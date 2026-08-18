@@ -20,10 +20,16 @@ slug paths + line ranges), code blocks, and lines. Pure; golden-tested.
 ### Phase 2 — Render + scroll (first vertical slice)
 End-to-end: `mdtation <fixture.md>` opens fullscreen and renders, wheel/cursor/page
 scroll. No comments yet. OpenTUI shell + `Renderer` (pure viewport → string[]).
-- `- [ ]` OpenTUI app shell mounts; `Renderer.render(doc, viewport, theme)` drives it.
-- `- [ ]` `Viewport` transitions (j/k, Ctrl-f/b page, G/g jump); cursor invariant.
-- `- [ ]` Golden render test on a fixture doc.
-- `- [ ]` `mdtation README.md` actually opens and scrolls on this machine.
+- `- [x]` `Viewport` transitions (moveCursor/pageDown/pageUp/jumpToLine/scroll); cursor invariant.
+- `- [x]` `Renderer.render(doc, viewport, opts)` pure frame (gutter cursor + comment markers).
+- `- [x]` Golden render test on a fixture doc.
+- `[x]` `mdtation --no-tui <file>` renders to stdout on this machine.
+- ✅ OpenTUI app shell mounts under **Bun** (`bun src/bin.ts <file>` opens the alt-screen
+  and renders the doc frame via `Renderer`). On Node the native FFI is unavailable,
+  so `mdtation <file>` falls back to stdout + a stderr notice (`--no-tui` always
+  renders to stdout). Keyboard scroll (`j/k`, Ctrl-f/b, Space, `G`/`g`, `q`, Ctrl-c)
+  routed + verified: `printf 'jq' | bun src/bin.ts <file>` exits 0.
+- ⚠️ Deferral: mouse (wheel/click) and the menu bar are Phase 3.
 
 ### Phase 3 — Command catalog + menu bar + help
 Single `CommandCatalog` table powers the menu bar (File/View/Navigate/Notes/Tools/Help),
@@ -62,7 +68,7 @@ Homebrew formula + npm publish checklist.
 |-------|--------|--------|-------|
 | 0 | scaffold | done | git + agent-lock + optmem + research |
 | 1 | phase1-document-model | done | parseDocument + slugify + findHeading; oxfmt pinned ^0.63.0 (0.1.0 corrupts TS `readonly`), oxlint + .oxfmtrc.json; 9/9 tests, tsc clean |
-| 2 | — | pending | — |
+| 2 | phase2-viewport-renderer | done | Viewport + Renderer pure seams + golden tests (37 total green); citty CLI (`mdtation --no-tui`, `bun src/bin.ts`). OpenTUI fullscreen verified under Bun 1.3.14 (alt-screen renders doc frame; jq/q key routing exits 0). Node falls back to stdout. |
 | 3 | — | pending | — |
 | 4 | — | pending | — |
 | 5 | — | pending | — |

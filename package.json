@@ -12,12 +12,13 @@
     "node": ">=22"
   },
   "scripts": {
-    "build": "tsdown",
+    "build": "tsdown src/bin.ts",
     "dev": "tsdown --watch",
+    "start": "bun src/bin.ts",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint",
-    "fmt": "oxfmt",
-    "fmt:check": "oxfmt --check",
+    "fmt": "oxfmt src test",
+    "fmt:check": "oxfmt --check src test",
     "test": "node --import tsx --test test/*.test.ts",
     "schema": "node --import tsx scripts/generate-schema.ts"
   },
