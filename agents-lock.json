@@ -1,0 +1,67 @@
+{
+  "lockfileVersion": 1,
+  "targets": {
+    "AGENTS.md": [
+      {
+        "ref": "../agentsmd/review/batch-001-v2.md#simplicity-yagni",
+        "integrity": "sha256-v0e30x0uDBmYIy+2O/vfiZbgLFx6HAZ0tv8Kk3ruZtg="
+      },
+      {
+        "ref": "../codeexplore/AGENTS.md#development-philosophy/agent-format",
+        "integrity": "sha256-As5j7+zUic48oa/qvrXg2a15ePJLNGzscChOK2TxOys="
+      },
+      {
+        "ref": "../codeexplore/AGENTS.md#development-philosophy/workflow",
+        "integrity": "sha256-GHR4uT4PWOG5Ag/vZ3cabMjVespqmCr2m+5E3Gxroks="
+      },
+      {
+        "ref": "../codeexplore/AGENTS.md#style-guide-example-typescript/naming",
+        "integrity": "sha256-qq8mNl3Y6FO4t5RCkY66AoHu25KrTSSOBezmtqE05H8="
+      },
+      {
+        "ref": "../lamp-press/AGENTS.md#development-philosophy/papercuts-unsure",
+        "integrity": "sha256-d0lcJSw22neA6wdZx5x84Cah99HCWVb4o+um5Z/MtOc="
+      },
+      {
+        "ref": "../highwrite/AGENTS.md#generic-agent-management/skills",
+        "integrity": "sha256-evp7Bv5AZL8DN6+YWxgfZIcpIiOg0AVVRWcyI02qzG8="
+      },
+      {
+        "ref": "inline:Memory",
+        "integrity": "sha256-tAKhsRwAUHznRD++i93/lES7v9M6D2LqwmbAdPS4Ysw="
+      },
+      {
+        "ref": "inline:Project Specific Notes",
+        "integrity": "sha256-dWZQxHFq7QWWDVKeWvICido1DCpMmAfnaeU3or777RA="
+      }
+    ],
+    ".claude/skills/create-spec/SKILL.md": [
+      {
+        "ref": "../janniks-ai/skills/create-spec/SKILL.md",
+        "integrity": "sha256-kfrIwQo0lZWn0wsJ8S5CtC5EXID1Q3G/esY0kKWddqc="
+      }
+    ],
+    ".claude/skills/tdd/SKILL.md": [
+      {
+        "ref": "../janniks-ai/skills/tdd/SKILL.md",
+        "integrity": "sha256-fh32J7zP1GY+xTP0vC0JmpQJ9SkVdaAkM4zaCR9DFrw="
+      }
+    ],
+    ".claude/skills/refine-spec/SKILL.md": [
+      {
+        "ref": "../janniks-ai/skills/refine-spec/SKILL.md",
+        "integrity": "sha256-666pU37aXgckyWRR9kwzo8z70hiy0f94lgS/HljZ5J4="
+      }
+    ],
+    ".claude/skills/errore/SKILL.md": [
+      {
+        "ref": "github:remorses/errore/skills/errore/SKILL.md",
+        "integrity": "sha256-nfhxVM80ruCOIAveTKFB+BI7XqBoV9MoTSpxh+I+d+M=",
+        "resolved": "4f67bc044cbbefcd2b0e4e0b6f3d2a91cf70af49"
+      }
+    ]
+  },
+  "env": {
+    "links": "sha256-tseq3mEJuo9HpEN8yuJ7RRjh06pP9XmdYHAkzeZj3mw="
+  }
+}

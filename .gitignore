@@ -1,0 +1,17 @@
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Learning references (clones of sibling / upstream projects) — read-only, never commit.
+_learn/
+
+# OptMem repo-local memory (vendored binary + mem store).
+.optmem/
+
+# Local plan scratch (per the AGENTS.md conventions).
+WIP-*.md
+
+# START agent-lock
+.agents/evidence.json
+agents_modules/
+# END agent-lock

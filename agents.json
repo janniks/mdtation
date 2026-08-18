@@ -1,0 +1,44 @@
+{
+  "$schema": "../agent-lock/agent-lock.schema.json",
+  "skills": [
+    "../janniks-ai/skills/create-spec/SKILL.md",
+    "../janniks-ai/skills/tdd/SKILL.md",
+    "../janniks-ai/skills/refine-spec/SKILL.md",
+    "github:remorses/errore/skills/errore/SKILL.md"
+  ],
+  "targets": {
+    "AGENTS.md": [
+      "../agentsmd/review/batch-001-v2.md#simplicity-yagni",
+      "../codeexplore/AGENTS.md#development-philosophy/agent-format",
+      "../codeexplore/AGENTS.md#development-philosophy/workflow",
+      "../codeexplore/AGENTS.md#style-guide-example-typescript/naming",
+      "../lamp-press/AGENTS.md#development-philosophy/papercuts-unsure",
+      "../highwrite/AGENTS.md#generic-agent-management/skills",
+      {
+        "section": "Memory",
+        "level": 2,
+        "content": [
+          "Your memory is OptMem, scoped to this repo only:",
+          "- The tool is `./.optmem/run` (a wrapper that pins `MEMORY_DIR` to `./.optmem/memory`; always use it, never bare `memo`).",
+          "- Memories live in `./.optmem/memory` (git-ignored).",
+          "- At session start, run `./.optmem/run wake` and read its output to the end.",
+          "- While working, run `./.optmem/run note \"<one line>\"` when you learn something worth keeping: a decision, a fact, an event of lasting effect.",
+          "- Look things up with `./.optmem/run recall <regex>`, or `./.optmem/run zoom <lo>-<hi>` to open a summary node.",
+          "- Never edit or delete anything under `.optmem/memory`; the tool manages it.",
+          "- Subagents must never run memo — when spawning one, write: `You are a subagent. Don't run memo.`"
+        ]
+      },
+      {
+        "section": "Project Specific Notes",
+        "level": 2,
+        "content": [
+          "- **Name:** `mdtation`.",
+          "- **Purpose:** Desktop-inspired terminal markdown viewer for the agentic era. Render a markdown file (or piped stdin) full-screen, mouse-friendly, with inline comments that copy structured references to the clipboard and ship straight to a CLI agent — a `hunk` diff viewer meets `agentation` annotation flow, built as a `herdr`-inspired TUI.",
+          "- **Stack:** TypeScript ESM. CLI via `citty`; TUI framework TBD (OpenTUI/React or Ink are the leading candidates — see `notes/research-pi-tui.md` and `notes/research-hunk.md`). Lint+format with `oxlint`/`oxfmt`; build with `tsdown`; one sentence per line in source docs so refs stay meaningful (per `agent-lock` convention).",
+          "- **Isolation:** Reference projects live in `_learn/` (git-ignored) and are read-only learning material, never committed.",
+          "- **Dogfooding:** This repo's `AGENTS.md` is assembled by `agent-lock` from pinned refs (this file) plus inline sections; `CLAUDE.md` is symlinked to it. Run `npx agent-lock install` after editing `agents.json`."
+        ]
+      }
+    ]
+  }
+}
