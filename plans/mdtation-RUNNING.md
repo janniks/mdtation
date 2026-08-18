@@ -12,9 +12,10 @@
 ### Phase 1 — Document model (core seam)
 Vertical slice: `Document.fromMarkdown(text)` parses a fixture into headings (with
 slug paths + line ranges), code blocks, and lines. Pure; golden-tested.
-- `- [ ]` `Document` module: `fromMarkdown`, `headings`, `codeBlocks`, `lines`.
-- `- [ ]` Tests: fixtures → parsed structure (incl. nested headings, fenced blocks).
-- `- [ ]` Slug path = GitHub-anchor grammar (`#section/subsection`).
+(API named `parseDocument` per Phase 1 request, same seam.)
+- `- [x]` `Document` module: `parseDocument`, `headings`, `codeBlocks`, `lines`.
+- `- [x]` Tests: fixtures → parsed structure (nested headings, fenced blocks, tilde fences).
+- `- [x]` Slug path = GitHub-anchor grammar (`#section/subsection`); `findHeading`.
 
 ### Phase 2 — Render + scroll (first vertical slice)
 End-to-end: `mdtation <fixture.md>` opens fullscreen and renders, wheel/cursor/page
@@ -60,7 +61,7 @@ Homebrew formula + npm publish checklist.
 | Phase | Commit | Status | Notes |
 |-------|--------|--------|-------|
 | 0 | scaffold | done | git + agent-lock + optmem + research |
-| 1 | — | pending | — |
+| 1 | phase1-document-model | done | parseDocument + slugify + findHeading; oxfmt pinned ^0.63.0 (0.1.0 corrupts TS `readonly`), oxlint + .oxfmtrc.json; 9/9 tests, tsc clean |
 | 2 | — | pending | — |
 | 3 | — | pending | — |
 | 4 | — | pending | — |
