@@ -12,6 +12,7 @@
 import type { Document, Heading } from "./document.ts";
 import type { Viewport } from "./viewport.ts";
 import { highlight } from "./syntax.ts";
+import { wrapLine } from "./unicode.ts";
 
 export interface RenderOptions {
   /** 0-based line indices that carry a comment. */
@@ -80,18 +81,6 @@ function styleList(raw: string): string | undefined {
   return undefined;
 }
 
-/** Hard-wrap `text` into chunks no wider than `width` columns. */
-function hardWrap(text: string, width: number): string[] {
-  if (width <= 0) {
-    return [text];
-  }
-  const rows: string[] = [];
-  for (let i = 0; i < text.length; i += width) {
-    rows.push(text.slice(i, i + width));
-  }
-  return rows;
-}
-
 function gutterFor(
   line: number,
   vp: Viewport,
@@ -147,7 +136,7 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
   const lines: string[] = [];
   for (let i = start; i < end; i++) {
     const raw = doc.lines[i] ?? "";
-    const chunks = raw.length > colWidth ? hardWrap(raw, colWidth) : [raw];
+    const chunks = wrapLine(raw, colWidth);
     chunks.forEach((chunk, ri) => {
       const g = ri === 0 ? gutterFor(i, vp, cursorOn, markers, color) : "  ";
       lines.push(g + bodyFor(i, chunk, doc, color));
