@@ -13,7 +13,7 @@ import { createCliRenderer, TextRenderable } from "@opentui/core";
 import type { CliRenderer } from "@opentui/core";
 import type { Document } from "../core/document.ts";
 import { render as renderFrame, statusBar } from "../core/renderer.ts";
-import { clampViewport, createViewport, type Viewport } from "../core/viewport.ts";
+import { clampViewport, createViewport, moveCursor, type Viewport } from "../core/viewport.ts";
 import { COMMANDS, matchKey, menuBar, reduceCommand, toChord, type Key } from "../core/commands.ts";
 
 /** Rows reserved at the top of the screen for the menu bar. */
@@ -37,13 +37,41 @@ export class TuiShell {
     this.renderer = renderer;
     this.doc = doc;
     this.vp = clampViewport(viewportFor(renderer), doc.lines.length);
-    this.text = new TextRenderable(renderer, { id: "mdtation-doc", content: "" });
+    this.text = new TextRenderable(renderer, {
+      id: "mdtation-doc",
+      content: "",
+      width: renderer.width || 80,
+      height: renderer.height || 24,
+      selectable: false,
+      onMouseScroll: (e) => this.onMouseScroll(e),
+      onMouseDown: (e) => this.onMouseDown(e),
+    });
     renderer.root.add(this.text);
     renderer.useMouse = true;
     renderer.keyInput.on("keypress", this.onKey);
     renderer.on("resize", () => this.onResize());
     this.draw();
   }
+
+  private onMouseScroll = (e: { scroll?: { delta: number } }): void => {
+    const delta = e.scroll?.delta ?? 0;
+    if (delta === 0) {
+      return;
+    }
+    this.vp = moveCursor(this.vp, delta > 0 ? 3 : -3, this.doc.lines.length);
+    this.draw();
+  };
+
+  private onMouseDown = (e: { y: number }): void => {
+    const row = e.y - MENU_HEIGHT; // skip the menu bar
+    const total = this.doc.lines.length;
+    if (row < 0 || row >= this.vp.height || total === 0) {
+      return;
+    }
+    const line = this.vp.offset + row;
+    this.vp = { ...this.vp, cursor: Math.max(0, Math.min(line, total - 1)) };
+    this.draw();
+  };
 
   private draw = (): void => {
     const width = this.vp.width;
@@ -67,6 +95,8 @@ export class TuiShell {
 
   private onResize = (): void => {
     this.vp = clampViewport(viewportFor(this.renderer), this.doc.lines.length);
+    this.text.width = this.renderer.width;
+    this.text.height = this.renderer.height;
     this.draw();
   };
 
