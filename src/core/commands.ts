@@ -1,0 +1,98 @@
+/**
+ * Command catalog — the single source of truth for keybindings, the menu bar,
+ * the help dialog, the command palette, and the key dispatcher (mirrors
+ * mdtation's spec: one table powers everything; a handler-map keyed by id
+ * covers every cataloged id, else typecheck fails).
+ *
+ * Dispatch is pure and fully unit-tested: the OpenTUI shell just calls
+ * `toChord(e)` -> `matchKey` -> `reduceCommand`.
+ */
+import { jumpToLine, moveCursor, pageDown, pageUp } from "./viewport.ts";
+import type { KeyAction, Viewport } from "./viewport.ts";
+
+export interface Command {
+  readonly id: string;
+  readonly title: string;
+  readonly category: string;
+  readonly keys: readonly string[];
+}
+
+/** The canonical command table. First-match-wins on key dispatch. Declaration
+ * order also drives the menu-bar category order (File, Navigate, Notes, Tools,
+ * Help — mirrors the spec's menu bar; an empty `View` is omitted until it has
+ * commands). */
+export const COMMANDS = [
+  { id: "quit", title: "Quit", category: "File", keys: ["q", "ctrl+c"] },
+  { id: "cursorDown", title: "Cursor Down", category: "Navigate", keys: ["j", "down"] },
+  { id: "cursorUp", title: "Cursor Up", category: "Navigate", keys: ["k", "up"] },
+  { id: "pageDown", title: "Page Down", category: "Navigate", keys: ["ctrl+f"] },
+  { id: "pageUp", title: "Page Up", category: "Navigate", keys: ["ctrl+b"] },
+  { id: "top", title: "Top", category: "Navigate", keys: ["g"] },
+  { id: "bottom", title: "Bottom", category: "Navigate", keys: ["shift+g"] },
+  { id: "comment", title: "New Comment", category: "Notes", keys: ["c"] },
+  { id: "copy", title: "Copy Reference", category: "Notes", keys: ["y"] },
+  { id: "palette", title: "Command Palette", category: "Tools", keys: ["/"] },
+  { id: "help", title: "Help", category: "Help", keys: ["?"] },
+] as const satisfies readonly Command[];
+
+export type CommandId = (typeof COMMANDS)[number]["id"];
+
+/** Effect of each command on the viewport. The mapped type enforces parity:
+ * dropping a command id here is a type error. */
+export type CmdHandler = (vp: Viewport, total: number) => KeyAction;
+export const HANDLERS: { readonly [K in CommandId]: CmdHandler } = {
+  cursorDown: (vp, total) => ({ vp: moveCursor(vp, 1, total) }),
+  cursorUp: (vp, total) => ({ vp: moveCursor(vp, -1, total) }),
+  pageDown: (vp, total) => ({ vp: pageDown(vp, total) }),
+  pageUp: (vp, total) => ({ vp: pageUp(vp, total) }),
+  top: (vp, total) => ({ vp: jumpToLine(vp, 0, total) }),
+  bottom: (vp, total) => ({ vp: jumpToLine(vp, Math.max(0, total - 1), total) }),
+  quit: () => ({ quit: true }),
+  palette: () => ({}),
+  comment: () => ({}),
+  copy: () => ({}),
+  help: () => ({}),
+};
+
+/** Raw key event shape (what OpenTUI's KeyEvent exposes minimally). */
+export interface Key {
+  name?: string;
+  ctrl?: boolean;
+  shift?: boolean;
+  alt?: boolean;
+}
+
+/** Normalize a key event into the chord string the catalog keys are written with. */
+export function toChord(e: Key): string {
+  const mods = [e.ctrl && "ctrl", e.shift && "shift", e.alt && "alt"].filter(Boolean);
+  return [...mods, e.name ?? ""].join("+");
+}
+
+/** First command whose `keys` contain `chord`, else undefined. */
+export function matchKey(
+  chord: string,
+  commands: readonly Command[] = COMMANDS,
+): Command | undefined {
+  return commands.find((c) => c.keys.includes(chord));
+}
+
+/** Reduce a matched command id to a viewport action. */
+export function reduceCommand(id: string | undefined, vp: Viewport, total: number): KeyAction {
+  if (!id) {
+    return {};
+  }
+  return (HANDLERS as Record<string, CmdHandler>)[id]?.(vp, total) ?? {};
+}
+
+/** One menu-bar line, e.g. "File   View   Navigate   Notes   Tools   Help". */
+export function menuBar(commands: readonly Command[] = COMMANDS): string {
+  const seen = new Set<string>();
+  const cats: string[] = [];
+  for (const c of commands) {
+    if (!seen.has(c.category)) {
+      seen.add(c.category);
+      cats.push(c.category);
+    }
+  }
+  return cats.join("   ");
+}

@@ -26,6 +26,14 @@ export interface Viewport {
   readonly height: number;
 }
 
+/** Result of a key dispatch: move the viewport, quit, or do nothing. */
+export interface KeyAction {
+  /** New viewport, or undefined when nothing changed. */
+  readonly vp?: Viewport;
+  /** Quit the shell. */
+  readonly quit?: boolean;
+}
+
 export function createViewport(
   offset: number,
   cursor: number,

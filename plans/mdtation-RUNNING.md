@@ -34,9 +34,12 @@ scroll. No comments yet. OpenTUI shell + `Renderer` (pure viewport → string[])
 ### Phase 3 — Command catalog + menu bar + help
 Single `CommandCatalog` table powers the menu bar (File/View/Navigate/Notes/Tools/Help),
 the key dispatcher, and the `?` help dialog (keys read live from the table).
-- `- [ ]` `CommandCatalog` + dispatch (first-match-wins; parity typecheck).
-- `- [ ]` MenuBar component (mouse + keyboard).
-- `- [ ]` Help dialog; key column derived from live chords.
+- `- [x]` `CommandCatalog` + dispatch (first-match-wins; typed `HANDLERS` map enforces
+  parity — every `CommandId` must have a handler, else typecheck fails).
+- `- [x]` MenuBar derives from the catalog (File/Navigate/Notes/Tools/Help) and renders
+  in the TUI.
+- ⚠️ Help dialog (`?`, keys read live from chords) deferred to the palette/modal slice;
+  the `help` command is cataloged but a no-op effect for now.
 
 ### Phase 4 — Command palette + comments modal
 `/ ` opens a herdr-style search-filtered palette over the catalog; `c` opens a centered
@@ -69,7 +72,7 @@ Homebrew formula + npm publish checklist.
 | 0 | scaffold | done | git + agent-lock + optmem + research |
 | 1 | phase1-document-model | done | parseDocument + slugify + findHeading; oxfmt pinned ^0.63.0 (0.1.0 corrupts TS `readonly`), oxlint + .oxfmtrc.json; 9/9 tests, tsc clean |
 | 2 | phase2-viewport-renderer | done | Viewport + Renderer pure seams + golden tests (37 total green); citty CLI (`mdtation --no-tui`, `bun src/bin.ts`). OpenTUI fullscreen verified under Bun 1.3.14 (alt-screen renders doc frame; jq/q key routing exits 0). Node falls back to stdout. |
-| 3 | — | pending | — |
+| 3 | phase3-command-catalog | done | CommandCatalog + first-match key dispatcher; typed HANDLERS parity (typecheck); menu bar (File/Navigate/Notes/Tools/Help) renders in TUI under Bun; j/q verified exit 0. Help dialog deferred to palette/modal slice. 41 tests green. |
 | 4 | — | pending | — |
 | 5 | — | pending | — |
 | 6 | — | pending | — |
