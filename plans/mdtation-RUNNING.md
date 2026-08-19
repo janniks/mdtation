@@ -46,6 +46,8 @@ the key dispatcher, and the `?` help dialog (keys read live from the table).
 modal (herdr shell) with text input (`↵`/`esc`), anchored to the current heading/line.
 - `- [x]` `CommentStore` + `resolve` against `Document` (heading path re-anchors by
   slug; line-number fallback; re-anchors after the doc changes). `Comment`/`Anchor`/`Location`.
+- `- [x]` `CommentStore.load`/`save` (persist to `.mdtation/comments.json`; missing/malformed
+  -> empty store; round-trips heading + line anchors). `test/persist.test.ts`.
 - ⚠️ Comment modal (centered shell, IME-correct caret), annotated-line gutter markers,
   and the `/` command palette — deferred (OpenTUI UI surface; the pure seams above are covered).
 
@@ -60,8 +62,10 @@ Next/prev annotated (`[`/`]`), `y` copies the structured reference to the clipbo
 ### Phase 6 — Send to CLI + config
 `send` serializes to stdout (pipe to agent); `.mdtation/config.json` for keybindings +
 theme token overrides + send target.
-- `- [ ]` `Export.sendFormat` + `mdtation send`.
-- `- [ ]` Config load + layer (defaults → user → flags).
+- `- [ ]` `Export.sendFormat` + `mdtation send` (deferred; clipboard/send channel is OpenTUI/OSC-52).
+- `- [x]` Config load + layer (`loadConfig` reads `<cwd>/mdtation.json`, merges over defaults,
+  missing/malformed -> defaults; `src/core/config.ts` + `test/config.test.ts`).
+  `mdtation config` CLI command deferred (TUI `HANDLERS` map is viewport-effects only).
 
 ### Phase 7 — Polish + ship
 Themes (pi md tokens wired to a JSON theme), multi-file future-proofing seams,
@@ -75,7 +79,7 @@ Homebrew formula + npm publish checklist.
 | 1 | phase1-document-model | done | parseDocument + slugify + findHeading; oxfmt pinned ^0.63.0 (0.1.0 corrupts TS `readonly`), oxlint + .oxfmtrc.json; 9/9 tests, tsc clean |
 | 2 | phase2-viewport-renderer | done | Viewport + Renderer pure seams + golden tests (37 total green); citty CLI (`mdtation --no-tui`, `bun src/bin.ts`). OpenTUI fullscreen verified under Bun 1.3.14 (alt-screen renders doc frame; jq/q key routing exits 0). Node falls back to stdout. |
 | 3 | phase3-command-catalog | done | CommandCatalog + first-match key dispatcher; typed HANDLERS parity (typecheck); menu bar (File/Navigate/Notes/Tools/Help) renders in TUI under Bun; j/q verified exit 0. Help dialog deferred to palette/modal slice. 41 tests green. |
-| 4 | phase4-comments | partial | CommentStore + Anchor + Location + resolveAnchor (re-anchor by slug, line fallback) + copyFormat pure seams, tested (52 total green). Modal/palette/gutter/IME/clipboard nav deferred (OpenTUI UI surface). |
-| 5 | — | pending | — |
-| 6 | — | pending | — |
-| 7 | — | pending | — |
+| 4 | phase4-comments-persist | partial | CommentStore + resolve + load/save (persist, tested) + copyFormat. Subagent-assisted: nemotron added load/save + persist.test.ts; cohere added config.ts + config.test.ts (review-fixed: missing node:test imports, `as any`). 61 tests green. Hardened pi 429 retry (slower backoff). Modal/palette/gutter/clipboard/send deferred. |
+| 5 | — | partial | `Export.copyFormat` (tested); `[`/`]` nav + gutter markers + OSC-52 clipboard deferred (OpenTUI). |
+| 6 | config-seam | partial | `loadConfig` (`<cwd>/mdtation.json` merge+defaults, tested); `mdtation send`/sendFormat deferred. |
+| 7 | — | pending | `mdtation config` CLI command + themes/publish checklist. |
