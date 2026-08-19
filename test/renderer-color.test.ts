@@ -11,15 +11,14 @@ test("renderer stays plain by default (golden regression)", () => {
   const frame = render(doc, createViewport(0, 0, 80, 24));
   assert.equal(frame[0], "> # H1");
   assert.equal(frame[1], "  **bold**");
-  // no ANSI escapes leak into plain output
   assert.equal(
     frame.some((l) => l.includes(ESC)),
     false,
   );
 });
 
-test("renderer color=true styles headings, inline, and code", () => {
-  const doc = parseDocument("# H1\n\n**bold** text\n\n```ts\ncode\n```\n");
+test("color=true styles headings, inline, fenced code, and syntax", () => {
+  const doc = parseDocument("# H1\n\n**bold** text\n\n```ts\nconst n = 1; // c\n```\n");
   const frame = render(doc, createViewport(0, 0, 80, 24), { color: true });
   // line 0: green cursor gutter + bold red heading
   assert.ok(
@@ -28,6 +27,10 @@ test("renderer color=true styles headings, inline, and code", () => {
   );
   // line 2: inline bold
   assert.ok(frame[2]?.endsWith(`${ESC}[1mbold${ESC}[0m text`), frame[2]);
-  // line 5: code block dimmed
-  assert.ok(frame[5]?.includes(`${ESC}[2mcode${ESC}[0m`), frame[5]);
+  // line 4: fence line dimmed
+  assert.ok(frame[4]?.includes(`${ESC}[2m`), `frame[4]=${frame[4]}`);
+  // line 5: inner code — keyword cyan, number magenta, comment gray
+  assert.ok(frame[5]?.includes(`${ESC}[36mconst${ESC}[0m`), `frame[5]=${frame[5]}`);
+  assert.ok(frame[5]?.includes(`${ESC}[35m1${ESC}[0m`), `frame[5]=${frame[5]}`);
+  assert.ok(frame[5]?.includes(`${ESC}[90m`), `frame[5]=${frame[5]}`);
 });

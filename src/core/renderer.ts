@@ -5,10 +5,13 @@
  *
  * Output is plain text by default (deterministic for golden tests and pipable
  * via `mdtation --no-tui`). When `RenderOptions.color` is set, the frame is
- * styled with ANSI SGR (bold / italic / colors) for the OpenTUI shell.
+ * styled with ANSI SGR (bold / italic / colors) for the OpenTUI shell; fenced
+ * code is syntax-highlighted via `highlight` (fences dimmed, inner code
+ * tokenized). Theming lives here as pure functions so it is golden-testable.
  */
 import type { Document, Heading } from "./document.ts";
 import type { Viewport } from "./viewport.ts";
+import { highlight } from "./syntax.ts";
 
 export interface RenderOptions {
   /** 0-based line indices that carry a comment. */
@@ -50,12 +53,12 @@ function headingAt(doc: Document, line: number): Heading | undefined {
   return doc.headings.find((h) => h.startLine === line);
 }
 
-function inCodeBlock(doc: Document, line: number): boolean {
-  return doc.codeBlocks.some((b) => line >= b.startLine && line <= b.endLine);
+/** Return the fenced code block covering `line`, if any. */
+function codeBlockAt(doc: Document, line: number) {
+  return doc.codeBlocks.find((b) => line >= b.startLine && line <= b.endLine);
 }
 
-/** Minimal inline markdown: `**bold**`, `*italic*`, `` `code` ``, `~~strike~~`.
- * Non-nesting, left-to-right; enough for a readable view. */
+/** Minimal inline markdown: `**bold**`, `*italic*`, `` `code` ``, `~~strike~~`. */
 function styleInline(text: string): string {
   return text
     .replace(/\*\*(.+?)\*\*/g, (_, p: string) => `${SGR.bold}${p}${SGR.reset}`)
@@ -98,8 +101,12 @@ function bodyFor(line: number, raw: string, doc: Document, color: boolean): stri
   if (heading) {
     return `${SGR.bold}${HEADING_COLOR[heading.level] ?? SGR.gray}${raw}${SGR.reset}`;
   }
-  if (inCodeBlock(doc, line)) {
-    return `${SGR.dim}${raw}${SGR.reset}`;
+  const block = codeBlockAt(doc, line);
+  if (block) {
+    if (line === block.startLine || line === block.endLine) {
+      return `${SGR.dim}${raw}${SGR.reset}`;
+    }
+    return highlight(raw, block.lang ?? null);
   }
   return styleInline(raw);
 }
