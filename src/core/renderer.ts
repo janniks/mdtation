@@ -67,6 +67,19 @@ function styleInline(text: string): string {
     .replace(/\*([^*]+?)\*/g, (_, p: string) => `${SGR.italic}${p}${SGR.reset}`);
 }
 
+/** Color the bullet/number of a markdown list item; `undefined` for non-list lines. */
+function styleList(raw: string): string | undefined {
+  const ul = raw.match(/^( *)([-*+\u2022])\s+(.*)$/);
+  if (ul) {
+    return `${SGR.cyan}${ul[1]}${ul[2]}${SGR.reset} ${ul[3]}`;
+  }
+  const ol = raw.match(/^( *)(\d+\.)\s+(.*)$/);
+  if (ol) {
+    return `${SGR.cyan}${ol[1]}${ol[2]}${SGR.reset} ${ol[3]}`;
+  }
+  return undefined;
+}
+
 /** Hard-wrap `text` into chunks no wider than `width` columns. */
 function hardWrap(text: string, width: number): string[] {
   if (width <= 0) {
@@ -120,7 +133,7 @@ function bodyFor(line: number, raw: string, doc: Document, color: boolean): stri
     }
     return highlight(raw, block.lang ?? null);
   }
-  return styleInline(raw);
+  return styleList(raw) ?? styleInline(raw);
 }
 
 export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): string[] {
