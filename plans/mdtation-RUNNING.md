@@ -44,16 +44,18 @@ the key dispatcher, and the `?` help dialog (keys read live from the table).
 ### Phase 4 — Command palette + comments modal
 `/ ` opens a herdr-style search-filtered palette over the catalog; `c` opens a centered
 modal (herdr shell) with text input (`↵`/`esc`), anchored to the current heading/line.
-- `- [ ]` Palette popup (search + filter + enter/esc).
-- `- [ ]` `CommentStore.add` + `resolve` against `Document`.
-- `- [ ]` Comment modal (centered shell, IME-correct caret).
-- `- [ ]` Annotated lines marked in the gutter.
+- `- [x]` `CommentStore` + `resolve` against `Document` (heading path re-anchors by
+  slug; line-number fallback; re-anchors after the doc changes). `Comment`/`Anchor`/`Location`.
+- ⚠️ Comment modal (centered shell, IME-correct caret), annotated-line gutter markers,
+  and the `/` command palette — deferred (OpenTUI UI surface; the pure seams above are covered).
 
 ### Phase 5 — Copy + navigate comments
 Next/prev annotated (`[`/`]`), `y` copies the structured reference to the clipboard;
 `Export.copyFormat` produces the agent-consumable markdown block.
-- `- [ ]` `Export.copyFormat` → markdown reference; clipboard write.
-- `- [ ]` Annotated-line navigation + gutter markers.
+- `- [x]` `Export.copyFormat` → markdown reference (tested); clipboard write deferred
+  (OSC-52 via OpenTUI under Bun; stdout-only for `--no-tui`).
+- `- [ ]` Annotated-line navigation (`[`/`]`) + gutter markers. (depends on CommentStore,
+  which is in place; nav dispatch + gutter marking deferred to the modal slice.)
 
 ### Phase 6 — Send to CLI + config
 `send` serializes to stdout (pipe to agent); `.mdtation/config.json` for keybindings +
@@ -73,7 +75,7 @@ Homebrew formula + npm publish checklist.
 | 1 | phase1-document-model | done | parseDocument + slugify + findHeading; oxfmt pinned ^0.63.0 (0.1.0 corrupts TS `readonly`), oxlint + .oxfmtrc.json; 9/9 tests, tsc clean |
 | 2 | phase2-viewport-renderer | done | Viewport + Renderer pure seams + golden tests (37 total green); citty CLI (`mdtation --no-tui`, `bun src/bin.ts`). OpenTUI fullscreen verified under Bun 1.3.14 (alt-screen renders doc frame; jq/q key routing exits 0). Node falls back to stdout. |
 | 3 | phase3-command-catalog | done | CommandCatalog + first-match key dispatcher; typed HANDLERS parity (typecheck); menu bar (File/Navigate/Notes/Tools/Help) renders in TUI under Bun; j/q verified exit 0. Help dialog deferred to palette/modal slice. 41 tests green. |
-| 4 | — | pending | — |
+| 4 | phase4-comments | partial | CommentStore + Anchor + Location + resolveAnchor (re-anchor by slug, line fallback) + copyFormat pure seams, tested (52 total green). Modal/palette/gutter/IME/clipboard nav deferred (OpenTUI UI surface). |
 | 5 | — | pending | — |
 | 6 | — | pending | — |
 | 7 | — | pending | — |
