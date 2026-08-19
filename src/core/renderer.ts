@@ -67,6 +67,18 @@ function styleInline(text: string): string {
     .replace(/\*([^*]+?)\*/g, (_, p: string) => `${SGR.italic}${p}${SGR.reset}`);
 }
 
+/** Hard-wrap `text` into chunks no wider than `width` columns. */
+function hardWrap(text: string, width: number): string[] {
+  if (width <= 0) {
+    return [text];
+  }
+  const rows: string[] = [];
+  for (let i = 0; i < text.length; i += width) {
+    rows.push(text.slice(i, i + width));
+  }
+  return rows;
+}
+
 function gutterFor(
   line: number,
   vp: Viewport,
@@ -118,11 +130,15 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
   const start = Math.max(0, vp.offset);
   const height = Math.max(0, vp.height);
   const end = Math.min(doc.lines.length, start + height);
+  const colWidth = Math.max(1, vp.width - GUTTER_WIDTH);
   const lines: string[] = [];
   for (let i = start; i < end; i++) {
-    lines.push(
-      gutterFor(i, vp, cursorOn, markers, color) + bodyFor(i, doc.lines[i] ?? "", doc, color),
-    );
+    const raw = doc.lines[i] ?? "";
+    const chunks = raw.length > colWidth ? hardWrap(raw, colWidth) : [raw];
+    chunks.forEach((chunk, ri) => {
+      const g = ri === 0 ? gutterFor(i, vp, cursorOn, markers, color) : "  ";
+      lines.push(g + bodyFor(i, chunk, doc, color));
+    });
   }
   return lines;
 }
