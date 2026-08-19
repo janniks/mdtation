@@ -46,7 +46,7 @@ export class TuiShell {
   private draw = (): void => {
     const width = this.vp.width;
     const menu = menuBar(COMMANDS).padEnd(width).slice(0, width);
-    this.text.content = [menu, ...renderFrame(this.doc, this.vp)].join("\n");
+    this.text.content = [menu, ...renderFrame(this.doc, this.vp, { color: true })].join("\n");
     this.renderer.requestRender();
   };
 
