@@ -82,4 +82,8 @@ Homebrew formula + npm publish checklist.
 | 4 | phase4-comments-persist | partial | CommentStore + resolve + load/save (persist, tested) + copyFormat. Subagent-assisted: nemotron added load/save + persist.test.ts; cohere added config.ts + config.test.ts (review-fixed: missing node:test imports, `as any`). 61 tests green. Hardened pi 429 retry (slower backoff). Modal/palette/gutter/clipboard/send deferred. |
 | 5 | — | partial | `Export.copyFormat` (tested); `[`/`]` nav + gutter markers + OSC-52 clipboard deferred (OpenTUI). |
 | 6 | config-seam | partial | `loadConfig` (`<cwd>/mdtation.json` merge+defaults, tested); `mdtation send`/sendFormat deferred. |
-| 7 | — | pending | `mdtation config` CLI command + themes/publish checklist. |
+| 7 | — | partial | Themes (pi md tokens -> inline SGR in `renderer.ts`) partially done: ANSI color/bold/italic ✓, ts/js syntax highlighting ✓ (`syntax.ts`), width-aware hard-wrap ✓ (narrow/mobile), list markers ✓ cyan (color mode only; plain output unchanged, golden-safe). List re-indent + tables + status line still pending. `mdtation config` CLI + publish checklist pending. Testing TUI: `bun src/bin.ts <file>` (pane w2:pA, color+syntax+wrap+list markers). |
+| 4+ | renderer-lists | done | List bullet/number markers colored cyan in color mode; non-list lines fall through to inline styling; plain output unchanged (golden-safe). (bf297f0) |
+| 4+ | renderer-color | done | ANSI theme (inline SGR in `renderer.ts`, heading-level colors); `RenderOptions.color` opt-in (default off preserves golden tests); color golden tests. (3f3e1fc) |
+| 4+ | renderer-syntax | done | ts/js highlighting (Keyword/Function/Comment/String/Number/Type); inline + fenced, color-aware. (bec2a48) |
+| 4+ | renderer-wrap | done | width-aware hard-wrap (continuation gutters) for narrow/mobile panes; golden tests. (bc06667) |
