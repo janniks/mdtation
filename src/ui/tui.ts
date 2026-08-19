@@ -12,16 +12,18 @@
 import { createCliRenderer, TextRenderable } from "@opentui/core";
 import type { CliRenderer } from "@opentui/core";
 import type { Document } from "../core/document.ts";
-import { render as renderFrame } from "../core/renderer.ts";
+import { render as renderFrame, statusBar } from "../core/renderer.ts";
 import { clampViewport, createViewport, type Viewport } from "../core/viewport.ts";
 import { COMMANDS, matchKey, menuBar, reduceCommand, toChord, type Key } from "../core/commands.ts";
 
 /** Rows reserved at the top of the screen for the menu bar. */
 const MENU_HEIGHT = 1;
+/** Rows reserved at the bottom of the screen for the status line. */
+const STATUS_HEIGHT = 1;
 
 function viewportFor(renderer: CliRenderer): Viewport {
   const width = renderer.width || 80;
-  const height = Math.max(1, (renderer.height || 24) - MENU_HEIGHT);
+  const height = Math.max(1, (renderer.height || 24) - MENU_HEIGHT - STATUS_HEIGHT);
   return createViewport(0, 0, width, height);
 }
 
@@ -46,7 +48,10 @@ export class TuiShell {
   private draw = (): void => {
     const width = this.vp.width;
     const menu = menuBar(COMMANDS).padEnd(width).slice(0, width);
-    this.text.content = [menu, ...renderFrame(this.doc, this.vp, { color: true })].join("\n");
+    const status = statusBar(this.doc, this.vp, { color: true }).padEnd(width).slice(0, width);
+    this.text.content = [menu, ...renderFrame(this.doc, this.vp, { color: true }), status].join(
+      "\n",
+    );
     this.renderer.requestRender();
   };
 
