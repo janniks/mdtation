@@ -19,6 +19,10 @@ export interface RenderOptions {
   readonly markers?: readonly number[];
   /** Emit ANSI styling (bold / italic / colors). Default false. */
   readonly color?: boolean;
+  /** Color bold / italic / links (needs `color`). Default true. */
+  readonly emphasis?: boolean;
+  /** Highlight fenced code (needs `color`). Default true. */
+  readonly syntax?: boolean;
 }
 
 /** Width (in columns) of the gutter prepended to every rendered line. */
@@ -61,7 +65,10 @@ function codeBlockAt(doc: Document, line: number) {
 }
 
 /** Minimal inline markdown: `**bold**`, `*italic*`, `` `code` ``, `~~strike~~`. */
-function styleInline(text: string): string {
+function styleInline(text: string, emphasis: boolean): string {
+  if (!emphasis) {
+    return text;
+  }
   // Links first: later rules emit `\x1b[` escapes that would match the link's `[`.
   return text
     .replace(
@@ -76,16 +83,9 @@ function styleInline(text: string): string {
 }
 
 /** Color the bullet/number of a markdown list item; `undefined` for non-list lines. */
-function styleList(raw: string): string | undefined {
-  const ul = raw.match(/^( *)([-*+\u2022])\s+(.*)$/);
-  if (ul) {
-    return `${SGR.cyan}${ul[1]}${ul[2]}${SGR.reset} ${ul[3]}`;
-  }
-  const ol = raw.match(/^( *)(\d+\.)\s+(.*)$/);
-  if (ol) {
-    return `${SGR.cyan}${ol[1]}${ol[2]}${SGR.reset} ${ol[3]}`;
-  }
-  return undefined;
+function styleList(raw: string, emphasis: boolean): string | undefined {
+  const m = raw.match(/^( *)([-*+\u2022]|\d+\.)\s+(.*)$/);
+  return m ? `${SGR.cyan}${m[1]}${m[2]}${SGR.reset} ${styleInline(m[3]!, emphasis)}` : undefined;
 }
 
 function gutterFor(
@@ -114,10 +114,11 @@ function gutterFor(
   return g;
 }
 
-function bodyFor(line: number, raw: string, doc: Document, color: boolean): string {
-  if (!color) {
+function bodyFor(line: number, raw: string, doc: Document, opts: RenderOptions): string {
+  if (!opts.color) {
     return raw;
   }
+  const emphasis = opts.emphasis !== false;
   const heading = headingAt(doc, line);
   if (heading) {
     return `${SGR.bold}${HEADING_COLOR[heading.level] ?? SGR.gray}${raw}${SGR.reset}`;
@@ -127,9 +128,9 @@ function bodyFor(line: number, raw: string, doc: Document, color: boolean): stri
     if (line === block.startLine || line === block.endLine) {
       return `${SGR.dim}${raw}${SGR.reset}`;
     }
-    return highlight(raw, block.lang ?? null);
+    return opts.syntax === false ? raw : highlight(raw, block.lang ?? null);
   }
-  return styleList(raw) ?? styleInline(raw);
+  return styleList(raw, emphasis) ?? styleInline(raw, emphasis);
 }
 
 /** Does `line` look like a GFM table row: `|`-delimited with at least 2 cells. */
@@ -235,7 +236,7 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
     const chunks = wrapLine(body, colWidth);
     chunks.forEach((chunk, ri) => {
       const g = ri === 0 ? gutterFor(i, vp, cursorOn, markers, color) : "  ";
-      lines.push(g + bodyFor(i, chunk, doc, color));
+      lines.push(g + bodyFor(i, chunk, doc, opts));
     });
   }
   return lines;

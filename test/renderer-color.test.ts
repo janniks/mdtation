@@ -44,3 +44,14 @@ test("italic gets a color and links are underlined with a dim url", () => {
     line,
   );
 });
+
+test("emphasis/syntax flags switch inline colors and highlighting off", () => {
+  const doc = parseDocument("- **b**\n```ts\nconst n = 1;\n```\n");
+  const vp = createViewport(0, 0, 80, 4);
+  const on = render(doc, vp, { color: true });
+  assert.ok(on[0]?.includes(`${ESC}[1m${ESC}[33mb${ESC}[0m`), on[0]);
+  assert.notEqual(on[2], "  const n = 1;");
+  const off = render(doc, vp, { color: true, emphasis: false, syntax: false });
+  assert.equal(off[0], `${ESC}[32m> ${ESC}[0m${ESC}[36m-${ESC}[0m **b**`);
+  assert.equal(off[2], "  const n = 1;");
+});
