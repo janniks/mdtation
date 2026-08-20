@@ -59,7 +59,7 @@ const FOOTER = 1;
 const CYCLES = {
   viewFences: ["ticks", "fence", "hide"],
   viewCaret: [">", "+", "▶", "›", "●"],
-  viewMark: ["✦", "●", "◆", "▌", "■", "•"],
+  viewMark: ["✦", "●", "◆", "▌", "■", "•", "none"],
   viewCheck: CHECKS.map((c) => c[1]),
 } as const;
 type Cycle = keyof typeof CYCLES;
@@ -341,7 +341,7 @@ export class TuiShell {
     return {
       fences: this.value("viewFences"),
       caret: this.value("viewCaret"),
-      mark: this.value("viewMark"),
+      mark: this.value("viewMark") === "none" ? " " : this.value("viewMark"), // none = bg only
       check: this.pick.viewCheck,
     };
   }
