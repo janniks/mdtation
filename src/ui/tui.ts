@@ -508,7 +508,11 @@ export class TuiShell {
     }
     if (id) {
       e.preventDefault(); // keep the opening key out of an overlay's input
+      const menu = this.cur;
       this.run(id);
+      if (menu >= 0 && this.cur === menu) {
+        this.menuOpen(menu); // rebuild so toggles flipped by key show their new state
+      }
     }
   };
 
