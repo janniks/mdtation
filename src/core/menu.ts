@@ -12,8 +12,8 @@ export interface Entry {
   readonly hint: string;
   /** Set for toggles: rendered as `[x]` / `[ ]` before the title. */
   readonly checked?: boolean;
-  /** Draw a separator above: the command's `group` changed. */
-  readonly gap?: boolean;
+  /** Section title drawn as a separator above this entry (first entry of a `group`). */
+  readonly group?: string;
 }
 
 export interface Menu {
@@ -69,8 +69,8 @@ export function menus(
       (entry as { checked?: boolean }).checked = checked;
     }
     const menu = out.find((m) => m.label === c.category);
-    if (menu && groups.get(c.category) !== c.group) {
-      (entry as { gap?: boolean }).gap = true;
+    if (c.group && groups.get(c.category) !== c.group) {
+      (entry as { group?: string }).group = c.group;
     }
     groups.set(c.category, c.group);
     if (menu) {

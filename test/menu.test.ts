@@ -55,14 +55,14 @@ describe("menu", () => {
   });
 });
 
-test("menus: a separator gap where the command group changes", () => {
+test("menus: the first entry of a group carries its section title", () => {
   const m = menus([
     { id: "a", title: "A", category: "V", keys: [], group: "x" },
     { id: "b", title: "B", category: "V", keys: [], group: "x" },
     { id: "c", title: "C", category: "V", keys: [], group: "y" },
   ]);
   assert.deepEqual(
-    m[0]!.entries.map((e) => e.gap ?? false),
-    [false, false, true],
+    m[0]!.entries.map((e) => e.group),
+    ["x", undefined, "y"],
   );
 });
