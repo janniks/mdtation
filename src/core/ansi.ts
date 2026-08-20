@@ -10,6 +10,7 @@ export interface Span {
   readonly dim?: boolean;
   readonly italic?: boolean;
   readonly strike?: boolean;
+  readonly underline?: boolean;
 }
 
 type Style = Omit<Span, "text">;
@@ -49,12 +50,16 @@ function apply(style: Style, codes: string): Style {
       s = { ...s, dim: true };
     } else if (n === 3) {
       s = { ...s, italic: true };
+    } else if (n === 4) {
+      s = { ...s, underline: true };
     } else if (n === 9) {
       s = { ...s, strike: true };
     } else if (n === 22) {
       s = { ...s, bold: false, dim: false };
     } else if (n === 23) {
       s = { ...s, italic: false };
+    } else if (n === 24) {
+      s = { ...s, underline: false };
     } else if (n === 29) {
       s = { ...s, strike: false };
     } else if (n === 39) {

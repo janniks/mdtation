@@ -37,3 +37,10 @@ test("span text concatenates to the stripped text", () => {
   );
   assert.equal(strip(raw), "# Head 团队 🧑‍🤝‍🧑 |");
 });
+
+test("underline on and off", () => {
+  assert.deepEqual(spans("\x1b[4ma\x1b[24mb"), [
+    { text: "a", underline: true },
+    { text: "b", underline: false },
+  ]);
+});

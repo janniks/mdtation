@@ -1,5 +1,5 @@
 /** SGR-escaped text -> OpenTUI StyledText. OpenTUI does not parse escape bytes itself. */
-import { bold, dim, fg, italic, strikethrough, StyledText } from "@opentui/core";
+import { bold, dim, fg, italic, strikethrough, StyledText, underline } from "@opentui/core";
 import type { TextChunk } from "@opentui/core";
 import { spans, type Span } from "../core/ansi.ts";
 
@@ -10,6 +10,7 @@ function chunk(s: Span): TextChunk {
   if (s.dim) c = dim(c);
   if (s.italic) c = italic(c);
   if (s.strike) c = strikethrough(c);
+  if (s.underline) c = underline(c);
   return c;
 }
 

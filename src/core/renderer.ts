@@ -31,6 +31,7 @@ const SGR = {
   dim: "\x1b[2m",
   italic: "\x1b[3m",
   strike: "\x1b[9m",
+  underline: "\x1b[4m",
   green: "\x1b[32m",
   yellow: "\x1b[33m",
   red: "\x1b[31m",
@@ -61,11 +62,17 @@ function codeBlockAt(doc: Document, line: number) {
 
 /** Minimal inline markdown: `**bold**`, `*italic*`, `` `code` ``, `~~strike~~`. */
 function styleInline(text: string): string {
+  // Links first: later rules emit `\x1b[` escapes that would match the link's `[`.
   return text
-    .replace(/\*\*(.+?)\*\*/g, (_, p: string) => `${SGR.bold}${p}${SGR.reset}`)
+    .replace(
+      /\[([^\]]+)\]\(([^)]+)\)/g,
+      (_, t: string, u: string) =>
+        `${SGR.underline}${SGR.blue}${t}${SGR.reset} ${SGR.dim}(${u})${SGR.reset}`,
+    )
+    .replace(/\*\*(.+?)\*\*/g, (_, p: string) => `${SGR.bold}${SGR.yellow}${p}${SGR.reset}`)
     .replace(/`([^`]+)`/g, (_, p: string) => `${SGR.gray}${p}${SGR.reset}`)
     .replace(/~~(.+?)~~/g, (_, p: string) => `${SGR.strike}${p}${SGR.reset}`)
-    .replace(/\*([^*]+?)\*/g, (_, p: string) => `${SGR.italic}${p}${SGR.reset}`);
+    .replace(/\*([^*]+?)\*/g, (_, p: string) => `${SGR.italic}${SGR.cyan}${p}${SGR.reset}`);
 }
 
 /** Color the bullet/number of a markdown list item; `undefined` for non-list lines. */

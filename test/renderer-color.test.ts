@@ -26,11 +26,21 @@ test("color=true styles headings, inline, fenced code, and syntax", () => {
     frame[0],
   );
   // line 2: inline bold
-  assert.ok(frame[2]?.endsWith(`${ESC}[1mbold${ESC}[0m text`), frame[2]);
+  assert.ok(frame[2]?.endsWith(`${ESC}[1m${ESC}[33mbold${ESC}[0m text`), frame[2]);
   // line 4: fence line dimmed
   assert.ok(frame[4]?.includes(`${ESC}[2m`), `frame[4]=${frame[4]}`);
   // line 5: inner code — keyword cyan, number magenta, comment gray
   assert.ok(frame[5]?.includes(`${ESC}[36mconst${ESC}[0m`), `frame[5]=${frame[5]}`);
   assert.ok(frame[5]?.includes(`${ESC}[35m1${ESC}[0m`), `frame[5]=${frame[5]}`);
   assert.ok(frame[5]?.includes(`${ESC}[90m`), `frame[5]=${frame[5]}`);
+});
+
+test("italic gets a color and links are underlined with a dim url", () => {
+  const doc = parseDocument("*it* and [site](https://x.y)\n");
+  const [line] = render(doc, createViewport(0, 0, 80, 1), { color: true });
+  assert.ok(line?.includes(`${ESC}[3m${ESC}[36mit${ESC}[0m`), line);
+  assert.ok(
+    line?.includes(`${ESC}[4m${ESC}[34msite${ESC}[0m ${ESC}[2m(https://x.y)${ESC}[0m`),
+    line,
+  );
 });
