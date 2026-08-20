@@ -9,7 +9,7 @@
  * pre-wrapped by `render()` and must never be re-wrapped by OpenTUI.
  */
 import { createCliRenderer, TextRenderable } from "@opentui/core";
-import type { CliRenderer, KeyEvent, MouseEvent } from "@opentui/core";
+import type { CliRenderer, KeyEvent, MouseEvent, Selection } from "@opentui/core";
 import { spawnSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
@@ -109,7 +109,7 @@ export class TuiShell {
       width: "100%",
       flexGrow: 1,
       flexShrink: 1,
-      selectable: false,
+      selectable: true,
       wrapMode: "none",
       onMouseScroll: (e) => this.wheel(e),
       onMouseDown: (e) => this.click(e),
@@ -120,6 +120,23 @@ export class TuiShell {
       renderer.root.add(n);
     }
     renderer.useMouse = true;
+    // Drag-select in the body copies like a terminal would (hunk does the same via OSC-52).
+    renderer.on("selection", (s: Selection) => {
+      // Rows after the first start at column 0, so drop their 2-col gutter.
+      const text = s.isDragging
+        ? ""
+        : s
+            .getSelectedText()
+            .split("\n")
+            .map((l, i) => (i ? l.slice(GUTTER_WIDTH) : l))
+            .join("\n")
+            .trim();
+      if (text) {
+        copy(text);
+        renderer.clearSelection();
+        this.draw("COPIED SELECTION");
+      }
+    });
     renderer.keyInput.on("keypress", this.onKey);
     renderer.on("resize", () => this.resize());
     this.draw();
@@ -141,8 +158,17 @@ export class TuiShell {
         height,
         Number(this.prefs.margin),
       ),
-      first: this.on.viewFront ? 0 : end(this.doc.lines) + 1,
+      first: this.on.viewFront ? 0 : this.first(),
     };
+  }
+
+  /** First line after hidden frontmatter, skipping blank lines. */
+  private first(): number {
+    let i = end(this.doc.lines) + 1;
+    while (i < this.doc.lines.length - 1 && this.doc.lines[i]!.trim() === "") {
+      i++;
+    }
+    return i;
   }
 
   /** Move the cursor to `line` (clamped, scrolled on-screen) and redraw. */
@@ -197,7 +223,7 @@ export class TuiShell {
     if (dir !== "up" && dir !== "down") {
       return;
     }
-    this.view = moveCursor(this.view, dir === "down" ? 3 : -3, this.doc.lines.length);
+    this.view = moveCursor(this.view, dir === "down" ? 1 : -1, this.doc.lines.length);
     this.draw();
   }
 
