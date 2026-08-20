@@ -24,7 +24,7 @@ describe("palette", () => {
 
   test("ranks title prefix over substring over id/category", () => {
     assert.deepEqual(ids("p"), ["pageDown", "top", "copy"]);
-    assert.deepEqual(ids("comments"), ["comment", "copy"]);
+    assert.deepEqual(ids("commen"), ["comment", "copy"]);
     assert.deepEqual(ids("pagedown"), ["pageDown"]);
   });
 
