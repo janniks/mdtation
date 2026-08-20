@@ -110,3 +110,11 @@ Unchecked entries are swept on occasional cleanup passes.
     - alternative: a preview/edit mode toggle, or an "edit recommendation" comment instead of touching the file.
     - why: simplest UX, and the same dirty/save path serves future structured edits.
     - verdict: ?
+
+## 2026-08-20 — Phase 8f store
+
+- [ ] Comments live in one `comments.json` keyed by absolute path in the XDG data dir.
+    - choice: `$MDTATION_HOME` / `$XDG_DATA_HOME/mdtation` / `~/.local/share/mdtation`, `{ [file]: Comment[] }`, read-modify-write on save.
+    - alternative: sqlite (`bun:sqlite` is Bun-only, Node 22 has none without a native dep) or per-session files like hunk.
+    - why: zero deps, one file to inspect or `--clear`, cwd-independent, no `.mdtation/` folder next to every markdown file.
+    - verdict: ?

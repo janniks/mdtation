@@ -1,11 +1,9 @@
 /**
- * Glue between the cursor line, the CommentStore and the on-disk file. Pure
- * except for the path helper; the OpenTUI shell owns the I/O calls.
+ * Glue between the cursor line and the CommentStore. Pure; `store.ts` owns the I/O.
  */
 import type { Anchor, Comment, CommentStore } from "./comment.ts";
 import type { Document } from "./document.ts";
 import { commentLines } from "./nav.ts";
-import { basename, dirname, join } from "node:path";
 
 /** Heading anchor only when `line` IS a heading row; any other line anchors by number. */
 export function anchorFor(doc: Document, line: number): Anchor {
@@ -20,9 +18,4 @@ export function create(doc: Document, line: number, text: string, now = Date.now
 /** Lines that should carry a gutter marker. */
 export function markers(store: CommentStore, doc: Document): number[] {
   return [...commentLines(store, doc)];
-}
-
-/** `<dir>/.mdtation/<name>.comments.json` — one store per markdown file. */
-export function storePath(file: string): string {
-  return join(dirname(file), ".mdtation", `${basename(file)}.comments.json`);
 }

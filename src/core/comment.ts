@@ -9,8 +9,6 @@
  */
 import { findHeading } from "./document.ts";
 import type { Document } from "./document.ts";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname } from "node:path";
 
 export type Anchor =
   | { readonly kind: "heading"; readonly slug: readonly string[] }
@@ -58,31 +56,6 @@ export class CommentStore {
     const store = new CommentStore();
     for (const c of data) store.add(c);
     return store;
-  }
-  /** Load a CommentStore from a JSON file at path. Missing or malformed
-   * file yields an empty store. */
-  static async load(path: string): Promise<CommentStore> {
-    let raw: string;
-    try {
-      raw = await readFile(path, "utf-8");
-    } catch {
-      return new CommentStore();
-    }
-    let data: unknown;
-    try {
-      data = JSON.parse(raw);
-    } catch {
-      return new CommentStore();
-    }
-    if (!Array.isArray(data)) {
-      return new CommentStore();
-    }
-    return CommentStore.fromJSON(data as readonly Comment[]);
-  }
-  /** Write this store to a JSON file at path. Creates parent dirs. */
-  async save(path: string): Promise<void> {
-    await mkdir(dirname(path), { recursive: true });
-    await writeFile(path, JSON.stringify(this.toJSON(), null, 2), "utf-8");
   }
 }
 
