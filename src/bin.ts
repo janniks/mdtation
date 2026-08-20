@@ -45,7 +45,7 @@ runMain(
       // Fullscreen TUI via OpenTUI. The native core only loads under Bun; on
       // Node it rejects and we fall back to the stdout render.
       try {
-        await runTui(doc);
+        await runTui(doc, file);
       } catch (e) {
         const why = e instanceof Error ? e.message : String(e ?? "renderer unavailable");
         console.error(

@@ -13,6 +13,13 @@ import type { CliRenderer, KeyEvent, MouseEvent } from "@opentui/core";
 import { styled } from "./styled.ts";
 import type { Overlay } from "./overlay.ts";
 import { Crumb, Dropdown, MenuBar, StatusBar } from "./chrome.ts";
+import { Help } from "./help.ts";
+import { Palette } from "./palette.ts";
+import { Modal } from "./modal.ts";
+import { copy } from "./clipboard.ts";
+import { CommentStore, copyFormat } from "../core/comment.ts";
+import { create, markers, storePath } from "../core/comments.ts";
+import { nextComment, prevComment } from "../core/nav.ts";
 import type { Document } from "../core/document.ts";
 import { crumb } from "../core/crumb.ts";
 import { menus, specs, step } from "../core/menu.ts";
@@ -28,6 +35,8 @@ const FOOTER = 1;
 export class TuiShell {
   readonly renderer: CliRenderer;
   readonly doc: Document;
+  readonly store: CommentStore;
+  private readonly file: string;
   overlay: Overlay | null = null;
   private readonly menu = menus(COMMANDS);
   private readonly spec = specs(this.menu);
@@ -39,9 +48,11 @@ export class TuiShell {
   /** Index of the open menu, or null. */
   private cur = -1;
 
-  constructor(renderer: CliRenderer, doc: Document, file = "") {
+  constructor(renderer: CliRenderer, doc: Document, file = "", store = new CommentStore()) {
     this.renderer = renderer;
     this.doc = doc;
+    this.file = file;
+    this.store = store;
     this.view = clampViewport(this.fit(), doc.lines.length);
     this.bar = new MenuBar(renderer, this.spec, file, {
       hover: (i) => this.cur >= 0 && this.cur !== i && this.menuOpen(i),
@@ -145,20 +156,78 @@ export class TuiShell {
     this.draw();
   }
 
-  draw(): void {
+  draw(mode = "VIEW"): void {
+    const marks = markers(this.store, this.doc);
     this.crumb.text = crumb(this.doc, this.view.cursor);
-    this.text.content = styled(renderFrame(this.doc, this.view, { color: true }).join("\n"));
-    this.status.update(statusBar(this.doc, this.view), "VIEW");
+    this.text.content = styled(
+      renderFrame(this.doc, this.view, { color: true, markers: marks }).join("\n"),
+    );
+    this.status.update(statusBar(this.doc, this.view, { markers: marks }), mode);
     this.renderer.requestRender();
   }
 
-  /** Run a command by id. Overlay openers are wired here by the orchestrator. */
+  /** Open the comment modal for the cursor line; ↵ adds + persists the comment. */
+  private comment(): void {
+    const line = this.view.cursor;
+    this.open(
+      new Modal(this.renderer, {
+        title: "Comment",
+        quote: this.doc.lines[line] ?? "",
+        submit: (text) => {
+          this.store.add(create(this.doc, line, text));
+          if (this.file) {
+            void this.store.save(storePath(this.file));
+          }
+          this.close();
+          this.draw("SAVED");
+        },
+        close: () => this.close(),
+      }),
+    );
+  }
+
+  /** Copy the structured reference of the comment under the cursor (OSC-52 + file). */
+  private copy(): void {
+    const c = this.store
+      .all()
+      .find((x) => this.store.resolve(x.anchor, this.doc)?.startLine === this.view.cursor);
+    if (!c) {
+      this.draw("NO COMMENT HERE");
+      return;
+    }
+    copy(this.file || "mdtation.md", copyFormat(c, this.doc));
+    this.draw("COPIED");
+  }
+
+  /** Run a command by id. */
   private run(id: CommandId): void {
+    const total = this.doc.lines.length;
     switch (id) {
       case "help":
+        this.open(new Help(this.renderer, () => this.close()));
+        return;
       case "palette":
+        this.open(
+          new Palette(
+            this.renderer,
+            (x) => this.run(x as CommandId),
+            () => this.close(),
+          ),
+        );
+        return;
       case "comment":
+        this.comment();
+        return;
       case "copy":
+        this.copy();
+        return;
+      case "nextComment":
+        this.view = nextComment(this.view, total, this.store, this.doc);
+        this.draw();
+        return;
+      case "prevComment":
+        this.view = prevComment(this.view, total, this.store, this.doc);
+        this.draw();
         return;
     }
     const action = reduceCommand(id, this.view, this.doc.lines.length);
@@ -180,6 +249,7 @@ export class TuiShell {
     }
     const id = matchKey(toChord(e))?.id as CommandId | undefined;
     if (id) {
+      e.preventDefault(); // keep the opening key out of an overlay's input
       this.run(id);
     }
   };
@@ -200,5 +270,6 @@ export class TuiShell {
 
 /** Mount the fullscreen TUI for `doc`. `file` is shown in the menu bar. The shell runs until the user quits. */
 export async function runTui(doc: Document, file = ""): Promise<TuiShell> {
-  return new TuiShell(await createCliRenderer({ useMouse: true }), doc, file);
+  const store = file ? await CommentStore.load(storePath(file)) : new CommentStore();
+  return new TuiShell(await createCliRenderer({ useMouse: true }), doc, file, store);
 }

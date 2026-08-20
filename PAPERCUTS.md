@@ -68,3 +68,9 @@ Append-only detours / surprises that cost more than one attempt.
   `herdr pane send-text <pane> "$(printf '\x1b[<65;10;5M')"` (65 wheel-down, 64
   wheel-up; click = `\x1b[<0;X;YM` + `\x1b[<0;X;Ym`, 1-based). Bun scripts that
   import `@opentui/core` must live inside the repo (module resolution), not in /tmp.
+- 2026-08-20 — OpenTUI key routing with a focused `InputRenderable`: global `keypress`
+  listeners fire BEFORE the focused renderable, so the key that opens an overlay
+  (`c`, `/`) lands in its input unless the shell calls `e.preventDefault()` on the
+  dispatched key. While an overlay is open do NOT preventDefault on keys it declines,
+  or typing starves. `renderer.root.remove(node)` takes the child, not an id — an id
+  throws silently inside OpenTUI and wedges the key loop.

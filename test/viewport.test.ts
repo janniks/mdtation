@@ -105,12 +105,12 @@ describe("viewport", () => {
 });
 
 test("pan drags the cursor along the window", () => {
-  const vp = createViewport(0, 0, 80, 10);
-  const down = pan(vp, 3, 100);
+  const v = createViewport(0, 0, 80, 10);
+  const down = pan(v, 3, 100);
   assert.deepEqual([down.offset, down.cursor], [3, 3]);
-  const up = pan({ ...vp, offset: 50, cursor: 59 }, -3, 100);
+  const up = pan({ ...v, offset: 50, cursor: 59 }, -3, 100);
   assert.deepEqual([up.offset, up.cursor], [47, 56]);
-  const end = pan({ ...vp, offset: 85, cursor: 85 }, 10, 100);
+  const end = pan({ ...v, offset: 85, cursor: 85 }, 10, 100);
   assert.deepEqual([end.offset, end.cursor], [90, 90]);
-  assert.deepEqual(pan(vp, 5, 0), createViewport(0, 0, 80, 0));
+  assert.deepEqual(pan(v, 5, 0), createViewport(0, 0, 80, 0));
 });
