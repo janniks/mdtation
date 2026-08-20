@@ -10,6 +10,7 @@
  */
 import { createCliRenderer, TextRenderable } from "@opentui/core";
 import type { CliRenderer, KeyEvent, MouseEvent } from "@opentui/core";
+import { basename } from "node:path";
 import { styled } from "./styled.ts";
 import type { Overlay } from "./overlay.ts";
 import { Crumb, Dropdown, MenuBar, StatusBar } from "./chrome.ts";
@@ -54,7 +55,7 @@ export class TuiShell {
     this.file = file;
     this.store = store;
     this.view = clampViewport(this.fit(), doc.lines.length);
-    this.bar = new MenuBar(renderer, this.spec, file, {
+    this.bar = new MenuBar(renderer, this.spec, basename(file), {
       hover: (i) => this.cur >= 0 && this.cur !== i && this.menuOpen(i),
       toggle: (i) => (this.cur === i ? this.close() : this.menuOpen(i)),
     });
