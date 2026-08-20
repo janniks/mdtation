@@ -4,15 +4,7 @@
  * Unknown languages pass through unchanged (plain). No external deps; this is
  * intentionally small (a highlighter lib / shiki is a later phase).
  */
-const SGR = {
-  reset: "\x1b[0m",
-  dim: "\x1b[2m",
-  cyan: "\x1b[36m",
-  green: "\x1b[32m",
-  magenta: "\x1b[35m",
-  yellow: "\x1b[33m",
-  gray: "\x1b[90m",
-} as const;
+import { SGR } from "./sgr.ts";
 
 /** Languages that share a JS-like token set. */
 const JS_LANGS = new Set([

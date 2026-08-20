@@ -49,8 +49,8 @@ export function layout(rows: readonly string[]): string[] {
   return grid.map((row) => {
     const parts: string[] = [];
     for (let c = 0; c < ncol; c++) {
-      const cell = row[c] ?? "";
-      parts.push(cell + " ".repeat(Math.max(0, widths[c]! - displayWidth(cell))));
+      const text = row[c] ?? "";
+      parts.push(text + " ".repeat(Math.max(0, widths[c]! - displayWidth(text))));
     }
     return `| ${parts.join(" | ")} |`;
   });

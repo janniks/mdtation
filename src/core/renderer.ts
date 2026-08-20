@@ -12,6 +12,7 @@
 import type { Document, Heading } from "./document.ts";
 import { end as fence } from "./front.ts";
 import type { Viewport } from "./viewport.ts";
+import { paint, SGR } from "./sgr.ts";
 import { highlight } from "./syntax.ts";
 import { isRow, isSep, layout } from "./table.ts";
 import { colWidth, displayWidth } from "./unicode.ts";
@@ -56,25 +57,6 @@ export const CHECKS = [
 /** Thin rule drawn for thematic breaks and (in hide-markup mode) fence rows. */
 const RULE = "\u2500".repeat(20);
 
-/** ANSI SGR escapes. Only emitted when color is requested. */
-const SGR = {
-  reset: "\x1b[0m",
-  bold: "\x1b[1m",
-  dim: "\x1b[2m",
-  italic: "\x1b[3m",
-  strike: "\x1b[9m",
-  underline: "\x1b[4m",
-  black: "\x1b[30m",
-  bgYellow: "\x1b[43m",
-  green: "\x1b[32m",
-  yellow: "\x1b[33m",
-  red: "\x1b[31m",
-  cyan: "\x1b[36m",
-  blue: "\x1b[34m",
-  magenta: "\x1b[35m",
-  gray: "\x1b[90m",
-} as const;
-
 /** Heading level (1-6) -> accent color. */
 const HEADING_COLOR: Readonly<Record<number, string>> = {
   1: SGR.red,
@@ -102,20 +84,19 @@ function styleInline(text: string, opts: RenderOptions): string {
   if (!emphasis && markup) {
     return text;
   }
-  const paint = (sgr: string, inner: string) => (emphasis ? `${sgr}${inner}${SGR.reset}` : inner);
   // Links first: later rules emit `\x1b[` escapes that would match the link's `[`.
   return text
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, t: string, u: string) => {
-      const label = paint(SGR.underline + SGR.blue, t);
-      return markup ? `${label} ${paint(SGR.dim, `(${u})`)}` : label;
+      const label = paint(emphasis, SGR.underline + SGR.blue, t);
+      return markup ? `${label} ${paint(emphasis, SGR.dim, `(${u})`)}` : label;
     })
     .replace(/\*\*(.+?)\*\*|__(.+?)__/g, (_, a: string, b: string) =>
-      paint(SGR.bold + SGR.yellow, a ?? b),
+      paint(emphasis, SGR.bold + SGR.yellow, a ?? b),
     )
-    .replace(/`([^`]+)`/g, (_, p: string) => paint(SGR.gray, p))
-    .replace(/~~(.+?)~~/g, (_, p: string) => paint(SGR.strike, p))
+    .replace(/`([^`]+)`/g, (_, p: string) => paint(emphasis, SGR.gray, p))
+    .replace(/~~(.+?)~~/g, (_, p: string) => paint(emphasis, SGR.strike, p))
     .replace(/\*([^*]+?)\*|\b_([^_]+?)_\b/g, (_, a: string, b: string) =>
-      paint(SGR.italic + SGR.magenta, a ?? b),
+      paint(emphasis, SGR.italic + SGR.magenta, a ?? b),
     );
 }
 
@@ -125,14 +106,15 @@ function styleList(raw: string, opts: RenderOptions): string | undefined {
   if (!m) {
     return undefined;
   }
-  const mark = opts.color ? `${SGR.cyan}${m[1]}${m[2]}${SGR.reset}` : `${m[1]}${m[2]}`;
+  const color = opts.color === true;
+  const mark = paint(color, SGR.cyan, `${m[1]}${m[2]}`);
   const task = m[3]!.match(/^\[( |x|X)\] (.*)$/);
   if (!task) {
     return `${mark} ${styleInline(m[3]!, opts)}`;
   }
   const done = task[1] !== " ";
   const glyph = CHECKS[opts.check ?? 0]![done ? 1 : 0];
-  const box = opts.color ? `${done ? SGR.green : SGR.dim}${glyph}${SGR.reset}` : glyph;
+  const box = paint(color, done ? SGR.green : SGR.dim, glyph);
   return `${mark} ${box} ${styleInline(task[2]!, opts)}`;
 }
 
@@ -191,8 +173,7 @@ function gutterFor(
   if (opts.color !== true || (!cursor && n === 0)) {
     return `${g} `;
   }
-  const sgr = n > 0 ? SGR.bgYellow + SGR.black : SGR.green;
-  return `${sgr}${g}${SGR.reset} `;
+  return `${paint(true, n > 0 ? SGR.bgYellow + SGR.black : SGR.green, g)} `;
 }
 
 function bodyFor(
@@ -203,25 +184,24 @@ function bodyFor(
   cols: number,
 ): string {
   const color = opts.color === true;
-  const paint = (sgr: string, s: string) => (color ? `${sgr}${s}${SGR.reset}` : s);
   // Frontmatter: the closing fence is a full-width rule (the opener gets no row, see `hidden`).
   if (line === fence(doc.lines)) {
-    return paint(SGR.dim, "\u2500".repeat(cols));
+    return paint(color, SGR.dim, "\u2500".repeat(cols));
   }
   const heading = headingAt(doc, line);
   if (heading) {
     const text = opts.hashes !== false ? raw : raw.replace(/^#+\s*/, "");
-    return paint(SGR.bold + (HEADING_COLOR[heading.level] ?? SGR.gray), text);
+    return paint(color, SGR.bold + (HEADING_COLOR[heading.level] ?? SGR.gray), text);
   }
   const block = codeBlockAt(doc, line);
   if (block) {
     if (line === block.startLine || line === block.endLine) {
-      return paint(SGR.dim, opts.fences !== false ? raw : RULE);
+      return paint(color, SGR.dim, opts.fences !== false ? raw : RULE);
     }
     return color && opts.syntax !== false ? highlight(raw, block.lang ?? null) : raw;
   }
   if (isRule(raw)) {
-    return paint(SGR.dim, RULE);
+    return paint(color, SGR.dim, RULE);
   }
   return styleList(raw, opts) ?? styleInline(raw, opts);
 }
@@ -230,18 +210,17 @@ function bodyFor(
  * hidden the separator becomes a rule and edge pipes go, inner ones turn `│`. */
 function styleTable(row: string, opts: RenderOptions): string {
   const color = opts.color === true;
-  const paint = (sgr: string, s: string) => (color ? `${sgr}${s}${SGR.reset}` : s);
   if (opts.pipes !== false) {
     return !color
       ? row
       : isSep(row)
-        ? paint(SGR.dim, row)
-        : row.replace(/\|/g, paint(SGR.gray, "|"));
+        ? paint(color, SGR.dim, row)
+        : row.replace(/\|/g, paint(color, SGR.gray, "|"));
   }
   if (isSep(row)) {
-    return paint(SGR.dim, "\u2500".repeat(displayWidth(row) - 4));
+    return paint(color, SGR.dim, "\u2500".repeat(displayWidth(row) - 4));
   }
-  return row.slice(2, -2).replace(/ \| /g, ` ${paint(SGR.dim, "\u2502")} `);
+  return row.slice(2, -2).replace(/ \| /g, ` ${paint(color, SGR.dim, "\u2502")} `);
 }
 
 /** Detect runs of table rows (whose 2nd line is a separator) and align them.
