@@ -74,3 +74,4 @@ Append-only detours / surprises that cost more than one attempt.
   dispatched key. While an overlay is open do NOT preventDefault on keys it declines,
   or typing starves. `renderer.root.remove(node)` takes the child, not an id — an id
   throws silently inside OpenTUI and wedges the key loop.
+- 2026-08-20: `process.stdout.write` of OSC-52 inside the running OpenTUI shell never reaches the terminal (the renderer owns stdout); use `renderer.copyToClipboardOSC52(text)`. Drag-selection "worked" only because OpenTUI copies natively.
