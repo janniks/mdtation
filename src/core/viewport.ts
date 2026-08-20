@@ -86,6 +86,13 @@ export function scroll(vp: Viewport, delta: number, total: number): Viewport {
   return clampBounds({ ...vp, offset: vp.offset + delta }, total);
 }
 
+/** Pan the window by `delta` rows (wheel); the cursor is dragged along so it stays visible. */
+export function pan(vp: Viewport, delta: number, total: number): Viewport {
+  const b = scroll(vp, delta, total);
+  const last = Math.min(b.offset + b.height - 1, total - 1);
+  return { ...b, cursor: Math.max(b.offset, Math.min(b.cursor, last)) };
+}
+
 /** Move the cursor by `delta` rows and scroll it on-screen. */
 export function moveCursor(vp: Viewport, delta: number, total: number): Viewport {
   return withCursorVisible({ ...vp, cursor: vp.cursor + delta }, total);
