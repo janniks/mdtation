@@ -31,8 +31,10 @@ describe("commands", () => {
       const cases: [string, string][] = [
         ["j", "cursorDown"],
         ["k", "cursorUp"],
-        ["ctrl+f", "pageDown"],
-        ["ctrl+b", "pageUp"],
+        ["ctrl+d", "pageDown"],
+        ["pagedown", "pageDown"],
+        ["ctrl+u", "pageUp"],
+        ["pageup", "pageUp"],
         ["g", "top"],
         ["shift+g", "bottom"],
         ["q", "quit"],
@@ -42,7 +44,7 @@ describe("commands", () => {
         ["space", "toggle"],
         ["/", "palette"],
         ["c", "comment"],
-        ["y", "copy"],
+        ["shift+c", "copy"],
         ["[", "prevComment"],
         ["]", "nextComment"],
         ["?", "help"],
@@ -54,6 +56,13 @@ describe("commands", () => {
 
     test("unknown chord yields nothing", () => {
       assert.equal(matchKey("z"), undefined);
+      assert.equal(matchKey("y"), undefined);
+    });
+
+    test("view toggles have no chord", () => {
+      for (const c of COMMANDS) {
+        if (c.category === "View") assert.deepEqual(c.keys, []);
+      }
     });
 
     test("first of two commands sharing a chord wins", () => {
@@ -87,6 +96,9 @@ describe("commands", () => {
         "help",
         "save",
         "toggle",
+        "viewColor",
+        "viewEmphasis",
+        "viewSyntax",
       ]) {
         const a = reduceCommand(id, V(), TOTAL);
         assert.equal(a.quit, undefined);
@@ -115,7 +127,7 @@ describe("commands", () => {
 
   describe("menuBar", () => {
     test("lists categories in first-seen order", () => {
-      assert.equal(menuBar(), "File   Navigate   Edit   Notes   Tools   Help");
+      assert.equal(menuBar(), "File   View   Navigate   Edit   Notes   Tools   Help");
     });
 
     test("empty catalog yields empty menu", () => {

@@ -10,6 +10,8 @@ export interface Entry {
   readonly id: string;
   readonly title: string;
   readonly hint: string;
+  /** Set for toggles: rendered as `[x]` / `[ ]` before the title. */
+  readonly checked?: boolean;
 }
 
 export interface Menu {
@@ -36,7 +38,7 @@ const NAMES: Readonly<Record<string, string>> = {
   backspace: "⌫",
 };
 
-/** `ctrl+f` -> `^F`, `shift+g` -> `G`, `down` -> `↓`, `/` -> `/`. */
+/** `ctrl+d` -> `^D`, `shift+g` -> `G`, `down` -> `↓`, `/` -> `/`. */
 export function hint(chord: string | undefined): string {
   if (!chord) {
     return "";
@@ -50,11 +52,19 @@ export function hint(chord: string | undefined): string {
   return out;
 }
 
-/** Group commands by category, keeping declaration order. */
-export function menus(commands: readonly Command[]): Menu[] {
+/** Group commands by category, keeping declaration order. `state(id)` returning
+ * a boolean marks that entry checkable. */
+export function menus(
+  commands: readonly Command[],
+  state: (id: string) => boolean | undefined = () => undefined,
+): Menu[] {
   const out: Menu[] = [];
   for (const c of commands) {
-    const entry = { id: c.id, title: c.title, hint: hint(c.keys[0]) };
+    const entry: Entry = { id: c.id, title: c.title, hint: hint(c.keys[0]) };
+    const checked = state(c.id);
+    if (checked !== undefined) {
+      (entry as { checked?: boolean }).checked = checked;
+    }
     const menu = out.find((m) => m.label === c.category);
     if (menu) {
       (menu.entries as Entry[]).push(entry);
@@ -80,9 +90,17 @@ export function specs(all: readonly Menu[]): Spec[] {
   return out;
 }
 
+/** `[x] ` / `[ ] ` for checkable entries, else two spaces. */
+export function prefix(e: Entry): string {
+  return e.checked === undefined ? "  " : e.checked ? "[x] " : "[ ] ";
+}
+
 /** Inner width a dropdown needs: `  title  hint ` with the hint right-aligned. */
 export function width(menu: Menu): number {
-  return Math.max(20, ...menu.entries.map((e) => displayWidth(e.title) + displayWidth(e.hint) + 5));
+  return Math.max(
+    20,
+    ...menu.entries.map((e) => displayWidth(prefix(e) + e.title) + displayWidth(e.hint) + 3),
+  );
 }
 
 /** Wrap-around index stepping over `n` items. */

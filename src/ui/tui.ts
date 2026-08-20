@@ -26,6 +26,7 @@ import { parseDocument, type Document } from "../core/document.ts";
 import { box, toggle } from "../core/edit.ts";
 import { displayWidth } from "../core/unicode.ts";
 import { crumb } from "../core/crumb.ts";
+import { loadConfig, type View } from "../core/config.ts";
 import { menus, specs, step } from "../core/menu.ts";
 import { GUTTER_WIDTH, render as renderFrame, statusBar } from "../core/renderer.ts";
 import { clampViewport, createViewport, jumpToLine, pan, type Viewport } from "../core/viewport.ts";
@@ -35,6 +36,12 @@ import { COMMANDS, matchKey, reduceCommand, toChord, type CommandId } from "../c
 const HEADER = 2;
 /** Rows of chrome below the body (status bar). */
 const FOOTER = 1;
+/** View-menu command -> the flag it flips. */
+const VIEW: Partial<Record<CommandId, keyof View>> = {
+  viewColor: "color",
+  viewEmphasis: "emphasis",
+  viewSyntax: "syntax",
+};
 
 export class TuiShell {
   readonly renderer: CliRenderer;
@@ -45,8 +52,9 @@ export class TuiShell {
   readonly store: CommentStore;
   private readonly file: string;
   overlay: Overlay | null = null;
-  private readonly menu = menus(COMMANDS);
-  private readonly spec = specs(this.menu);
+  private readonly spec = specs(menus(COMMANDS));
+  /** View toggles, seeded from `mdtation.json`; flips are session-only. */
+  private flags: View = loadConfig(process.cwd()).view;
   private readonly bar: MenuBar;
   private readonly crumb: Crumb;
   private readonly text: TextRenderable;
@@ -124,15 +132,23 @@ export class TuiShell {
     this.renderer.requestRender();
   }
 
+  /** Live menu model: View entries carry their current check state. */
+  private menus() {
+    return menus(COMMANDS, (id) => {
+      const k = VIEW[id as CommandId];
+      return k && this.flags[k];
+    });
+  }
+
   private menuOpen(i: number): void {
     this.open(
-      new Dropdown(this.renderer, this.menu[i]!, this.spec[i]!, {
+      new Dropdown(this.renderer, this.menus()[i]!, this.spec[i]!, {
         run: (id) => {
           this.close();
           this.run(id as CommandId);
         },
         close: () => this.close(),
-        switch: (d) => this.menuOpen(step(i, d, this.menu.length)),
+        switch: (d) => this.menuOpen(step(i, d, this.spec.length)),
       }),
     );
     this.cur = i;
@@ -195,7 +211,7 @@ export class TuiShell {
     this.bar.label = this.dirty ? `${basename(this.file)} ●` : basename(this.file);
     this.crumb.text = crumb(this.doc, this.view.cursor);
     this.text.content = styled(
-      renderFrame(this.doc, this.view, { color: true, markers: marks }).join("\n"),
+      renderFrame(this.doc, this.view, { ...this.flags, markers: marks }).join("\n"),
     );
     this.status.update(statusBar(this.doc, this.view, { markers: marks }), mode);
     this.renderer.requestRender();
@@ -262,6 +278,14 @@ export class TuiShell {
       case "save":
         this.save();
         return;
+      case "viewColor":
+      case "viewEmphasis":
+      case "viewSyntax": {
+        const k = VIEW[id]!;
+        this.flags = { ...this.flags, [k]: !this.flags[k] };
+        this.draw();
+        return;
+      }
       case "quit":
         if (this.dirty && !this.guard) {
           this.guard = true;

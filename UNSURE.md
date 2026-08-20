@@ -126,3 +126,16 @@ Unchecked entries are swept on occasional cleanup passes.
     - alternative: sqlite, but `bun:sqlite` vs `node:sqlite` need two adapters and Node 22 lacks a stable one.
     - why: one file, zero deps, and the `CommentStore` API stays the same if the backend is swapped later.
     - verdict: ?
+
+## 2026-08-20 — Phase 8e view menu
+
+- [ ] View toggles are session-only; `mdtation.json` `view: { color, emphasis, syntax }` seeds them but is never written.
+    - choice: `loadConfig` gains `view` (lenient, each flag defaults true); flipping a View entry only changes shell state.
+    - alternative: `saveConfig(cwd, cfg)` writing the toggles back on every flip.
+    - why: read-only config stays one function; persisting per-cwd UI state is a decision for later.
+    - verdict: ?
+- [ ] View toggles have no key chords (menu bar, palette, help only).
+    - choice: `keys: []` is legal everywhere; hint renders `""`.
+    - alternative: bind e.g. `alt+c` / `alt+e` / `alt+s`.
+    - why: keeps the key surface small; toggles are rare.
+    - verdict: ?

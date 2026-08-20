@@ -6,7 +6,7 @@
 import { BoxRenderable, TextRenderable } from "@opentui/core";
 import type { CliRenderer, KeyEvent } from "@opentui/core";
 import type { Overlay } from "./overlay.ts";
-import { step, type Menu, type Spec, width } from "../core/menu.ts";
+import { prefix, step, type Menu, type Spec, width } from "../core/menu.ts";
 import { displayWidth } from "../core/unicode.ts";
 
 export const THEME = {
@@ -130,7 +130,7 @@ export class Dropdown implements Overlay {
       });
       row.add(
         new TextRenderable(renderer, {
-          content: pad(`  ${e.title}`, inner - displayWidth(e.hint) - 1) + e.hint,
+          content: pad(prefix(e) + e.title, inner - displayWidth(e.hint) - 1) + e.hint,
           fg: THEME.text,
           selectable: false,
           wrapMode: "none",

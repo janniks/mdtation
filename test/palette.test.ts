@@ -5,11 +5,11 @@ import { filter, hint, rows } from "../src/core/palette.ts";
 
 const CAT = [
   { id: "quit", title: "Quit", category: "File", keys: ["q"] },
-  { id: "pageDown", title: "Page Down", category: "Navigate", keys: ["ctrl+f"] },
+  { id: "pageDown", title: "Page Down", category: "Navigate", keys: ["ctrl+d"] },
   { id: "top", title: "Top", category: "Navigate", keys: ["g"] },
   { id: "bottom", title: "Bottom", category: "Navigate", keys: ["shift+g"] },
   { id: "comment", title: "New Comment", category: "Notes", keys: ["c"] },
-  { id: "copy", title: "Copy Reference", category: "Notes", keys: ["y"] },
+  { id: "copy", title: "Copy Reference", category: "Notes", keys: ["shift+c"] },
 ];
 const ids = (q: string) => filter(CAT, q).map((c) => c.id);
 
@@ -34,7 +34,7 @@ describe("palette", () => {
   });
 
   test("hint labels the first chord", () => {
-    assert.equal(hint(["ctrl+f"]), "^F");
+    assert.equal(hint(["ctrl+d"]), "^D");
     assert.equal(hint(["shift+g"]), "G");
     assert.equal(hint(["q", "ctrl+c"]), "q");
     assert.equal(hint(["down"]), "down");

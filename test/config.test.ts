@@ -14,7 +14,7 @@ describe("loadConfig", () => {
     const dir = await mkdtemp(join(tmpdir(), "mdt-cfg-"));
     try {
       await writeConfig(dir, { theme: "light", gutter: false });
-      deepStrictEqual(loadConfig(dir), { theme: "light", gutter: false });
+      deepStrictEqual(loadConfig(dir), { ...defaultConfig, theme: "light", gutter: false });
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
@@ -54,6 +54,16 @@ describe("loadConfig", () => {
     try {
       await writeConfig(dir, { theme: "purple" });
       deepStrictEqual(loadConfig(dir), defaultConfig);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("reads view flags, defaulting each missing or non-boolean one to true", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "mdt-cfg-"));
+    try {
+      await writeConfig(dir, { view: { emphasis: false, syntax: "no" } });
+      deepStrictEqual(loadConfig(dir).view, { color: true, emphasis: false, syntax: true });
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
