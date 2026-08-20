@@ -26,6 +26,8 @@ export interface RenderOptions {
   readonly syntax?: boolean;
   /** One-column cursor glyph. Default `>`. */
   readonly caret?: string;
+  /** One-column glyph for a row with one comment. Default `✦`. */
+  readonly mark?: string;
   /** Show markdown markup (inline marks, heading hashes, fence lines). Default true. */
   readonly markup?: boolean;
 }
@@ -143,7 +145,8 @@ function wrapStyled(text: string, width: number): string[] {
   return rows;
 }
 
-/** Gutter cell: the caret on the cursor line, else `★` for one comment or the count. */
+/** Gutter cell: caret on the cursor line, else the mark for one comment or the count.
+ * A commented row keeps its background even under the caret. */
 function gutterFor(
   line: number,
   vp: Viewport,
@@ -151,17 +154,20 @@ function gutterFor(
   counts: ReadonlyMap<number, number>,
   opts: RenderOptions,
 ): string {
-  const color = opts.color === true;
-  if (line === vp.cursor && cursorOn) {
-    const g = `${opts.caret ?? ">"} `;
-    return color ? `${SGR.green}${g}${SGR.reset}` : g;
-  }
+  const cursor = line === vp.cursor && cursorOn;
   const n = counts.get(line) ?? 0;
-  if (n === 0) {
-    return "  ";
+  const g = cursor
+    ? (opts.caret ?? ">")
+    : n === 0
+      ? " "
+      : n === 1
+        ? (opts.mark ?? "✦")
+        : String(Math.min(n, 9));
+  if (opts.color !== true || (!cursor && n === 0)) {
+    return `${g} `;
   }
-  const g = n === 1 ? "★" : String(Math.min(n, 9));
-  return color ? `${SGR.bgYellow}${SGR.black}${g}${SGR.reset} ` : `${g} `;
+  const sgr = n > 0 ? SGR.bgYellow + SGR.black : SGR.green;
+  return `${sgr}${g}${SGR.reset} `;
 }
 
 function bodyFor(

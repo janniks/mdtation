@@ -131,8 +131,8 @@ test("margin keeps the cursor away from the edges and pads the end", () => {
 });
 
 test("first: lines before it are unreachable and never shown", () => {
-  const vp = { ...createViewport(0, 0, 80, 5), first: 3 };
-  const c = clampViewport(vp, 20);
+  const v0 = { ...createViewport(0, 0, 80, 5), first: 3 };
+  const c = clampViewport(v0, 20);
   assert.equal(c.offset, 3);
   assert.equal(c.cursor, 3);
   assert.equal(moveCursor(c, -1, 20).cursor, 3);

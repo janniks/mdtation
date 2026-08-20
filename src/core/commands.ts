@@ -32,6 +32,7 @@ export const COMMANDS = [
   { id: "viewMarkup", title: "Hide markup", category: "View", keys: [], group: "Render" },
   { id: "viewFront", title: "Show frontmatter", category: "View", keys: [], group: "Render" },
   { id: "viewCaret", title: "Next caret glyph", category: "View", keys: [], group: "Gutter" },
+  { id: "viewMark", title: "Next comment glyph", category: "View", keys: [], group: "Gutter" },
   { id: "viewCrumb", title: "Show section crumb", category: "View", keys: [], group: "Section" },
   {
     id: "viewArchive",
@@ -77,6 +78,7 @@ export const HANDLERS: { readonly [K in CommandId]: CmdHandler } = {
   viewMarkup: () => ({}),
   viewFront: () => ({}),
   viewCaret: () => ({}),
+  viewMark: () => ({}),
   viewCrumb: () => ({}),
   viewArchive: () => ({}),
   editor: () => ({}),

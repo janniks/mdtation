@@ -61,7 +61,10 @@ export class Modal implements Overlay {
   key(e: KeyEvent): boolean {
     if (e.name === "escape") {
       this.opts.close();
-    } else if ((e.name === "return" || e.name === "enter") && !e.shift) {
+    } else if ((e.name === "return" || e.name === "enter") && e.shift) {
+      e.preventDefault();
+      this.input.insertText("\n");
+    } else if (e.name === "return" || e.name === "enter") {
       e.preventDefault();
       const text = this.input.plainText.trim();
       if (text) {

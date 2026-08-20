@@ -49,6 +49,8 @@ import { COMMANDS, matchKey, reduceCommand, toChord, type CommandId } from "../c
 const FOOTER = 1;
 /** Cursor glyphs cycled by `View › Next caret glyph`. */
 const CARETS = [">", "+", "▶", "›", "●"];
+/** Single-comment glyphs cycled by `View › Next comment glyph`. */
+const MARKS = ["✦", "●", "◆", "▌", "■", "•"];
 
 export class TuiShell {
   readonly renderer: CliRenderer;
@@ -65,6 +67,7 @@ export class TuiShell {
   /** Settings palette values (scroll margin, beta flags). */
   private prefs: Values = DEFAULTS;
   private glyph = 0;
+  private mark = 0;
   private readonly bar: MenuBar;
   private readonly crumb: Crumb;
   private readonly text: TextRenderable;
@@ -280,6 +283,7 @@ export class TuiShell {
         syntax: this.on.viewSyntax,
         markup: !this.on.viewMarkup,
         caret: CARETS[this.glyph],
+        mark: MARKS[this.mark],
         markers: marks,
       }).join("\n"),
     );
@@ -365,6 +369,10 @@ export class TuiShell {
         return;
       case "viewCaret":
         this.glyph = (this.glyph + 1) % CARETS.length;
+        this.draw();
+        return;
+      case "viewMark":
+        this.mark = (this.mark + 1) % MARKS.length;
         this.draw();
         return;
       case "toggle":
