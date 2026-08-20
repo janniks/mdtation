@@ -9,7 +9,7 @@ const CAT = [
   { id: "top", title: "Top", category: "Navigate", keys: ["g"] },
   { id: "bottom", title: "Bottom", category: "Navigate", keys: ["shift+g"] },
   { id: "comment", title: "New Comment", category: "Comments", keys: ["c"] },
-  { id: "copy", title: "Copy Reference", category: "Comments", keys: ["shift+c"] },
+  { id: "copy", title: "Copy comments to clipboard", category: "Comments", keys: ["shift+c"] },
 ];
 const ids = (q: string) => filter(CAT, q).map((c) => c.id);
 

@@ -47,7 +47,7 @@ export const COMMANDS = [
   { id: "bottom", title: "Bottom", category: "Navigate", keys: ["shift+g"] },
   { id: "toggle", title: "Toggle / Edit", category: "Edit", keys: ["x", "space"] },
   { id: "comment", title: "New Comment", category: "Comments", keys: ["c"] },
-  { id: "copy", title: "Copy Reference", category: "Comments", keys: ["shift+c"] },
+  { id: "copy", title: "Copy comments to clipboard", category: "Comments", keys: ["shift+c"] },
   { id: "editor", title: "Show in editor", category: "Comments", keys: [] },
   { id: "prevComment", title: "Previous Comment", category: "Comments", keys: ["["] },
   { id: "nextComment", title: "Next Comment", category: "Comments", keys: ["]"] },
