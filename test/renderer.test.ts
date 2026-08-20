@@ -74,16 +74,18 @@ test("gutter shows the comment count past one, and a custom caret", () => {
 const show = (src: string, opts = {}) =>
   render(parseDocument(src), createViewport(0, 99, 80, 99), opts);
 
+const hide = { hashes: false, marks: false, fences: false, pipes: false };
+
 describe("hide markup", () => {
   const rule = "─".repeat(20);
 
   test("strips inline marks, link urls and heading hashes", () => {
-    const out = show("## Hi\n**b** __b__ *i* _i_ ~~s~~ `c` [t](http://x)", { markup: false });
+    const out = show("## Hi\n**b** __b__ *i* _i_ ~~s~~ `c` [t](http://x)", { ...hide });
     assert.deepEqual(out, ["  Hi", "  b b i i s c t"]);
   });
 
   test("fence rows become plain rules", () => {
-    const out = show("```ts\nconst x = 1\n```", { markup: false });
+    const out = show("```ts\nconst x = 1\n```", { ...hide });
     assert.deepEqual(out, [`  ${rule}`, "  const x = 1", `  ${rule}`]);
   });
 
@@ -94,21 +96,18 @@ describe("hide markup", () => {
       `  ${"─".repeat(78)}`,
       `  ${rule}`,
     ]);
-    assert.equal(show("___", { markup: false })[0], `  ${rule}`);
+    assert.equal(show("___", { ...hide })[0], `  ${rule}`);
   });
 
   test("styling still applies to the stripped text", () => {
-    const out = show("**b** [t](u)", { markup: false, color: true });
+    const out = show("**b** [t](u)", { ...hide, color: true });
     assert.equal(out[0], "  \x1b[1m\x1b[33mb\x1b[0m \x1b[4m\x1b[34mt\x1b[0m");
   });
 
   test("wrapping measures the stripped text and re-opens styles per chunk", () => {
     const doc = parseDocument("**abcdef**");
-    assert.deepEqual(render(doc, createViewport(0, 0, 6, 9), { markup: false }), [
-      "> abcd",
-      "  ef",
-    ]);
-    const styled = render(doc, createViewport(0, 0, 6, 9), { markup: false, color: true });
+    assert.deepEqual(render(doc, createViewport(0, 0, 6, 9), { ...hide }), ["> abcd", "  ef"]);
+    const styled = render(doc, createViewport(0, 0, 6, 9), { ...hide, color: true });
     assert.deepEqual(styled, [
       "\x1b[32m>\x1b[0m \x1b[1m\x1b[33mabcd\x1b[0m",
       "  \x1b[1m\x1b[33mef\x1b[0m",
@@ -116,7 +115,7 @@ describe("hide markup", () => {
   });
 
   test("tables drop edge pipes, use │ between cells and a rule for the separator", () => {
-    const out = show("| a | bb |\n| - | - |\n| c | d |", { markup: false });
+    const out = show("| a | bb |\n| - | - |\n| c | d |", { ...hide });
     assert.deepEqual(out, ["  a │ bb", `  ${"─".repeat(6)}`, "  c │ d "]);
   });
 
@@ -128,7 +127,7 @@ describe("hide markup", () => {
       "  | ccc | d  |",
       "  | e   | f  |",
     ]);
-    assert.equal(show(src, { markup: false })[2], "  ccc │ d ");
+    assert.equal(show(src, { ...hide })[2], "  ccc │ d ");
   });
 });
 

@@ -31,6 +31,7 @@ import { cycle, DEFAULTS, rows as settings, type Values } from "../core/settings
 import { nextComment, prevComment } from "../core/nav.ts";
 import { parseDocument, type Document } from "../core/document.ts";
 import { box, toggle } from "../core/edit.ts";
+import { align, cell } from "../core/table.ts";
 import { displayWidth } from "../core/unicode.ts";
 import { crumb } from "../core/crumb.ts";
 import { loadConfig } from "../core/config.ts";
@@ -87,7 +88,10 @@ export class TuiShell {
       viewColor: cfg.color,
       viewEmphasis: cfg.emphasis,
       viewSyntax: cfg.syntax,
-      viewMarkup: false,
+      viewHashes: true,
+      viewMarks: true,
+      viewFences: true,
+      viewPipes: true,
       viewFront: false,
       viewCrumb: true,
       viewArchive: false,
@@ -216,6 +220,12 @@ export class TuiShell {
       this.toggle();
       return;
     }
+    // Clicking a header or separator cell cycles that column's alignment.
+    const t = cell(this.doc.lines, line, col);
+    if (t && (t.row === 0 || line === t.sep)) {
+      this.edit(align(this.doc.text, t.sep, t.col));
+      return;
+    }
     this.draw();
   }
 
@@ -283,7 +293,10 @@ export class TuiShell {
         color: this.on.viewColor,
         emphasis: this.on.viewEmphasis,
         syntax: this.on.viewSyntax,
-        markup: !this.on.viewMarkup,
+        hashes: this.on.viewHashes,
+        marks: this.on.viewMarks,
+        fences: this.on.viewFences,
+        pipes: this.on.viewPipes,
         caret: CARETS[this.glyph],
         mark: MARKS[this.mark],
         check: this.check,
@@ -388,16 +401,19 @@ export class TuiShell {
       case "save":
         this.save();
         return;
-      case "viewColor":
-      case "viewEmphasis":
-      case "viewSyntax":
-      case "viewMarkup":
       case "viewMouse":
         // Off: the terminal keeps the mouse, so its native select-to-copy works; `M` turns it back on.
         this.on.viewMouse = !this.on.viewMouse;
         this.renderer.useMouse = this.on.viewMouse;
         this.draw(this.on.viewMouse ? "MOUSE ON" : "MOUSE OFF · select freely · M to re-enable");
         return;
+      case "viewColor":
+      case "viewEmphasis":
+      case "viewSyntax":
+      case "viewHashes":
+      case "viewMarks":
+      case "viewFences":
+      case "viewPipes":
       case "viewFront":
       case "viewCrumb":
       case "viewArchive":

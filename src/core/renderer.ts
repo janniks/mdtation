@@ -30,8 +30,14 @@ export interface RenderOptions {
   readonly mark?: string;
   /** Index into `CHECKS`: how task boxes are drawn. Default 0 (`[ ]`/`[x]`). */
   readonly check?: number;
-  /** Show markdown markup (inline marks, heading hashes, fence lines). Default true. */
-  readonly markup?: boolean;
+  /** Show heading `#` marks. Default true. */
+  readonly hashes?: boolean;
+  /** Show inline marks (`**`, `_`, backticks, link urls). Default true. */
+  readonly marks?: boolean;
+  /** Show code fence rows as written (else a thin rule). Default true. */
+  readonly fences?: boolean;
+  /** Show table pipes and the separator row as written (else bars and a rule). Default true. */
+  readonly pipes?: boolean;
 }
 
 /** Width (in columns) of the gutter prepended to every rendered line. */
@@ -91,7 +97,7 @@ function codeBlockAt(doc: Document, line: number) {
  * Marks are dropped whenever the inner text gets styled or markup is hidden. */
 function styleInline(text: string, opts: RenderOptions): string {
   const emphasis = opts.color === true && opts.emphasis !== false;
-  const markup = opts.markup !== false;
+  const markup = opts.marks !== false;
   if (!emphasis && markup) {
     return text;
   }
@@ -196,7 +202,6 @@ function bodyFor(
   cols: number,
 ): string {
   const color = opts.color === true;
-  const markup = opts.markup !== false;
   const paint = (sgr: string, s: string) => (color ? `${sgr}${s}${SGR.reset}` : s);
   // Frontmatter: the opening fence stays blank, the closing one is a full-width rule.
   const close = fence(doc.lines);
@@ -208,13 +213,13 @@ function bodyFor(
   }
   const heading = headingAt(doc, line);
   if (heading) {
-    const text = markup ? raw : raw.replace(/^#+\s*/, "");
+    const text = opts.hashes !== false ? raw : raw.replace(/^#+\s*/, "");
     return paint(SGR.bold + (HEADING_COLOR[heading.level] ?? SGR.gray), text);
   }
   const block = codeBlockAt(doc, line);
   if (block) {
     if (line === block.startLine || line === block.endLine) {
-      return paint(SGR.dim, markup ? raw : RULE);
+      return paint(SGR.dim, opts.fences !== false ? raw : RULE);
     }
     return color && opts.syntax !== false ? highlight(raw, block.lang ?? null) : raw;
   }
@@ -272,7 +277,7 @@ export function tableLayout(rows: string[]): string[] {
 function styleTable(row: string, opts: RenderOptions): string {
   const color = opts.color === true;
   const paint = (sgr: string, s: string) => (color ? `${sgr}${s}${SGR.reset}` : s);
-  if (opts.markup !== false) {
+  if (opts.pipes !== false) {
     return !color
       ? row
       : isSepRow(row)
