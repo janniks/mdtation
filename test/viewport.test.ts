@@ -116,8 +116,7 @@ test("pan drags the cursor along the window", () => {
 });
 
 test("margin keeps the cursor away from the edges and pads the end", () => {
-  const vp = createViewport(0, 0, 80, 10, 3);
-  let v = vp;
+  let v = createViewport(0, 0, 80, 10, 3);
   for (let i = 0; i < 6; i++) v = moveCursor(v, 1, 100);
   assert.deepEqual([v.offset, v.cursor], [0, 6]);
   v = moveCursor(v, 1, 100);
