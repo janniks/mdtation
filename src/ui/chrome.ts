@@ -17,6 +17,7 @@ export const THEME = {
   text: "#d0d0d0",
   muted: "#8a8a8a",
   badge: "#5f87af",
+  warn: "#d7af5f",
 } as const;
 
 function pad(s: string, w: number): string {
@@ -28,6 +29,7 @@ export class MenuBar {
   private readonly boxes: BoxRenderable[] = [];
   private readonly labels: TextRenderable[] = [];
   private readonly file: TextRenderable;
+  private readonly state: TextRenderable;
 
   constructor(
     renderer: CliRenderer,
@@ -66,9 +68,17 @@ export class MenuBar {
     const right = new BoxRenderable(renderer, {
       flexGrow: 1,
       height: 1,
+      flexDirection: "row",
       justifyContent: "flex-end",
       backgroundColor: THEME.bar,
     });
+    this.state = new TextRenderable(renderer, {
+      content: "",
+      fg: THEME.warn,
+      selectable: false,
+      wrapMode: "none",
+    });
+    right.add(this.state);
     this.file = new TextRenderable(renderer, {
       content: ` ${file} `,
       fg: THEME.muted,
@@ -80,9 +90,9 @@ export class MenuBar {
     this.node.add(right);
   }
 
-  /** Replace the right-hand file label. */
-  set label(s: string) {
-    this.file.content = ` ${s} `;
+  /** Show or clear the edit state left of the file name. */
+  set dirty(on: boolean) {
+    this.state.content = on ? "(unsaved changes)" : "";
   }
 
   /** Highlight menu `i` (null clears). */

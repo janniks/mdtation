@@ -358,7 +358,7 @@ export class TuiShell {
 
   draw(mode = this.dirty ? "UNSAVED" : "VIEW"): void {
     const marks = markers(this.store, this.doc);
-    this.bar.label = this.dirty ? `${basename(this.file)} ●` : basename(this.file);
+    this.bar.dirty = this.dirty;
     this.crumb.node.visible = this.on.viewCrumb === true;
     this.crumb.text = crumb(this.doc, this.view.cursor, Number(this.prefs.crumb) || Infinity);
     this.text.content = styled(

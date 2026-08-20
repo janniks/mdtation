@@ -30,10 +30,13 @@ export interface Row {
   readonly items: { readonly title: string; readonly hint: string }[];
 }
 
-/** Help rows grouped by category, in catalog order. */
+/** Help rows grouped by category, in catalog order. Keyless commands (menu-only toggles) are left out. */
 export function rows(commands: readonly Command[]): Row[] {
   const out: Row[] = [];
   for (const c of commands) {
+    if (c.keys.length === 0) {
+      continue;
+    }
     let row = out.find((r) => r.category === c.category);
     if (!row) {
       row = { category: c.category, items: [] };

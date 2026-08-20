@@ -49,6 +49,10 @@ describe("palette", () => {
     );
     assert.deepEqual(r[0]?.items, [{ title: "Quit", hint: "q" }]);
     assert.deepEqual(r[1]?.items.at(-1), { title: "Bottom", hint: "G" });
-    assert.equal(rows(COMMANDS).flatMap((x) => x.items).length, COMMANDS.length);
+    assert.equal(
+      rows(COMMANDS).flatMap((x) => x.items).length,
+      COMMANDS.filter((c) => c.keys.length).length,
+    );
+    assert.ok(rows(COMMANDS).every((r) => r.items.every((i) => i.hint)));
   });
 });
