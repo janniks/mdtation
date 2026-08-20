@@ -30,6 +30,7 @@ export const COMMANDS = [
   { id: "viewEmphasis", title: "Color bold/italic", category: "View", keys: [], group: "Render" },
   { id: "viewSyntax", title: "Syntax highlight", category: "View", keys: [], group: "Render" },
   { id: "viewMarkup", title: "Hide markup", category: "View", keys: [], group: "Render" },
+  { id: "viewFront", title: "Show frontmatter", category: "View", keys: [], group: "Render" },
   { id: "viewCaret", title: "Next caret glyph", category: "View", keys: [], group: "Gutter" },
   { id: "viewCrumb", title: "Show section crumb", category: "View", keys: [], group: "Section" },
   {
@@ -74,6 +75,7 @@ export const HANDLERS: { readonly [K in CommandId]: CmdHandler } = {
   viewEmphasis: () => ({}),
   viewSyntax: () => ({}),
   viewMarkup: () => ({}),
+  viewFront: () => ({}),
   viewCaret: () => ({}),
   viewCrumb: () => ({}),
   viewArchive: () => ({}),

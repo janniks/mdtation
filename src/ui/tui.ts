@@ -26,7 +26,7 @@ import { CommentStore, copyFormat } from "../core/comment.ts";
 import { create, markers } from "../core/comments.ts";
 import { load, save } from "../core/store.ts";
 import { report } from "../core/report.ts";
-import { field, set } from "../core/front.ts";
+import { end, field, set } from "../core/front.ts";
 import { cycle, DEFAULTS, rows as settings, type Values } from "../core/settings.ts";
 import { nextComment, prevComment } from "../core/nav.ts";
 import { parseDocument, type Document } from "../core/document.ts";
@@ -84,6 +84,7 @@ export class TuiShell {
       viewEmphasis: cfg.emphasis,
       viewSyntax: cfg.syntax,
       viewMarkup: false,
+      viewFront: false,
       viewCrumb: true,
       viewArchive: false,
     };
@@ -123,13 +124,16 @@ export class TuiShell {
     const width = this.renderer.width || 80;
     const header = this.on.viewCrumb ? 2 : 1;
     const height = Math.max(1, (this.renderer.height || 24) - header - FOOTER);
-    return createViewport(
-      this.view?.offset ?? 0,
-      this.view?.cursor ?? 0,
-      width,
-      height,
-      Number(this.prefs.margin),
-    );
+    return {
+      ...createViewport(
+        this.view?.offset ?? 0,
+        this.view?.cursor ?? 0,
+        width,
+        height,
+        Number(this.prefs.margin),
+      ),
+      first: this.on.viewFront ? 0 : end(this.doc.lines) + 1,
+    };
   }
 
   /** Move the cursor to `line` (clamped, scrolled on-screen) and redraw. */
@@ -373,6 +377,7 @@ export class TuiShell {
       case "viewEmphasis":
       case "viewSyntax":
       case "viewMarkup":
+      case "viewFront":
       case "viewCrumb":
       case "viewArchive":
         this.on[id] = !this.on[id];

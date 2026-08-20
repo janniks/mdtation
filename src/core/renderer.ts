@@ -10,6 +10,7 @@
  * tokenized). Theming lives here as pure functions so it is golden-testable.
  */
 import type { Document, Heading } from "./document.ts";
+import { end as fence } from "./front.ts";
 import type { Viewport } from "./viewport.ts";
 import { highlight } from "./syntax.ts";
 import { colWidth, displayWidth } from "./unicode.ts";
@@ -163,10 +164,24 @@ function gutterFor(
   return color ? `${SGR.bgYellow}${SGR.black}${g}${SGR.reset} ` : `${g} `;
 }
 
-function bodyFor(line: number, raw: string, doc: Document, opts: RenderOptions): string {
+function bodyFor(
+  line: number,
+  raw: string,
+  doc: Document,
+  opts: RenderOptions,
+  cols: number,
+): string {
   const color = opts.color === true;
   const markup = opts.markup !== false;
   const paint = (sgr: string, s: string) => (color ? `${sgr}${s}${SGR.reset}` : s);
+  // Frontmatter: the opening fence stays blank, the closing one is a full-width rule.
+  const close = fence(doc.lines);
+  if (close > 0 && line === 0) {
+    return "";
+  }
+  if (line === close) {
+    return paint(SGR.dim, "\u2500".repeat(cols));
+  }
   const heading = headingAt(doc, line);
   if (heading) {
     const text = markup ? raw : raw.replace(/^#+\s*/, "");
@@ -299,7 +314,7 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
       lines.push(g + styleTable(body, opts));
       continue;
     }
-    wrapStyled(bodyFor(i, body, doc, opts), cols).forEach((chunk, ri) => {
+    wrapStyled(bodyFor(i, body, doc, opts, cols), cols).forEach((chunk, ri) => {
       lines.push((ri === 0 ? gutterFor(i, vp, cursorOn, counts, opts) : "  ") + chunk);
     });
   }

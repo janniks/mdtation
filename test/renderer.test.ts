@@ -85,11 +85,11 @@ describe("hide markup", () => {
     assert.deepEqual(out, [`  ${rule} ts`, "  const x = 1", `  ${rule}`]);
   });
 
-  test("thematic breaks and frontmatter fences are rules in both modes", () => {
+  test("thematic breaks are rules; frontmatter opens blank and closes full-width", () => {
     assert.deepEqual(show("---\ntitle: T\n---\n***"), [
-      `  ${rule}`,
+      "  ",
       "  title: T",
-      `  ${rule}`,
+      `  ${"─".repeat(78)}`,
       `  ${rule}`,
     ]);
     assert.equal(show("___", { markup: false })[0], `  ${rule}`);

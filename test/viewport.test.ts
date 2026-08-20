@@ -129,3 +129,14 @@ test("margin keeps the cursor away from the edges and pads the end", () => {
   const small = moveCursor(createViewport(0, 0, 80, 10, 3), 4, 5);
   assert.deepEqual([small.offset, small.cursor, small.height], [0, 4, 5]);
 });
+
+test("first: lines before it are unreachable and never shown", () => {
+  const vp = { ...createViewport(0, 0, 80, 5), first: 3 };
+  const c = clampViewport(vp, 20);
+  assert.equal(c.offset, 3);
+  assert.equal(c.cursor, 3);
+  assert.equal(moveCursor(c, -1, 20).cursor, 3);
+  assert.equal(jumpToLine(c, 0, 20).offset, 3);
+  const tail = jumpToLine(c, 19, 20);
+  assert.equal(tail.offset, 15);
+});
