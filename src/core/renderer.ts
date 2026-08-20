@@ -12,7 +12,7 @@
 import type { Document, Heading } from "./document.ts";
 import type { Viewport } from "./viewport.ts";
 import { highlight } from "./syntax.ts";
-import { wrapLine, displayWidth } from "./unicode.ts";
+import { colWidth, displayWidth } from "./unicode.ts";
 
 export interface RenderOptions {
   /** 0-based line indices that carry a comment. */
@@ -25,10 +25,15 @@ export interface RenderOptions {
   readonly syntax?: boolean;
   /** One-column cursor glyph. Default `>`. */
   readonly caret?: string;
+  /** Show markdown markup (inline marks, heading hashes, fence lines). Default true. */
+  readonly markup?: boolean;
 }
 
 /** Width (in columns) of the gutter prepended to every rendered line. */
 export const GUTTER_WIDTH = 2;
+
+/** Thin rule drawn for thematic breaks and (in hide-markup mode) fence rows. */
+const RULE = "\u2500".repeat(20);
 
 /** ANSI SGR escapes. Only emitted when color is requested. */
 const SGR = {
@@ -68,28 +73,73 @@ function codeBlockAt(doc: Document, line: number) {
   return doc.codeBlocks.find((b) => line >= b.startLine && line <= b.endLine);
 }
 
-/** Minimal inline markdown: `**bold**`, `*italic*`, `` `code` ``, `~~strike~~`. */
-function styleInline(text: string, emphasis: boolean): string {
-  if (!emphasis) {
+/** Minimal inline markdown: `**bold**`, `*italic*`, `` `code` ``, `~~strike~~`, links.
+ * Marks are dropped whenever the inner text gets styled or markup is hidden. */
+function styleInline(text: string, opts: RenderOptions): string {
+  const emphasis = opts.color === true && opts.emphasis !== false;
+  const markup = opts.markup !== false;
+  if (!emphasis && markup) {
     return text;
   }
+  const paint = (sgr: string, inner: string) => (emphasis ? `${sgr}${inner}${SGR.reset}` : inner);
   // Links first: later rules emit `\x1b[` escapes that would match the link's `[`.
   return text
-    .replace(
-      /\[([^\]]+)\]\(([^)]+)\)/g,
-      (_, t: string, u: string) =>
-        `${SGR.underline}${SGR.blue}${t}${SGR.reset} ${SGR.dim}(${u})${SGR.reset}`,
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, t: string, u: string) => {
+      const label = paint(SGR.underline + SGR.blue, t);
+      return markup ? `${label} ${paint(SGR.dim, `(${u})`)}` : label;
+    })
+    .replace(/\*\*(.+?)\*\*|__(.+?)__/g, (_, a: string, b: string) =>
+      paint(SGR.bold + SGR.yellow, a ?? b),
     )
-    .replace(/\*\*(.+?)\*\*/g, (_, p: string) => `${SGR.bold}${SGR.yellow}${p}${SGR.reset}`)
-    .replace(/`([^`]+)`/g, (_, p: string) => `${SGR.gray}${p}${SGR.reset}`)
-    .replace(/~~(.+?)~~/g, (_, p: string) => `${SGR.strike}${p}${SGR.reset}`)
-    .replace(/\*([^*]+?)\*/g, (_, p: string) => `${SGR.italic}${SGR.magenta}${p}${SGR.reset}`);
+    .replace(/`([^`]+)`/g, (_, p: string) => paint(SGR.gray, p))
+    .replace(/~~(.+?)~~/g, (_, p: string) => paint(SGR.strike, p))
+    .replace(/\*([^*]+?)\*|\b_([^_]+?)_\b/g, (_, a: string, b: string) =>
+      paint(SGR.italic + SGR.magenta, a ?? b),
+    );
 }
 
 /** Color the bullet/number of a markdown list item; `undefined` for non-list lines. */
-function styleList(raw: string, emphasis: boolean): string | undefined {
+function styleList(raw: string, opts: RenderOptions): string | undefined {
   const m = raw.match(/^( *)([-*+\u2022]|\d+\.)\s+(.*)$/);
-  return m ? `${SGR.cyan}${m[1]}${m[2]}${SGR.reset} ${styleInline(m[3]!, emphasis)}` : undefined;
+  if (!m) {
+    return undefined;
+  }
+  const mark = opts.color ? `${SGR.cyan}${m[1]}${m[2]}${SGR.reset}` : `${m[1]}${m[2]}`;
+  return `${mark} ${styleInline(m[3]!, opts)}`;
+}
+
+/** Thematic break: three or more `-`, `*` or `_` on their own line. */
+function isRule(raw: string): boolean {
+  return /^ {0,3}([-*_])( *\1){2,} *$/.test(raw);
+}
+
+/** Like `wrapLine`, but SGR escapes are zero-width and every chunk is closed
+ * with a reset and reopened with the styles still active. */
+function wrapStyled(text: string, width: number): string[] {
+  const rows: string[] = [];
+  let cur = "";
+  let cols = 0;
+  let open = "";
+  // oxlint-disable-next-line no-control-regex -- SGR escapes are the point here
+  for (const tok of text.match(/\u001b\[[0-9;]*m|./gsu) ?? []) {
+    if (tok.startsWith("\x1b")) {
+      open = tok === SGR.reset ? "" : open + tok;
+      cur += tok;
+      continue;
+    }
+    const w = colWidth(tok);
+    if (cols + w > width && cols > 0) {
+      rows.push(cur + (open ? SGR.reset : ""));
+      cur = open;
+      cols = 0;
+    }
+    cur += tok;
+    cols += w;
+  }
+  if (cur.length > 0 || rows.length === 0) {
+    rows.push(cur);
+  }
+  return rows;
 }
 
 /** Gutter cell: the caret on the cursor line, else `★` for one comment or the count. */
@@ -114,28 +164,32 @@ function gutterFor(
 }
 
 function bodyFor(line: number, raw: string, doc: Document, opts: RenderOptions): string {
-  if (!opts.color) {
-    return raw;
-  }
-  const emphasis = opts.emphasis !== false;
+  const color = opts.color === true;
+  const markup = opts.markup !== false;
+  const paint = (sgr: string, s: string) => (color ? `${sgr}${s}${SGR.reset}` : s);
   const heading = headingAt(doc, line);
   if (heading) {
-    return `${SGR.bold}${HEADING_COLOR[heading.level] ?? SGR.gray}${raw}${SGR.reset}`;
+    const text = markup ? raw : raw.replace(/^#+\s*/, "");
+    return paint(SGR.bold + (HEADING_COLOR[heading.level] ?? SGR.gray), text);
   }
   const block = codeBlockAt(doc, line);
   if (block) {
     if (line === block.startLine || line === block.endLine) {
-      return `${SGR.dim}${raw}${SGR.reset}`;
+      const rule = line === block.startLine && block.lang ? `${RULE} ${block.lang}` : RULE;
+      return paint(SGR.dim, markup ? raw : rule);
     }
-    return opts.syntax === false ? raw : highlight(raw, block.lang ?? null);
+    return color && opts.syntax !== false ? highlight(raw, block.lang ?? null) : raw;
   }
-  return styleList(raw, emphasis) ?? styleInline(raw, emphasis);
+  if (isRule(raw)) {
+    return paint(SGR.dim, RULE);
+  }
+  return styleList(raw, opts) ?? styleInline(raw, opts);
 }
 
-/** Does `line` look like a GFM table row: `|`-delimited with at least 2 cells. */
+/** Does `line` look like a GFM table row: `|`-delimited with at least 2 cells.
+ * Edge pipes are optional, so ragged source tables still qualify. */
 function isTableRow(line: string): boolean {
-  const t = line.trim();
-  return /^\|.*\|$/.test(t) && t.split("|").length >= 4;
+  return line.includes("|") && parseCells(line).length >= 2;
 }
 
 /** Is `line` a separator row (`| --- | :---- |` with optional colons)? */
@@ -143,11 +197,12 @@ function isSepRow(line: string): boolean {
   return parseCells(line).every((c) => /^-*:?-+:?\s*$/.test(c) && c.includes("-"));
 }
 
-/** Parse `| a | b |` into `["a","b"]`. */
+/** Parse `| a | b |` (edge pipes optional) into `["a","b"]`. */
 function parseCells(row: string): string[] {
-  const t = row.trim();
-  return t
-    .slice(1, -1)
+  return row
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
     .split("|")
     .map((c) => c.trim());
 }
@@ -174,12 +229,22 @@ export function tableLayout(rows: string[]): string[] {
   return out;
 }
 
-/** Style an aligned table row: gray borders, dimmed separator. */
-function colorTable(row: string, sep: boolean): string {
-  if (sep) {
-    return `${SGR.dim}${row}${SGR.reset}`;
+/** Style an aligned table row: gray borders, dimmed separator. With markup
+ * hidden the separator becomes a rule and edge pipes go, inner ones turn `│`. */
+function styleTable(row: string, opts: RenderOptions): string {
+  const color = opts.color === true;
+  const paint = (sgr: string, s: string) => (color ? `${sgr}${s}${SGR.reset}` : s);
+  if (opts.markup !== false) {
+    return !color
+      ? row
+      : isSepRow(row)
+        ? paint(SGR.dim, row)
+        : row.replace(/\|/g, paint(SGR.gray, "|"));
   }
-  return row.replace(/\|/g, `${SGR.gray}|${SGR.reset}`);
+  if (isSepRow(row)) {
+    return paint(SGR.dim, "\u2500".repeat(displayWidth(row)));
+  }
+  return row.slice(2, -2).replace(/ \| /g, ` ${paint(SGR.dim, "\u2502")} `);
 }
 
 /** Detect runs of table rows (whose 2nd line is a separator) and align them.
@@ -214,12 +279,11 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
   for (const m of opts.markers ?? []) {
     counts.set(m, (counts.get(m) ?? 0) + 1);
   }
-  const color = opts.color === true;
   const cursorOn = vp.cursor >= vp.offset && vp.cursor < vp.offset + vp.height;
   const start = Math.max(0, vp.offset);
   const height = Math.max(0, vp.height);
   const end = Math.min(doc.lines.length, start + height);
-  const colWidth = Math.max(1, vp.width - GUTTER_WIDTH);
+  const cols = Math.max(1, vp.width - GUTTER_WIDTH);
   const src: string[] = [];
   for (let i = start; i < end; i++) {
     src.push(doc.lines[i] ?? "");
@@ -232,13 +296,11 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
     const body = src[idx]!;
     if (flags[idx]) {
       const g = gutterFor(i, vp, cursorOn, counts, opts);
-      lines.push(g + (color ? colorTable(body, isSepRow(body)) : body));
+      lines.push(g + styleTable(body, opts));
       continue;
     }
-    const chunks = wrapLine(body, colWidth);
-    chunks.forEach((chunk, ri) => {
-      const g = ri === 0 ? gutterFor(i, vp, cursorOn, counts, opts) : "  ";
-      lines.push(g + bodyFor(i, chunk, doc, opts));
+    wrapStyled(bodyFor(i, body, doc, opts), cols).forEach((chunk, ri) => {
+      lines.push((ri === 0 ? gutterFor(i, vp, cursorOn, counts, opts) : "  ") + chunk);
     });
   }
   return lines;
