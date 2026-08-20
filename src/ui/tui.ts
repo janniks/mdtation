@@ -152,7 +152,7 @@ export class TuiShell {
             .join("\n")
             .trim();
       if (text) {
-        copy(text);
+        copy(text, renderer);
         renderer.clearSelection();
         this.draw("COPIED SELECTION");
       }
@@ -422,7 +422,7 @@ export class TuiShell {
       this.draw("NO COMMENT HERE");
       return;
     }
-    copy(copyFormat(c, this.doc));
+    copy(copyFormat(c, this.doc), this.renderer);
     if (this.on.viewArchive) {
       this.store.archive(c.id);
       this.persist();
