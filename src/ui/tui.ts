@@ -23,7 +23,7 @@ import type { CliRenderer, TextChunk } from "@opentui/core";
 import { spans, type Span } from "../core/ansi.ts";
 import type { Document } from "../core/document.ts";
 import { render as renderFrame, statusBar } from "../core/renderer.ts";
-import { clampViewport, createViewport, moveCursor, type Viewport } from "../core/viewport.ts";
+import { clampViewport, createViewport, scroll, type Viewport } from "../core/viewport.ts";
 import { COMMANDS, matchKey, menuBar, reduceCommand, toChord, type Key } from "../core/commands.ts";
 
 /** Rows reserved at the top of the screen for the menu bar. */
@@ -79,12 +79,16 @@ export class TuiShell {
     this.draw();
   }
 
-  private onMouseScroll = (e: { scroll?: { delta: number } }): void => {
-    const delta = e.scroll?.delta ?? 0;
-    if (delta === 0) {
+  /** Wheel pans the window (desktop-style); the cursor is dragged along so it stays visible. */
+  private onMouseScroll = (e: { scroll?: { direction: string } }): void => {
+    const dir = e.scroll?.direction;
+    if (dir !== "up" && dir !== "down") {
       return;
     }
-    this.vp = moveCursor(this.vp, delta > 0 ? 3 : -3, this.doc.lines.length);
+    const total = this.doc.lines.length;
+    const vp = scroll(this.vp, dir === "down" ? 3 : -3, total);
+    const cursor = Math.max(vp.offset, Math.min(vp.cursor, vp.offset + vp.height - 1));
+    this.vp = { ...vp, cursor: Math.max(0, Math.min(cursor, Math.max(0, total - 1))) };
     this.draw();
   };
 
