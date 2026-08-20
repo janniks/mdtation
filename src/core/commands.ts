@@ -21,11 +21,13 @@ export interface Command {
 
 /** The canonical command table. First-match-wins on key dispatch. Declaration
  * order also drives the menu-bar category order (File, View, Navigate, Edit,
- * Comments, Tools, Help — mirrors the spec's menu bar). View toggles have no
+ * Comments, Help). View toggles have no
  * chords on purpose: they are reached via the menu bar, palette, or help. */
 export const COMMANDS = [
   { id: "quit", title: "Quit", category: "File", keys: ["q", "ctrl+c"] },
   { id: "save", title: "Save", category: "File", keys: ["ctrl+s"] },
+  { id: "palette", title: "Command Palette", category: "File", keys: ["/"], group: "Tools" },
+  { id: "settings", title: "Settings", category: "File", keys: [], group: "Tools" },
   { id: "viewColor", title: "Color", category: "View", keys: [], group: "Render" },
   { id: "viewEmphasis", title: "Color bold/italic", category: "View", keys: [], group: "Render" },
   { id: "viewSyntax", title: "Syntax highlight", category: "View", keys: [], group: "Render" },
@@ -45,7 +47,6 @@ export const COMMANDS = [
   { id: "pageUp", title: "Page Up", category: "Navigate", keys: ["ctrl+u", "pageup"] },
   { id: "top", title: "Top", category: "Navigate", keys: ["g"] },
   { id: "bottom", title: "Bottom", category: "Navigate", keys: ["shift+g"] },
-  { id: "toggle", title: "Toggle / Edit", category: "Edit", keys: ["x", "space"] },
   { id: "comment", title: "New Comment", category: "Comments", keys: ["c"] },
   { id: "copy", title: "Copy comments to clipboard", category: "Comments", keys: ["shift+c"] },
   { id: "editor", title: "Show in editor", category: "Comments", keys: [] },
@@ -58,8 +59,6 @@ export const COMMANDS = [
     keys: [],
     group: "Options",
   },
-  { id: "palette", title: "Command Palette", category: "Tools", keys: ["/"] },
-  { id: "settings", title: "Settings", category: "Tools", keys: [] },
   { id: "help", title: "Help", category: "Help", keys: ["?"] },
 ] as const satisfies readonly Command[];
 
@@ -93,7 +92,6 @@ export const HANDLERS: { readonly [K in CommandId]: CmdHandler } = {
   viewMouse: () => ({}),
   editor: () => ({}),
   settings: () => ({}),
-  toggle: () => ({}),
   palette: () => ({}),
   comment: () => ({}),
   copy: () => ({}),

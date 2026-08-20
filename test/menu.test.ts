@@ -18,7 +18,7 @@ describe("menu", () => {
     const m = menus(COMMANDS);
     assert.deepEqual(
       m.map((x) => x.label),
-      ["File", "View", "Navigate", "Edit", "Comments", "Tools", "Help"],
+      ["File", "View", "Navigate", "Comments", "Help"],
     );
     assert.deepEqual(m[2]!.entries[0], { id: "cursorDown", title: "Cursor Down", hint: "j" });
     assert.equal(m[0]!.entries[0]!.hint, "q");

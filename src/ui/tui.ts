@@ -479,9 +479,6 @@ export class TuiShell {
         this.remember();
         this.draw();
         return;
-      case "toggle":
-        this.toggle();
-        return;
       case "save":
         this.save();
         return;
