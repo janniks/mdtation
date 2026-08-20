@@ -12,8 +12,8 @@ const doc = [
   "",
   "tail | not",
 ];
-// Aligned: "| a    | bb | c |"
-//          "| 日本 | 🙂 | x |"
+// Aligned: "| a    | bb   | c  |"
+//          "| 日本 | 🙂   | x  |"
 
 describe("table", () => {
   describe("cell", () => {
@@ -21,7 +21,7 @@ describe("table", () => {
       assert.deepEqual(cell(doc, 2, 2), { row: 2, col: 0, sep: 3 });
       assert.deepEqual(cell(doc, 2, 0), { row: 2, col: 0, sep: 3 });
       assert.deepEqual(cell(doc, 2, 8), { row: 2, col: 1, sep: 3 });
-      assert.deepEqual(cell(doc, 2, 13), { row: 2, col: 2, sep: 3 });
+      assert.deepEqual(cell(doc, 2, 14), { row: 2, col: 2, sep: 3 });
       assert.deepEqual(cell(doc, 5, 7), { row: 5, col: 1, sep: 3 });
     });
 
@@ -29,7 +29,8 @@ describe("table", () => {
       assert.deepEqual(cell(doc, 4, 5), { row: 4, col: 0, sep: 3 });
       assert.deepEqual(cell(doc, 4, 7), { row: 4, col: 1, sep: 3 });
       assert.deepEqual(cell(doc, 4, 9), { row: 4, col: 1, sep: 3 });
-      assert.deepEqual(cell(doc, 4, 12), { row: 4, col: 2, sep: 3 });
+      assert.deepEqual(cell(doc, 4, 13), { row: 4, col: 1, sep: 3 });
+      assert.deepEqual(cell(doc, 4, 15), { row: 4, col: 2, sep: 3 });
     });
 
     test("clamps past the right edge and on the separator row", () => {
