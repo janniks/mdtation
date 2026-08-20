@@ -1,7 +1,8 @@
 import { strict as assert } from "node:assert";
 import { test, describe } from "node:test";
 import { parseDocument } from "../src/core/document.ts";
-import { render, tableLayout } from "../src/core/renderer.ts";
+import { render } from "../src/core/renderer.ts";
+import { layout as tableLayout } from "../src/core/table.ts";
 import { createViewport } from "../src/core/viewport.ts";
 import { displayWidth } from "../src/core/unicode.ts";
 

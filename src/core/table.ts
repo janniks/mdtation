@@ -1,10 +1,10 @@
 /**
- * Table cell hit-testing and alignment edits. Pure: the shell re-parses after `align`.
+ * GFM table helpers: row parsing, column layout, cell hit-testing and alignment edits.
+ * Pure: the renderer aligns runs with `layout`; the shell re-parses after `align`.
  * A table run is a block of consecutive `|`-rows whose 2nd line is a separator row.
  */
 
-import { tableLayout } from "./renderer.ts";
-import { colWidth } from "./unicode.ts";
+import { colWidth, displayWidth } from "./unicode.ts";
 
 export interface Cell {
   readonly row: number;
@@ -16,7 +16,7 @@ export interface Cell {
 const SEP = /^(:?)(-+)(:?)$/;
 
 /** Parse `| a | b |` (edge pipes optional) into `["a","b"]`. */
-function cells(row: string): string[] {
+export function cells(row: string): string[] {
   return row
     .trim()
     .replace(/^\|/, "")
@@ -25,12 +25,35 @@ function cells(row: string): string[] {
     .map((c) => c.trim());
 }
 
-function isRow(line: string): boolean {
+/** Does `line` look like a table row: `|`-delimited with at least 2 cells.
+ * Edge pipes are optional, so ragged source tables still qualify. */
+export function isRow(line: string): boolean {
   return line.includes("|") && cells(line).length >= 2;
 }
 
-function isSep(line: string): boolean {
+/** Is `line` a separator row (`| --- | :---- |` with optional colons)? */
+export function isSep(line: string): boolean {
   return isRow(line) && cells(line).every((c) => SEP.test(c));
+}
+
+/** Align a run of plain table rows into even-width columns. */
+export function layout(rows: readonly string[]): string[] {
+  const grid = rows.map(cells);
+  const ncol = Math.max(...grid.map((c) => c.length));
+  const widths: number[] = Array.from({ length: ncol }, () => 0);
+  for (const row of grid) {
+    for (let c = 0; c < row.length; c++) {
+      widths[c] = Math.max(widths[c]!, displayWidth(row[c]!));
+    }
+  }
+  return grid.map((row) => {
+    const parts: string[] = [];
+    for (let c = 0; c < ncol; c++) {
+      const cell = row[c] ?? "";
+      parts.push(cell + " ".repeat(Math.max(0, widths[c]! - displayWidth(cell))));
+    }
+    return `| ${parts.join(" | ")} |`;
+  });
 }
 
 /** `[start, end)` of the table run containing `line`, or null. */
@@ -55,7 +78,7 @@ export function cell(lines: readonly string[], line: number, x: number): Cell | 
   if (!r) {
     return null;
   }
-  const laid = tableLayout(lines.slice(r[0], r[1]))[line - r[0]]!;
+  const laid = layout(lines.slice(r[0], r[1]))[line - r[0]]!;
   let col = -1;
   let at = 0;
   for (const ch of laid) {

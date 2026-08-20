@@ -13,6 +13,7 @@ import type { Document, Heading } from "./document.ts";
 import { end as fence } from "./front.ts";
 import type { Viewport } from "./viewport.ts";
 import { highlight } from "./syntax.ts";
+import { isRow, isSep, layout } from "./table.ts";
 import { colWidth, displayWidth } from "./unicode.ts";
 
 export interface RenderOptions {
@@ -225,49 +226,6 @@ function bodyFor(
   return styleList(raw, opts) ?? styleInline(raw, opts);
 }
 
-/** Does `line` look like a GFM table row: `|`-delimited with at least 2 cells.
- * Edge pipes are optional, so ragged source tables still qualify. */
-function isTableRow(line: string): boolean {
-  return line.includes("|") && parseCells(line).length >= 2;
-}
-
-/** Is `line` a separator row (`| --- | :---- |` with optional colons)? */
-function isSepRow(line: string): boolean {
-  return parseCells(line).every((c) => /^-*:?-+:?\s*$/.test(c) && c.includes("-"));
-}
-
-/** Parse `| a | b |` (edge pipes optional) into `["a","b"]`. */
-function parseCells(row: string): string[] {
-  return row
-    .trim()
-    .replace(/^\|/, "")
-    .replace(/\|$/, "")
-    .split("|")
-    .map((c) => c.trim());
-}
-
-/** Align a run of plain table rows into even-width columns. */
-export function tableLayout(rows: string[]): string[] {
-  const cellRows = rows.map(parseCells);
-  const ncol = Math.max(...cellRows.map((c) => c.length));
-  const widths: number[] = Array.from({ length: ncol }, () => 0);
-  for (const cells of cellRows) {
-    for (let c = 0; c < cells.length; c++) {
-      widths[c] = Math.max(widths[c]!, displayWidth(cells[c]!));
-    }
-  }
-  const out = cellRows.map((cells) => {
-    const parts: string[] = [];
-    for (let c = 0; c < ncol; c++) {
-      const cell = cells[c] ?? "";
-      const pad = widths[c]! - displayWidth(cell);
-      parts.push(cell + " ".repeat(Math.max(0, pad)));
-    }
-    return `| ${parts.join(" | ")} |`;
-  });
-  return out;
-}
-
 /** Style an aligned table row: gray borders, dimmed separator. With markup
  * hidden the separator becomes a rule and edge pipes go, inner ones turn `│`. */
 function styleTable(row: string, opts: RenderOptions): string {
@@ -276,11 +234,11 @@ function styleTable(row: string, opts: RenderOptions): string {
   if (opts.pipes !== false) {
     return !color
       ? row
-      : isSepRow(row)
+      : isSep(row)
         ? paint(SGR.dim, row)
         : row.replace(/\|/g, paint(SGR.gray, "|"));
   }
-  if (isSepRow(row)) {
+  if (isSep(row)) {
     return paint(SGR.dim, "\u2500".repeat(displayWidth(row) - 4));
   }
   return row.slice(2, -2).replace(/ \| /g, ` ${paint(SGR.dim, "\u2502")} `);
@@ -294,16 +252,16 @@ function markTables(rows: string[], flags: boolean[], start: number, doc: Docume
   let i = 0;
   while (i < n) {
     const sl = start + i;
-    if (codeBlockAt(doc, sl) || !isTableRow(rows[i]!)) {
+    if (codeBlockAt(doc, sl) || !isRow(rows[i]!)) {
       i++;
       continue;
     }
     let j = i;
-    while (j < n && !codeBlockAt(doc, start + j) && isTableRow(rows[j]!)) {
+    while (j < n && !codeBlockAt(doc, start + j) && isRow(rows[j]!)) {
       j++;
     }
-    const laid = tableLayout(rows.slice(i, j));
-    if (laid.length >= 2 && isSepRow(laid[1]!)) {
+    const laid = layout(rows.slice(i, j));
+    if (laid.length >= 2 && isSep(laid[1]!)) {
       for (let k = 0; k < laid.length; k++) {
         rows[i + k] = laid[k]!;
         flags[i + k] = true;
