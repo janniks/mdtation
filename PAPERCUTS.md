@@ -59,3 +59,12 @@ Append-only detours / surprises that cost more than one attempt.
   an SGR-laden string.
 - 2026-08-20 — `pkill -f "bun src/bin.ts"` kills the calling Claude shell too (the
   pattern matches the `zsh -c` wrapper). Anchor it: `pkill -f "^bun src/bin.ts"`.
+- 2026-08-20 — "Mouse doesn't work" was a UX bug, not plumbing: OpenTUI delivers
+  `onMouseScroll` to a `TextRenderable` fine (verified with a probe), but
+  `ScrollInfo.delta` is always positive — the sign lives in `scroll.direction` —
+  and the handler moved the *cursor* 3 lines, so the view only moved once the
+  cursor hit an edge. Pan the viewport by direction instead.
+- 2026-08-20 — Mouse can be tested headlessly in herdr by injecting SGR sequences:
+  `herdr pane send-text <pane> "$(printf '\x1b[<65;10;5M')"` (65 wheel-down, 64
+  wheel-up; click = `\x1b[<0;X;YM` + `\x1b[<0;X;Ym`, 1-based). Bun scripts that
+  import `@opentui/core` must live inside the repo (module resolution), not in /tmp.
