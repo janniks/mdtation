@@ -22,7 +22,7 @@ test("color=true styles headings, inline, fenced code, and syntax", () => {
   const frame = render(doc, createViewport(0, 0, 80, 24), { color: true });
   // line 0: green cursor gutter + bold red heading
   assert.ok(
-    frame[0]?.startsWith(`${ESC}[32m> ${ESC}[0m${ESC}[1m${ESC}[31m# H1${ESC}[0m`),
+    frame[0]?.startsWith(`${ESC}[32m>${ESC}[0m ${ESC}[1m${ESC}[31m# H1${ESC}[0m`),
     frame[0],
   );
   // line 2: inline bold
@@ -52,6 +52,6 @@ test("emphasis/syntax flags switch inline colors and highlighting off", () => {
   assert.ok(on[0]?.includes(`${ESC}[1m${ESC}[33mb${ESC}[0m`), on[0]);
   assert.notEqual(on[2], "  const n = 1;");
   const off = render(doc, vp, { color: true, emphasis: false, syntax: false });
-  assert.equal(off[0], `${ESC}[32m> ${ESC}[0m${ESC}[36m-${ESC}[0m **b**`);
+  assert.equal(off[0], `${ESC}[32m>${ESC}[0m ${ESC}[36m-${ESC}[0m **b**`);
   assert.equal(off[2], "  const n = 1;");
 });
