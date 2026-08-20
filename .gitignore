@@ -15,3 +15,6 @@ WIP-*.md
 .agents/evidence.json
 agents_modules/
 # END agent-lock
+
+# Per-file comment sidecars + clipboard fallback.
+.mdtation/

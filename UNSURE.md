@@ -75,3 +75,30 @@ Unchecked entries are swept on occasional cleanup passes.
     - why: table packing is the interesting pure logic; testing it directly keeps the
       render-golden assertions focused on guttering/gutter color.
     - verdict: ?
+
+## 2026-08-20 — Phase 8c comments
+
+- [ ] Anchor kind for a commented line.
+    - choice: `anchorFor` yields a heading anchor only when the cursor line IS a
+      heading row; every other line anchors by line number.
+    - alternative: anchor body lines to their enclosing heading (path + offset).
+    - why: the spec names heading-path as primary and line as fallback; "under a
+      heading" needs an offset scheme `resolveAnchor` does not model yet. Line anchors
+      are exact today; revisit when edits start drifting them.
+    - verdict: ?
+
+- [ ] Comment store location.
+    - choice: `<dir>/.mdtation/<basename>.comments.json` — one sidecar per markdown file.
+    - alternative: one `.mdtation/comments.json` per directory keyed by file name.
+    - why: per-file sidecars need no keying or merge logic and delete cleanly with the
+      file. The spec's `comments.json` name is kept as a suffix.
+    - verdict: ?
+
+- [ ] Modal key routing.
+    - choice: `Modal.key` consumes esc/enter itself and returns `true` for every key
+      (shell skips its own dispatch) while the focused `InputRenderable` receives typing
+      through OpenTUI's focus path. The shell must `e.preventDefault()` only on the key
+      that opens the modal, else the `c` lands in the input.
+    - alternative: the modal re-implements editing from raw keys and never uses focus.
+    - why: reuses OpenTUI's editing (cursor, backspace, paste) for free.
+    - verdict: ?

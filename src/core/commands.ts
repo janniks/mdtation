@@ -31,6 +31,8 @@ export const COMMANDS = [
   { id: "bottom", title: "Bottom", category: "Navigate", keys: ["shift+g"] },
   { id: "comment", title: "New Comment", category: "Notes", keys: ["c"] },
   { id: "copy", title: "Copy Reference", category: "Notes", keys: ["y"] },
+  { id: "prevComment", title: "Previous Comment", category: "Notes", keys: ["["] },
+  { id: "nextComment", title: "Next Comment", category: "Notes", keys: ["]"] },
   { id: "palette", title: "Command Palette", category: "Tools", keys: ["/"] },
   { id: "help", title: "Help", category: "Help", keys: ["?"] },
 ] as const satisfies readonly Command[];
@@ -51,6 +53,8 @@ export const HANDLERS: { readonly [K in CommandId]: CmdHandler } = {
   palette: () => ({}),
   comment: () => ({}),
   copy: () => ({}),
+  prevComment: () => ({}),
+  nextComment: () => ({}),
   help: () => ({}),
 };
 

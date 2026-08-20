@@ -40,6 +40,8 @@ describe("commands", () => {
         ["/", "palette"],
         ["c", "comment"],
         ["y", "copy"],
+        ["[", "prevComment"],
+        ["]", "nextComment"],
         ["?", "help"],
       ];
       for (const [key, id] of cases) {
@@ -73,7 +75,7 @@ describe("commands", () => {
     });
 
     test("deferred commands are no-ops on the viewport", () => {
-      for (const id of ["palette", "comment", "copy", "help"]) {
+      for (const id of ["palette", "comment", "copy", "prevComment", "nextComment", "help"]) {
         const a = reduceCommand(id, V(), TOTAL);
         assert.equal(a.quit, undefined);
         assert.equal(a.vp, undefined);
