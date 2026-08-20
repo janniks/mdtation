@@ -12,7 +12,7 @@ export interface Entry {
   readonly hint: string;
   /** Set for toggles: rendered as `[x]` / `[ ]` before the title. */
   readonly checked?: boolean;
-  /** Section title drawn as a separator above this entry (first entry of a `group`). */
+  /** Section title drawn as a separator above this entry; the first section of a menu stays unnamed. */
   readonly group?: string;
 }
 
@@ -69,7 +69,7 @@ export function menus(
       (entry as { checked?: boolean }).checked = checked;
     }
     const menu = out.find((m) => m.label === c.category);
-    if (c.group && groups.get(c.category) !== c.group) {
+    if (menu && c.group && groups.get(c.category) !== c.group) {
       (entry as { group?: string }).group = c.group;
     }
     groups.set(c.category, c.group);

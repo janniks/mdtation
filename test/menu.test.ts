@@ -63,6 +63,6 @@ test("menus: the first entry of a group carries its section title", () => {
   ]);
   assert.deepEqual(
     m[0]!.entries.map((e) => e.group),
-    ["x", undefined, "y"],
+    [undefined, undefined, "y"],
   );
 });
