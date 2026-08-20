@@ -38,7 +38,7 @@ test("color=true styles headings, inline, fenced code, and syntax", () => {
 test("italic gets a color and links are underlined with a dim url", () => {
   const doc = parseDocument("*it* and [site](https://x.y)\n");
   const [line] = render(doc, createViewport(0, 0, 80, 1), { color: true });
-  assert.ok(line?.includes(`${ESC}[3m${ESC}[36mit${ESC}[0m`), line);
+  assert.ok(line?.includes(`${ESC}[3m${ESC}[35mit${ESC}[0m`), line);
   assert.ok(
     line?.includes(`${ESC}[4m${ESC}[34msite${ESC}[0m ${ESC}[2m(https://x.y)${ESC}[0m`),
     line,

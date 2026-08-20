@@ -72,7 +72,7 @@ function styleInline(text: string): string {
     .replace(/\*\*(.+?)\*\*/g, (_, p: string) => `${SGR.bold}${SGR.yellow}${p}${SGR.reset}`)
     .replace(/`([^`]+)`/g, (_, p: string) => `${SGR.gray}${p}${SGR.reset}`)
     .replace(/~~(.+?)~~/g, (_, p: string) => `${SGR.strike}${p}${SGR.reset}`)
-    .replace(/\*([^*]+?)\*/g, (_, p: string) => `${SGR.italic}${SGR.cyan}${p}${SGR.reset}`);
+    .replace(/\*([^*]+?)\*/g, (_, p: string) => `${SGR.italic}${SGR.magenta}${p}${SGR.reset}`);
 }
 
 /** Color the bullet/number of a markdown list item; `undefined` for non-list lines. */

@@ -27,6 +27,6 @@ describe("renderer lists", () => {
   test("non-list lines fall through to inline styling", () => {
     const doc = parseDocument("just text *italic* here\n");
     const frame = render(doc, createViewport(0, 0, 80, 24), { color: true });
-    assert.equal(frame[0]?.includes(`${ITALIC}\x1b[36mitalic${RST}`), true);
+    assert.equal(frame[0]?.includes(`${ITALIC}\x1b[35mitalic${RST}`), true);
   });
 });
