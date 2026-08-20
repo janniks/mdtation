@@ -114,3 +114,19 @@ test("pan drags the cursor along the window", () => {
   assert.deepEqual([end.offset, end.cursor], [90, 90]);
   assert.deepEqual(pan(v, 5, 0), createViewport(0, 0, 80, 0));
 });
+
+test("margin keeps the cursor away from the edges and pads the end", () => {
+  const vp = createViewport(0, 0, 80, 10, 3);
+  let v = vp;
+  for (let i = 0; i < 6; i++) v = moveCursor(v, 1, 100);
+  assert.deepEqual([v.offset, v.cursor], [0, 6]);
+  v = moveCursor(v, 1, 100);
+  assert.deepEqual([v.offset, v.cursor], [1, 7]);
+  v = jumpToLine(v, 99, 100);
+  assert.deepEqual([v.offset, v.cursor], [93, 99]);
+  v = moveCursor(v, -4, 100);
+  assert.deepEqual([v.offset, v.cursor], [92, 95]);
+  assert.deepEqual(jumpToLine(v, 0, 100).offset, 0);
+  const small = moveCursor(createViewport(0, 0, 80, 10, 3), 4, 5);
+  assert.deepEqual([small.offset, small.cursor, small.height], [0, 4, 5]);
+});

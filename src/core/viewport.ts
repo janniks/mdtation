@@ -8,8 +8,12 @@
  * Invariants after every *cursor* transition (moveCursor / pageDown / pageUp /
  * jumpToLine):
  *   - 0 <= cursor <= total - 1          (when total > 0)
- *   - 0 <= offset <= maxOffset          (maxOffset = max(0, total - height))
- *   - offset <= cursor <= offset+height-1  (cursor stays on-screen)
+ *   - 0 <= offset <= maxOffset          (maxOffset = max(0, total - height + margin))
+ *   - offset+margin <= cursor <= offset+height-1-margin  (cursor stays inside the margin)
+ *
+ * `margin` is vim's scrolloff: rows kept between the cursor and the window edge.
+ * Near the end the window may pan past the last line by `margin` rows (blank
+ * padding) so the last line can reach the margin too.
  *
  * `scroll` is a pure window pan: it moves `offset` only and leaves the cursor
  * where it is (the cursor may drift off-screen until the next cursor move).
@@ -24,6 +28,8 @@ export interface Viewport {
   readonly width: number;
   /** Number of visible rows. */
   readonly height: number;
+  /** Rows kept between the cursor and the window edge (scrolloff). Default 0. */
+  readonly margin?: number;
 }
 
 /** Result of a key dispatch: move the viewport, quit, or do nothing. */
@@ -39,22 +45,28 @@ export function createViewport(
   cursor: number,
   width: number,
   height: number,
+  margin = 0,
 ): Viewport {
-  return { offset, cursor, width, height };
+  return { offset, cursor, width, height, margin };
 }
 
 const MAX = 24; // default fallback height for a terminal that reports nothing
 export const DEFAULT_WIDTH = 80;
 export const DEFAULT_HEIGHT = MAX;
 
+/** Effective scrolloff: never more than half the window. */
+function gap(vp: Viewport): number {
+  return Math.max(0, Math.min(vp.margin ?? 0, Math.floor((vp.height - 1) / 2)));
+}
+
 function clampBounds(vp: Viewport, total: number): Viewport {
   if (total <= 0) {
-    return { offset: 0, cursor: 0, width: vp.width, height: 0 };
+    return { ...vp, offset: 0, cursor: 0, height: 0 };
   }
   const height = Math.min(vp.height, total);
-  const maxOffset = total - height;
+  const maxOffset = Math.max(0, total - height + (total > height ? gap(vp) : 0));
   return {
-    width: vp.width,
+    ...vp,
     height,
     offset: Math.max(0, Math.min(vp.offset, maxOffset)),
     cursor: Math.max(0, Math.min(vp.cursor, total - 1)),
@@ -66,14 +78,14 @@ function withCursorVisible(vp: Viewport, total: number): Viewport {
   if (total <= 0 || b.height <= 0) {
     return b;
   }
-  const maxOffset = total - b.height;
+  const m = total > b.height ? gap(b) : 0;
   let offset = b.offset;
-  if (b.cursor < offset) {
-    offset = b.cursor;
-  } else if (b.cursor > offset + b.height - 1) {
-    offset = Math.min(b.cursor - b.height + 1, maxOffset);
+  if (b.cursor < offset + m) {
+    offset = b.cursor - m;
+  } else if (b.cursor > offset + b.height - 1 - m) {
+    offset = b.cursor - b.height + 1 + m;
   }
-  return { offset, cursor: b.cursor, width: b.width, height: b.height };
+  return { ...b, offset: Math.max(0, Math.min(offset, total - b.height + m)) };
 }
 
 /** Clamp to document bounds. The cursor is *not* forced on-screen. */
