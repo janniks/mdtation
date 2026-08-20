@@ -79,6 +79,8 @@ hovering an annotated line. Navigation reuses hunk's keys (`j/k`, `Ctrl-f/b`, `G
     Golden-tested on fixtures, not widgets.
   - `Export` — `copyFormat(c, doc): string` and `sendFormat(c, doc): string` produce the
     agent-consumable markdown block. Pure.
+  - `Ansi` — `spans(text): Span[]` / `strip(text)` turn the Renderer's SGR strings into
+    styled spans for the TUI (OpenTUI does not parse escape bytes). Pure.
 - **Anchor scheme (key decision):** heading-path is the **primary** anchor (stable across
   edits), slugified the GitHub-anchor way (`path#section/subsection`). Line number is the
   **fallback** for inline/text spans without a heading. A comment's anchor is resolved

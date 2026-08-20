@@ -97,7 +97,9 @@ Homebrew formula + npm publish checklist.
 ## Phase 8 — hunk-style shell (2026-08-20)
 
 Goal: a human can open `bun src/bin.ts <file>` and it feels like hunk: menu bar with dropdowns, sticky heading breadcrumb, status bar, `?` help, `/` palette, `c` comment modal, gutter markers, `y` copy, mouse everywhere.
-Architecture: `@opentui/core` imperative (no React). Root = column flex: menu bar box (1 row) → breadcrumb (1 row) → body `TextRenderable` (flexGrow, `wrapMode: "none"`) → status bar box (1 row). Overlays are absolutely positioned and follow `src/ui/overlay.ts`; the shell holds at most one and routes keys to it first.
+Architecture: `@opentui/core` imperative (no React).
+Root = column flex: menu bar box (1 row) → breadcrumb (1 row) → body `TextRenderable` (flexGrow, `wrapMode: "none"`) → status bar box (1 row).
+Overlays are absolutely positioned and follow `src/ui/overlay.ts`; the shell holds at most one and routes keys to it first.
 Pure models live in `src/core` with node tests; `src/ui` only wires OpenTUI.
 
 - Slice 8a — chrome (owner: `src/ui/tui.ts`, `src/ui/chrome.ts`, `src/core/menu.ts`, `src/core/crumb.ts`): layout above; menu model derived from `COMMANDS` (category → entries with live key hints); dropdown overlay (mouse hover/click, F10/←/→/↑/↓/↵/esc); breadcrumb = heading path of the cursor line; status bar left `Ln x/y · n comments`, right mode badge + file name; body `wrapMode: "none"`; resize-safe.
