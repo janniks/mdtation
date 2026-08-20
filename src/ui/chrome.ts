@@ -120,17 +120,25 @@ export class Dropdown implements Overlay {
       backgroundColor: THEME.panel,
       flexDirection: "column",
     });
+    let rows = 0;
     menu.entries.forEach((e, i) => {
       if (e.group) {
+        // Spacer keeps the flex column honest; the title row overdraws the border so it joins it.
+        this.node.add(new BoxRenderable(renderer, { height: 1, width: inner }));
         this.node.add(
           new TextRenderable(renderer, {
-            content: `─ ${e.group} ${"─".repeat(Math.max(0, inner - displayWidth(e.group) - 3))}`,
+            position: "absolute",
+            top: rows,
+            left: -1,
+            content: `├─ ${e.group} ${"─".repeat(Math.max(0, inner - displayWidth(e.group) - 3))}┤`,
             fg: THEME.muted,
             selectable: false,
             wrapMode: "none",
           }),
         );
+        rows++;
       }
+      rows++;
       const row = new BoxRenderable(renderer, {
         height: 1,
         width: inner,
