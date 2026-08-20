@@ -23,11 +23,11 @@ describe("comments glue", () => {
     });
   });
 
-  test("markers: resolved, sorted, unique lines", () => {
+  test("markers: resolved, sorted, one per comment", () => {
     const store = new CommentStore();
     store.add(create(doc, 4, "a", 1));
     store.add(create(doc, 2, "b", 2));
     store.add(create(doc, 4, "c", 3));
-    assert.deepEqual(markers(store, doc), [2, 4]);
+    assert.deepEqual(markers(store, doc), [2, 4, 4]);
   });
 });

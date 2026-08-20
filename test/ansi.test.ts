@@ -44,3 +44,9 @@ test("underline on and off", () => {
     { text: "b", underline: false },
   ]);
 });
+
+test("background colors", () => {
+  assert.deepEqual(spans("\x1b[43m\x1b[30m★\x1b[0m"), [
+    { text: "★", bg: "#e5e510", fg: "#000000" },
+  ]);
+});

@@ -3,7 +3,6 @@
  */
 import type { Anchor, Comment, CommentStore } from "./comment.ts";
 import type { Document } from "./document.ts";
-import { commentLines } from "./nav.ts";
 
 /** Heading anchor only when `line` IS a heading row; any other line anchors by number. */
 export function anchorFor(doc: Document, line: number): Anchor {
@@ -15,7 +14,11 @@ export function create(doc: Document, line: number, text: string, now = Date.now
   return { id: now.toString(36), anchor: anchorFor(doc, line), text, createdAt: now };
 }
 
-/** Lines that should carry a gutter marker. */
+/** One entry per live comment: its resolved line (duplicates = several comments on a line). */
 export function markers(store: CommentStore, doc: Document): number[] {
-  return [...commentLines(store, doc)];
+  return store
+    .live()
+    .map((c) => store.resolve(c.anchor, doc)?.startLine)
+    .filter((n): n is number => n !== undefined)
+    .toSorted((a, b) => a - b);
 }

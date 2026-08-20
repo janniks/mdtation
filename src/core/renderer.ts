@@ -23,6 +23,8 @@ export interface RenderOptions {
   readonly emphasis?: boolean;
   /** Highlight fenced code (needs `color`). Default true. */
   readonly syntax?: boolean;
+  /** One-column cursor glyph. Default `>`. */
+  readonly caret?: string;
 }
 
 /** Width (in columns) of the gutter prepended to every rendered line. */
@@ -36,6 +38,8 @@ const SGR = {
   italic: "\x1b[3m",
   strike: "\x1b[9m",
   underline: "\x1b[4m",
+  black: "\x1b[30m",
+  bgYellow: "\x1b[43m",
   green: "\x1b[32m",
   yellow: "\x1b[33m",
   red: "\x1b[31m",
@@ -88,30 +92,25 @@ function styleList(raw: string, emphasis: boolean): string | undefined {
   return m ? `${SGR.cyan}${m[1]}${m[2]}${SGR.reset} ${styleInline(m[3]!, emphasis)}` : undefined;
 }
 
+/** Gutter cell: the caret on the cursor line, else `★` for one comment or the count. */
 function gutterFor(
   line: number,
   vp: Viewport,
   cursorOn: boolean,
-  markers: ReadonlySet<number>,
-  color: boolean,
+  counts: ReadonlyMap<number, number>,
+  opts: RenderOptions,
 ): string {
-  let g: string;
+  const color = opts.color === true;
   if (line === vp.cursor && cursorOn) {
-    g = "> ";
-  } else if (markers.has(line)) {
-    g = "● ";
-  } else {
-    g = "  ";
+    const g = `${opts.caret ?? ">"} `;
+    return color ? `${SGR.green}${g}${SGR.reset}` : g;
   }
-  if (color) {
-    if (g === "> ") {
-      return `${SGR.green}${g}${SGR.reset}`;
-    }
-    if (g === "● ") {
-      return `${SGR.yellow}${g}${SGR.reset}`;
-    }
+  const n = counts.get(line) ?? 0;
+  if (n === 0) {
+    return "  ";
   }
-  return g;
+  const g = n === 1 ? "★" : String(Math.min(n, 9));
+  return color ? `${SGR.bgYellow}${SGR.black}${g}${SGR.reset} ` : `${g} `;
 }
 
 function bodyFor(line: number, raw: string, doc: Document, opts: RenderOptions): string {
@@ -211,7 +210,10 @@ function markTables(rows: string[], flags: boolean[], start: number, doc: Docume
 }
 
 export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): string[] {
-  const markers = new Set(opts.markers ?? []);
+  const counts = new Map<number, number>();
+  for (const m of opts.markers ?? []) {
+    counts.set(m, (counts.get(m) ?? 0) + 1);
+  }
   const color = opts.color === true;
   const cursorOn = vp.cursor >= vp.offset && vp.cursor < vp.offset + vp.height;
   const start = Math.max(0, vp.offset);
@@ -229,13 +231,13 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
     const idx = i - start;
     const body = src[idx]!;
     if (flags[idx]) {
-      const g = gutterFor(i, vp, cursorOn, markers, color);
+      const g = gutterFor(i, vp, cursorOn, counts, opts);
       lines.push(g + (color ? colorTable(body, isSepRow(body)) : body));
       continue;
     }
     const chunks = wrapLine(body, colWidth);
     chunks.forEach((chunk, ri) => {
-      const g = ri === 0 ? gutterFor(i, vp, cursorOn, markers, color) : "  ";
+      const g = ri === 0 ? gutterFor(i, vp, cursorOn, counts, opts) : "  ";
       lines.push(g + bodyFor(i, chunk, doc, opts));
     });
   }
@@ -244,7 +246,7 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
 
 /** Status line: cursor position, comment count, mode. */
 export function statusBar(doc: Document, vp: Viewport, opts: RenderOptions = {}): string {
-  const count = new Set(opts.markers ?? []).size;
+  const count = opts.markers?.length ?? 0;
   const cur = Math.min(vp.cursor + 1, doc.lines.length);
   const plural = count === 1 ? "" : "s";
   const plain = `Ln ${cur}/${doc.lines.length} · ${count} comment${plural}`;

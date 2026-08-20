@@ -6,6 +6,7 @@
 export interface Span {
   readonly text: string;
   readonly fg?: string;
+  readonly bg?: string;
   readonly bold?: boolean;
   readonly dim?: boolean;
   readonly italic?: boolean;
@@ -64,8 +65,12 @@ function apply(style: Style, codes: string): Style {
       s = { ...s, strike: false };
     } else if (n === 39) {
       s = { ...s, fg: undefined };
+    } else if (n === 49) {
+      s = { ...s, bg: undefined };
     } else if (FG[n]) {
       s = { ...s, fg: FG[n] };
+    } else if (FG[n - 10]) {
+      s = { ...s, bg: FG[n - 10] };
     }
   }
   return s;
