@@ -131,3 +131,20 @@ describe("hide markup", () => {
     assert.equal(show(src, { markup: false })[2], "  ccc │ d ");
   });
 });
+
+test("task boxes follow the checkbox style", () => {
+  const doc = parseDocument("- [ ] a\n- [x] b\n");
+  const vp = createViewport(0, 0, 80, 2);
+  assert.deepEqual(
+    render(doc, vp, { markers: [], check: 0 }).map((l) => l.slice(2)),
+    ["- [ ] a", "- [x] b"],
+  );
+  assert.deepEqual(
+    render(doc, vp, { check: 2 }).map((l) => l.slice(2)),
+    ["- ○ a", "- ● b"],
+  );
+  assert.equal(
+    render(doc, vp, { check: 4, color: true })[1]!.slice(2),
+    "\x1b[36m-\x1b[0m \x1b[32m✓\x1b[0m b",
+  );
+});

@@ -33,6 +33,7 @@ export const COMMANDS = [
   { id: "viewFront", title: "Show frontmatter", category: "View", keys: [], group: "Render" },
   { id: "viewCaret", title: "Next caret glyph", category: "View", keys: [], group: "Gutter" },
   { id: "viewMark", title: "Next comment glyph", category: "View", keys: [], group: "Gutter" },
+  { id: "viewCheck", title: "Next checkbox style", category: "View", keys: [], group: "Gutter" },
   { id: "viewCrumb", title: "Show section crumb", category: "View", keys: [], group: "Section" },
   { id: "viewMouse", title: "Capture mouse", category: "View", keys: ["shift+m"], group: "Mouse" },
   {
@@ -80,6 +81,7 @@ export const HANDLERS: { readonly [K in CommandId]: CmdHandler } = {
   viewFront: () => ({}),
   viewCaret: () => ({}),
   viewMark: () => ({}),
+  viewCheck: () => ({}),
   viewCrumb: () => ({}),
   viewArchive: () => ({}),
   viewMouse: () => ({}),

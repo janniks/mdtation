@@ -35,7 +35,7 @@ import { displayWidth } from "../core/unicode.ts";
 import { crumb } from "../core/crumb.ts";
 import { loadConfig } from "../core/config.ts";
 import { menus, specs, step } from "../core/menu.ts";
-import { GUTTER_WIDTH, render as renderFrame, statusBar } from "../core/renderer.ts";
+import { CHECKS, GUTTER_WIDTH, render as renderFrame, statusBar } from "../core/renderer.ts";
 import {
   clampViewport,
   createViewport,
@@ -68,6 +68,7 @@ export class TuiShell {
   private prefs: Values = DEFAULTS;
   private glyph = 0;
   private mark = 0;
+  private check = 0;
   private readonly bar: MenuBar;
   private readonly crumb: Crumb;
   private readonly text: TextRenderable;
@@ -285,6 +286,7 @@ export class TuiShell {
         markup: !this.on.viewMarkup,
         caret: CARETS[this.glyph],
         mark: MARKS[this.mark],
+        check: this.check,
         markers: marks,
       }).join("\n"),
     );
@@ -374,6 +376,10 @@ export class TuiShell {
         return;
       case "viewMark":
         this.mark = (this.mark + 1) % MARKS.length;
+        this.draw();
+        return;
+      case "viewCheck":
+        this.check = (this.check + 1) % CHECKS.length;
         this.draw();
         return;
       case "toggle":

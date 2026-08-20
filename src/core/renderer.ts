@@ -28,12 +28,23 @@ export interface RenderOptions {
   readonly caret?: string;
   /** One-column glyph for a row with one comment. Default `✦`. */
   readonly mark?: string;
+  /** Index into `CHECKS`: how task boxes are drawn. Default 0 (`[ ]`/`[x]`). */
+  readonly check?: number;
   /** Show markdown markup (inline marks, heading hashes, fence lines). Default true. */
   readonly markup?: boolean;
 }
 
 /** Width (in columns) of the gutter prepended to every rendered line. */
 export const GUTTER_WIDTH = 2;
+
+/** Task-box styles, `[open, done]`, cycled by `View › Next checkbox style`. */
+export const CHECKS = [
+  ["[ ]", "[x]"],
+  ["☐", "☑"],
+  ["○", "●"],
+  ["◯", "◉"],
+  ["✗", "✓"],
+] as const;
 
 /** Thin rule drawn for thematic breaks and (in hide-markup mode) fence rows. */
 const RULE = "\u2500".repeat(20);
@@ -108,7 +119,14 @@ function styleList(raw: string, opts: RenderOptions): string | undefined {
     return undefined;
   }
   const mark = opts.color ? `${SGR.cyan}${m[1]}${m[2]}${SGR.reset}` : `${m[1]}${m[2]}`;
-  return `${mark} ${styleInline(m[3]!, opts)}`;
+  const task = m[3]!.match(/^\[( |x|X)\] (.*)$/);
+  if (!task) {
+    return `${mark} ${styleInline(m[3]!, opts)}`;
+  }
+  const done = task[1] !== " ";
+  const glyph = CHECKS[opts.check ?? 0]![done ? 1 : 0];
+  const box = opts.color ? `${done ? SGR.green : SGR.dim}${glyph}${SGR.reset}` : glyph;
+  return `${mark} ${box} ${styleInline(task[2]!, opts)}`;
 }
 
 /** Thematic break: three or more `-`, `*` or `_` on their own line. */
