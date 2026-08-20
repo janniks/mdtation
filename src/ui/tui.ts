@@ -17,13 +17,7 @@ import type { Document } from "../core/document.ts";
 import { crumb } from "../core/crumb.ts";
 import { menus, specs, step } from "../core/menu.ts";
 import { render as renderFrame, statusBar } from "../core/renderer.ts";
-import {
-  clampViewport,
-  createViewport,
-  jumpToLine,
-  scroll,
-  type Viewport,
-} from "../core/viewport.ts";
+import { clampViewport, createViewport, jumpToLine, pan, type Viewport } from "../core/viewport.ts";
 import { COMMANDS, matchKey, reduceCommand, toChord, type CommandId } from "../core/commands.ts";
 
 /** Rows of chrome above the body (menu bar + breadcrumb). */
@@ -133,10 +127,7 @@ export class TuiShell {
     if (dir !== "up" && dir !== "down") {
       return;
     }
-    const total = this.doc.lines.length;
-    const vp = scroll(this.view, dir === "down" ? 3 : -3, total);
-    const cursor = Math.max(vp.offset, Math.min(vp.cursor, vp.offset + vp.height - 1));
-    this.view = { ...vp, cursor: Math.max(0, Math.min(cursor, Math.max(0, total - 1))) };
+    this.view = pan(this.view, dir === "down" ? 3 : -3, this.doc.lines.length);
     this.draw();
   }
 
