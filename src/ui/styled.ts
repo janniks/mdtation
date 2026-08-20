@@ -3,8 +3,13 @@ import { bg, bold, dim, fg, italic, strikethrough, StyledText, underline } from 
 import type { TextChunk } from "@opentui/core";
 import { spans, type Span } from "../core/ansi.ts";
 
-function chunk(s: Span): TextChunk {
-  let c: TextChunk = { __isChunk: true, text: s.text };
+/** Plain OpenTUI text chunk. */
+export function chunk(text: string): TextChunk {
+  return { __isChunk: true, text };
+}
+
+function style(s: Span): TextChunk {
+  let c = chunk(s.text);
   if (s.fg) c = fg(s.fg)(c);
   if (s.bg) c = bg(s.bg)(c);
   if (s.bold) c = bold(c);
@@ -16,5 +21,5 @@ function chunk(s: Span): TextChunk {
 }
 
 export function styled(text: string): StyledText {
-  return new StyledText(spans(text).map(chunk));
+  return new StyledText(spans(text).map(style));
 }

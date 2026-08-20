@@ -1,7 +1,7 @@
 import { strict as assert } from "node:assert";
 import { describe, test } from "node:test";
 import { COMMANDS } from "../src/core/commands.ts";
-import { filter, hint, rows } from "../src/core/palette.ts";
+import { filter, rows } from "../src/core/palette.ts";
 
 const CAT = [
   { id: "quit", title: "Quit", category: "File", keys: ["q"] },
@@ -31,14 +31,6 @@ describe("palette", () => {
   test("is case-insensitive and drops misses", () => {
     assert.deepEqual(ids("BOT"), ["bottom"]);
     assert.deepEqual(ids("zzz"), []);
-  });
-
-  test("hint labels the first chord", () => {
-    assert.equal(hint(["ctrl+d"]), "^d");
-    assert.equal(hint(["shift+g"]), "G");
-    assert.equal(hint(["q", "ctrl+c"]), "q");
-    assert.equal(hint(["down"]), "↓");
-    assert.equal(hint([]), "");
   });
 
   test("rows group by category in catalog order", () => {

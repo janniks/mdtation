@@ -4,10 +4,10 @@ import { BoxRenderable, InputRenderable, StyledText, TextRenderable, bg, dim } f
 import type { CliRenderer, KeyEvent, MouseEvent, TextChunk } from "@opentui/core";
 import { COMMANDS } from "../core/commands.ts";
 import type { Command } from "../core/commands.ts";
-import { filter, hint } from "../core/palette.ts";
+import { hint } from "../core/menu.ts";
+import { filter } from "../core/palette.ts";
 import type { Overlay } from "./overlay.ts";
-
-const chunk = (text: string): TextChunk => ({ __isChunk: true, text });
+import { chunk } from "./styled.ts";
 
 export class Palette implements Overlay {
   readonly node: BoxRenderable;
@@ -79,7 +79,7 @@ export class Palette implements Overlay {
     const from = Math.max(0, Math.min(this.sel - this.max + 1, this.hits.length - this.max));
     const out: TextChunk[] = [];
     this.hits.slice(from, from + this.max).forEach((c, i) => {
-      const h = hint(c.keys);
+      const h = hint(c.keys[0]);
       const text = `  ${c.title}${" ".repeat(Math.max(1, this.inner - c.title.length - h.length - 4))}${h}  `;
       const row = from + i === this.sel ? bg("#364a82")(chunk(text)) : chunk(text);
       out.push(row, chunk("\n"));

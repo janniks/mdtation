@@ -1,11 +1,10 @@
 /** `?` help overlay: centered box, one section per category, key column live from `COMMANDS`. */
 import { BoxRenderable, StyledText, TextRenderable, bold, dim } from "@opentui/core";
-import type { CliRenderer, KeyEvent, TextChunk } from "@opentui/core";
+import type { CliRenderer, KeyEvent } from "@opentui/core";
 import { COMMANDS } from "../core/commands.ts";
 import { rows } from "../core/palette.ts";
 import type { Overlay } from "./overlay.ts";
-
-const chunk = (text: string): TextChunk => ({ __isChunk: true, text });
+import { chunk } from "./styled.ts";
 
 export class Help implements Overlay {
   readonly node: BoxRenderable;

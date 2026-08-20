@@ -1,6 +1,6 @@
 /** Pure models behind the help dialog and the command palette. Both derive from `COMMANDS`. */
 import type { Command } from "./commands.ts";
-import { hint as label } from "./menu.ts";
+import { hint } from "./menu.ts";
 
 /** Rank commands for `query`: title prefix > title substring > id/category substring. Empty query keeps catalog order. */
 export function filter(commands: readonly Command[], query: string): Command[] {
@@ -20,11 +20,6 @@ export function filter(commands: readonly Command[], query: string): Command[] {
     .map((x) => x.c);
 }
 
-/** Human label for the first chord (see `menu.hint`). */
-export function hint(keys: readonly string[]): string {
-  return label(keys[0]);
-}
-
 export interface Row {
   readonly category: string;
   readonly items: { readonly title: string; readonly hint: string }[];
@@ -42,7 +37,7 @@ export function rows(commands: readonly Command[]): Row[] {
       row = { category: c.category, items: [] };
       out.push(row);
     }
-    row.items.push({ title: c.title, hint: hint(c.keys) });
+    row.items.push({ title: c.title, hint: hint(c.keys[0]) });
   }
   return out;
 }
