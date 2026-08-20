@@ -25,6 +25,7 @@ import { copy } from "./clipboard.ts";
 import { CommentStore, copyFormat } from "../core/comment.ts";
 import { create, markers } from "../core/comments.ts";
 import { load, save } from "../core/store.ts";
+import { load as loadPrefs, save as savePrefs } from "../core/prefs.ts";
 import { report } from "../core/report.ts";
 import { end, field, set } from "../core/front.ts";
 import { cycle, DEFAULTS, rows as settings, type Values } from "../core/settings.ts";
@@ -76,6 +77,7 @@ export class TuiShell {
   private glyph = 0;
   private mark = 0;
   private check = 0;
+  private timer: ReturnType<typeof setTimeout> | null = null;
   private readonly bar: MenuBar;
   private readonly crumb: Crumb;
   private readonly text: TextRenderable;
@@ -103,6 +105,16 @@ export class TuiShell {
       viewArchive: false,
       viewMouse: true,
     };
+    const saved = loadPrefs();
+    for (const k of Object.keys(this.on)) {
+      if (k !== "viewMouse" && typeof saved.toggles[k] === "boolean") {
+        this.on[k] = saved.toggles[k]!;
+      }
+    }
+    this.prefs = { ...this.prefs, ...saved.values } as Values;
+    this.glyph = saved.glyphs.caret ?? 0;
+    this.mark = saved.glyphs.mark ?? 0;
+    this.check = saved.glyphs.check ?? 0;
     this.view = clampViewport(this.fit(), doc.lines.length);
     this.bar = new MenuBar(renderer, this.spec, basename(file), {
       hover: (i) => this.cur >= 0 && this.cur !== i && this.menuOpen(i),
@@ -317,6 +329,21 @@ export class TuiShell {
     this.draw("SAVED");
   }
 
+  /** Persist toggles, settings and glyph picks (debounced, atomic write). */
+  private remember(): void {
+    if (this.timer) {
+      clearTimeout(this.timer);
+    }
+    this.timer = setTimeout(() => {
+      const { viewMouse: _, ...toggles } = this.on;
+      savePrefs({
+        toggles,
+        values: this.prefs,
+        glyphs: { caret: this.glyph, mark: this.mark, check: this.check },
+      });
+    }, 200);
+  }
+
   /** Step the cursor off a row-less line, continuing in the direction it came from. */
   private settle(prev: number): void {
     const dir = Math.sign(this.view.cursor - prev) || 1;
@@ -422,6 +449,7 @@ export class TuiShell {
             this.renderer,
             (x) => {
               this.prefs = cycle(this.prefs, x.slice(4));
+              this.remember();
               this.resize();
             },
             () => this.close(),
@@ -431,14 +459,17 @@ export class TuiShell {
         return;
       case "viewCaret":
         this.glyph = (this.glyph + 1) % CARETS.length;
+        this.remember();
         this.draw();
         return;
       case "viewMark":
         this.mark = (this.mark + 1) % MARKS.length;
+        this.remember();
         this.draw();
         return;
       case "viewCheck":
         this.check = (this.check + 1) % CHECKS.length;
+        this.remember();
         this.draw();
         return;
       case "toggle":
@@ -464,6 +495,7 @@ export class TuiShell {
       case "viewCrumb":
       case "viewArchive":
         this.on[id] = !this.on[id];
+        this.remember();
         this.view = clampViewport(this.fit(), total);
         this.draw();
         return;
