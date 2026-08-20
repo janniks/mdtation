@@ -1,4 +1,4 @@
-/** Centered comment modal: quoted target line, small textarea, ↵ save / shift+↵ newline / esc cancel. */
+/** Centered comment modal: quoted target line, a one-line input that grows with newlines (shift+↵), esc cancel / ↵ save. */
 import { BoxRenderable, TextareaRenderable, TextRenderable } from "@opentui/core";
 import type { CliRenderer, KeyEvent } from "@opentui/core";
 import type { Overlay } from "./overlay.ts";
@@ -20,7 +20,7 @@ export class Modal implements Overlay {
   constructor(renderer: CliRenderer, opts: ModalOpts) {
     this.opts = opts;
     const width = Math.max(30, Math.min(60, renderer.width - 4));
-    const height = 8;
+    const height = 5;
     this.node = new BoxRenderable(renderer, {
       id: "mdtation-modal",
       position: "absolute",
@@ -41,21 +41,31 @@ export class Modal implements Overlay {
     this.node.add(new TextRenderable(renderer, { content: quote, fg: "#808080", width: inner }));
     this.input = new TextareaRenderable(renderer, {
       width: inner,
-      height: 4,
+      height: 1,
       placeholder: "your comment",
       initialValue: opts.value ?? "",
       backgroundColor: "#303030",
       focusedBackgroundColor: "#303030",
     });
+    this.input.on("input", () => this.grow());
     this.node.add(this.input);
     this.node.add(
       new TextRenderable(renderer, {
-        content: "↵ save · ⇧↵ newline · esc cancel",
+        content: "esc cancel · ↵ save".padStart(inner),
         fg: "#808080",
         width: inner,
       }),
     );
     this.input.focus();
+  }
+
+  /** Size the input to its lines (1–4) so a single line stays compact. */
+  private grow(): void {
+    const rows = Math.min(4, this.input.plainText.split("\n").length);
+    if (rows !== this.input.height) {
+      this.input.height = rows;
+      this.node.height = rows + 4;
+    }
   }
 
   key(e: KeyEvent): boolean {
@@ -64,6 +74,7 @@ export class Modal implements Overlay {
     } else if ((e.name === "return" || e.name === "enter") && e.shift) {
       e.preventDefault();
       this.input.insertText("\n");
+      this.grow();
     } else if (e.name === "return" || e.name === "enter") {
       e.preventDefault();
       const text = this.input.plainText.trim();

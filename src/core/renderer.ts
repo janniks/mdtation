@@ -36,8 +36,8 @@ export interface RenderOptions {
   readonly hashes?: boolean;
   /** Show inline marks (`**`, `_`, backticks, link urls). Default true. */
   readonly marks?: boolean;
-  /** Show code fence rows as written (else a thin rule). Default true. */
-  readonly fences?: boolean;
+  /** Code fence rows: `ticks` as written, `fence` a thin rule, `hide` no row. Default `ticks`. */
+  readonly fences?: "ticks" | "fence" | "hide";
   /** Show table pipes and the separator row as written (else bars and a rule). Default true. */
   readonly pipes?: boolean;
 }
@@ -196,7 +196,7 @@ function bodyFor(
   const block = codeBlockAt(doc, line);
   if (block) {
     if (line === block.startLine || line === block.endLine) {
-      return paint(color, SGR.dim, opts.fences !== false ? raw : RULE);
+      return paint(color, SGR.dim, opts.fences === "fence" ? RULE : raw);
     }
     return color && opts.syntax !== false ? highlight(raw, block.lang ?? null) : raw;
   }
@@ -251,7 +251,13 @@ function markTables(rows: string[], flags: boolean[], start: number, doc: Docume
 }
 
 /** Lines that get no row: the frontmatter opener and the blank run right after its closer. */
-export function hidden(doc: Document, line: number): boolean {
+export function hidden(doc: Document, line: number, opts: RenderOptions = {}): boolean {
+  if (opts.fences === "hide") {
+    const block = codeBlockAt(doc, line);
+    if (block && (line === block.startLine || line === block.endLine)) {
+      return true;
+    }
+  }
   const close = fence(doc.lines);
   if (close <= 0) {
     return false;
@@ -287,7 +293,7 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
   for (let i = start; i < end; i++) {
     const idx = i - start;
     const body = src[idx]!;
-    if (hidden(doc, i)) {
+    if (hidden(doc, i, opts)) {
       continue;
     }
     if (flags[idx]) {

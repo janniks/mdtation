@@ -55,17 +55,19 @@ export function hint(chord: string | undefined): string {
 }
 
 /** Group commands by category, keeping declaration order. `state(id)` returning
- * a boolean marks that entry checkable. */
+ * a boolean marks that entry checkable; a string is shown as its current value. */
 export function menus(
   commands: readonly Command[],
-  state: (id: string) => boolean | undefined = () => undefined,
+  state: (id: string) => boolean | string | undefined = () => undefined,
 ): Menu[] {
   const out: Menu[] = [];
   const groups = new Map<string, string | undefined>();
   for (const c of commands) {
     const entry: Entry = { id: c.id, title: c.title, hint: hint(c.keys[0]) };
     const checked = state(c.id);
-    if (checked !== undefined) {
+    if (typeof checked === "string") {
+      (entry as { hint: string }).hint = `[${checked}]`; // cyclers show their current value
+    } else if (checked !== undefined) {
       (entry as { checked?: boolean }).checked = checked;
     }
     const menu = out.find((m) => m.label === c.category);

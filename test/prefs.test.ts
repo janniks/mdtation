@@ -7,14 +7,14 @@ import { load, save } from "../src/core/prefs.ts";
 
 test("prefs round-trip through settings.json, leaving no temp file", () => {
   process.env.MDTATION_HOME = mkdtempSync(join(tmpdir(), "mdtation-prefs-"));
-  assert.deepEqual(load(), { toggles: {}, values: {}, glyphs: {} });
-  save({ toggles: { viewColor: false }, values: { margin: "5" }, glyphs: { caret: 2 } });
+  assert.deepEqual(load(), { toggles: {}, values: {}, picks: {} });
+  save({ toggles: { viewColor: false }, values: { margin: "5" }, picks: { caret: 2 } });
   assert.deepEqual(load(), {
     toggles: { viewColor: false },
     values: { margin: "5" },
-    glyphs: { caret: 2 },
+    picks: { caret: 2 },
   });
   assert.deepEqual(readdirSync(process.env.MDTATION_HOME), ["settings.json"]);
   writeFileSync(join(process.env.MDTATION_HOME, "settings.json"), "{nope");
-  assert.deepEqual(load(), { toggles: {}, values: {}, glyphs: {} });
+  assert.deepEqual(load(), { toggles: {}, values: {}, picks: {} });
 });

@@ -74,7 +74,7 @@ test("gutter shows the comment count past one, and a custom caret", () => {
 const show = (src: string, opts = {}) =>
   render(parseDocument(src), createViewport(0, 99, 80, 99), opts);
 
-const hide = { hashes: false, marks: false, fences: false, pipes: false };
+const hide = { hashes: false, marks: false, fences: "fence", pipes: false } as const;
 
 describe("hide markup", () => {
   const rule = "─".repeat(20);
@@ -145,4 +145,12 @@ test("task boxes follow the checkbox style", () => {
     render(doc, vp, { check: 4, color: true })[1]!.slice(2),
     "\x1b[36m-\x1b[0m \x1b[32m✓\x1b[0m b",
   );
+});
+
+test("fence styles: ticks as written, fence as a rule, hide drops the rows", () => {
+  const doc = parseDocument("```ts\nx\n```\n");
+  const vp = createViewport(0, 0, 80, 3);
+  assert.equal(render(doc, vp, { fences: "ticks" })[0], "> ```ts");
+  assert.equal(render(doc, vp, { fences: "fence" })[0], `> ${"─".repeat(20)}`);
+  assert.deepEqual(render(doc, vp, { fences: "hide" }), ["  x"]);
 });

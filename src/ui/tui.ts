@@ -55,10 +55,14 @@ import { COMMANDS, matchKey, reduceCommand, toChord, type CommandId } from "../c
 
 /** Rows of chrome below the body (status bar). */
 const FOOTER = 1;
-/** Cursor glyphs cycled by `View › Next caret glyph`. */
-const CARETS = [">", "+", "▶", "›", "●"];
-/** Single-comment glyphs cycled by `View › Next comment glyph`. */
-const MARKS = ["✦", "●", "◆", "▌", "■", "•"];
+/** View › Style cyclers: each pick moves to the next value; the menu shows the current one. */
+const CYCLES = {
+  viewFences: ["ticks", "fence", "hide"],
+  viewCaret: [">", "+", "▶", "›", "●"],
+  viewMark: ["✦", "●", "◆", "▌", "■", "•"],
+  viewCheck: CHECKS.map((c) => c[1]),
+} as const;
+type Cycle = keyof typeof CYCLES;
 
 export class TuiShell {
   readonly renderer: CliRenderer;
@@ -74,9 +78,8 @@ export class TuiShell {
   private on: Record<string, boolean>;
   /** Settings palette values (scroll margin, beta flags). */
   private prefs: Values = DEFAULTS;
-  private glyph = 0;
-  private mark = 0;
-  private check = 0;
+  /** Current index per cycler. */
+  private pick: Record<Cycle, number> = { viewFences: 0, viewCaret: 0, viewMark: 0, viewCheck: 0 };
   private timer: ReturnType<typeof setTimeout> | null = null;
   private readonly bar: MenuBar;
   private readonly crumb: Crumb;
@@ -98,7 +101,6 @@ export class TuiShell {
       viewSyntax: cfg.syntax,
       viewHashes: true,
       viewMarks: true,
-      viewFences: true,
       viewPipes: true,
       viewFront: false,
       viewCrumb: true,
@@ -112,9 +114,9 @@ export class TuiShell {
       }
     }
     this.prefs = { ...this.prefs, ...saved.values } as Values;
-    this.glyph = saved.glyphs.caret ?? 0;
-    this.mark = saved.glyphs.mark ?? 0;
-    this.check = saved.glyphs.check ?? 0;
+    for (const k of Object.keys(this.pick) as Cycle[]) {
+      this.pick[k] = (saved.picks[k] ?? 0) % CYCLES[k].length;
+    }
     this.view = clampViewport(this.fit(), doc.lines.length);
     this.bar = new MenuBar(renderer, this.spec, basename(file), {
       hover: (i) => this.cur >= 0 && this.cur !== i && this.menuOpen(i),
@@ -217,7 +219,7 @@ export class TuiShell {
 
   /** Live menu model: View entries carry their current check state. */
   private menus() {
-    return menus(COMMANDS, (id) => this.on[id]);
+    return menus(COMMANDS, (id) => (id in CYCLES ? this.value(id as Cycle) : this.on[id]));
   }
 
   private menuOpen(i: number): void {
@@ -329,7 +331,22 @@ export class TuiShell {
     this.draw("SAVED");
   }
 
-  /** Persist toggles, settings and glyph picks (debounced, atomic write). */
+  /** Current value of a cycler. */
+  private value<K extends Cycle>(id: K): (typeof CYCLES)[K][number] {
+    return CYCLES[id][this.pick[id]]!;
+  }
+
+  /** Render options owned by the Style cyclers. */
+  private style() {
+    return {
+      fences: this.value("viewFences"),
+      caret: this.value("viewCaret"),
+      mark: this.value("viewMark"),
+      check: this.pick.viewCheck,
+    };
+  }
+
+  /** Persist toggles, settings and cycle picks (debounced, atomic write). */
   private remember(): void {
     if (this.timer) {
       clearTimeout(this.timer);
@@ -339,7 +356,7 @@ export class TuiShell {
       savePrefs({
         toggles,
         values: this.prefs,
-        glyphs: { caret: this.glyph, mark: this.mark, check: this.check },
+        picks: this.pick,
       });
     }, 200);
   }
@@ -348,7 +365,7 @@ export class TuiShell {
   private settle(prev: number): void {
     const dir = Math.sign(this.view.cursor - prev) || 1;
     let c = this.view.cursor;
-    while (hidden(this.doc, c) && c + dir >= 0 && c + dir < this.doc.lines.length) {
+    while (hidden(this.doc, c, this.style()) && c + dir >= 0 && c + dir < this.doc.lines.length) {
       c += dir;
     }
     if (c !== this.view.cursor) {
@@ -368,11 +385,8 @@ export class TuiShell {
         syntax: this.on.viewSyntax,
         hashes: this.on.viewHashes,
         marks: this.on.viewMarks,
-        fences: this.on.viewFences,
         pipes: this.on.viewPipes,
-        caret: CARETS[this.glyph],
-        mark: MARKS[this.mark],
-        check: this.check,
+        ...this.style(),
         markers: marks,
       }).join("\n"),
     );
@@ -457,18 +471,11 @@ export class TuiShell {
           ),
         );
         return;
+      case "viewFences":
       case "viewCaret":
-        this.glyph = (this.glyph + 1) % CARETS.length;
-        this.remember();
-        this.draw();
-        return;
       case "viewMark":
-        this.mark = (this.mark + 1) % MARKS.length;
-        this.remember();
-        this.draw();
-        return;
       case "viewCheck":
-        this.check = (this.check + 1) % CHECKS.length;
+        this.pick[id] = (this.pick[id] + 1) % CYCLES[id].length;
         this.remember();
         this.draw();
         return;
@@ -489,7 +496,6 @@ export class TuiShell {
       case "viewSyntax":
       case "viewHashes":
       case "viewMarks":
-      case "viewFences":
       case "viewPipes":
       case "viewFront":
       case "viewCrumb":

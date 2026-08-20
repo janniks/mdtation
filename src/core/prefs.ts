@@ -1,5 +1,5 @@
 /**
- * Persistent UI preferences: View toggles, settings values and gutter glyph picks.
+ * Persistent UI preferences: View toggles, settings values and cycle picks (fence style, glyphs).
  * One `settings.json` in the data dir (see `store.home`), written atomically (tmp + rename).
  */
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
@@ -9,10 +9,10 @@ import { home } from "./store.ts";
 export interface Prefs {
   readonly toggles: Readonly<Record<string, boolean>>;
   readonly values: Readonly<Record<string, string>>;
-  readonly glyphs: Readonly<Record<string, number>>;
+  readonly picks: Readonly<Record<string, number>>;
 }
 
-const EMPTY: Prefs = { toggles: {}, values: {}, glyphs: {} };
+const EMPTY: Prefs = { toggles: {}, values: {}, picks: {} };
 
 function path(): string {
   return join(home(), "settings.json");
@@ -25,7 +25,7 @@ export function load(): Prefs {
     return {
       toggles: { ...data.toggles },
       values: { ...data.values },
-      glyphs: { ...data.glyphs },
+      picks: { ...data.picks },
     };
   } catch {
     return EMPTY;
