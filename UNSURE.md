@@ -139,3 +139,25 @@ Unchecked entries are swept on occasional cleanup passes.
     - alternative: bind e.g. `alt+c` / `alt+e` / `alt+s`.
     - why: keeps the key surface small; toggles are rare.
     - verdict: ?
+
+## 2026-08-20 — Phase 8h–8l gutter/settings/frontmatter
+
+- [ ] Settings palette vs View menu split.
+    - choice: booleans that change rendering live in `View` (checkable, sectioned); value-cycling prefs (`margin`, `crumb depth`, beta flags) live in `Tools › Settings` (palette in `stay` mode).
+    - alternative: one settings palette for everything.
+    - why: View stays one click away; the palette holds the rare knobs. Both are session-only, nothing is written to `mdtation.json`.
+    - verdict: ?
+- [ ] Hidden frontmatter is implemented as `Viewport.first` (lines before it are unreachable), not by removing lines.
+    - choice: keeps frame rows 1:1 with doc lines (click mapping, comments, edits untouched).
+    - alternative: render a trimmed document and remap line numbers.
+    - why: smallest change; the cost is a blank first row when the line after the fence is empty.
+    - verdict: ?
+- [ ] Table alignment cycles only from the header or separator row click.
+    - choice: body-cell clicks just move the cursor.
+    - alternative: any cell click cycles its column.
+    - why: clicking a body cell to focus a row must not edit the file.
+    - verdict: ?
+- [ ] `shift+enter` newline in the comment modal needs a terminal that reports shift on enter (kitty protocol); legacy terminals save instead.
+    - verdict: ?
+- [ ] Default comment glyph `✦`, default caret `>`, default checkbox `[x]`; all cycle from the View menu until the user picks.
+    - verdict: ?
