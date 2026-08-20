@@ -93,3 +93,14 @@ Homebrew formula + npm publish checklist.
 | 4+ | tui-mouse | done | `onMouseScroll` -> `moveCursor` (3x lines, sign of `scroll.delta`); `onMouseDown` -> cursor to clicked row (skips menu bar); hit-area tracks the pane via `width`/`height` setters; `selectable: false` stops text-selection eating clicks. Wired in TUI; tsc + lint clean; verified live in `w2:pC`. (917245e) |
 | 4+ | core-coverage | done | 122 tests green (was 112; +10 table tests); `src/core` = 100% lines / 96.8% branch / 98.0% funcs (all functions hit; >=90% goal met). |
 | 4+ | tui-styledtext | done | TUI was unusable: raw SGR bytes fed to OpenTUI `TextRenderable` occupied cells (truncated styled lines, garbled status bar, garbage after navigation). Added pure `src/core/ansi.ts` (`spans`/`strip`, 6 tests) + `styled()` bridge to `StyledText` in `tui.ts`; dropped `padEnd/slice` on escaped strings. Verified live in herdr `w4:p1`: clean frame before/after `j`/`G`/`g`. |
+
+## Phase 8 — hunk-style shell (2026-08-20)
+
+Goal: a human can open `bun src/bin.ts <file>` and it feels like hunk: menu bar with dropdowns, sticky heading breadcrumb, status bar, `?` help, `/` palette, `c` comment modal, gutter markers, `y` copy, mouse everywhere.
+Architecture: `@opentui/core` imperative (no React). Root = column flex: menu bar box (1 row) → breadcrumb (1 row) → body `TextRenderable` (flexGrow, `wrapMode: "none"`) → status bar box (1 row). Overlays are absolutely positioned and follow `src/ui/overlay.ts`; the shell holds at most one and routes keys to it first.
+Pure models live in `src/core` with node tests; `src/ui` only wires OpenTUI.
+
+- Slice 8a — chrome (owner: `src/ui/tui.ts`, `src/ui/chrome.ts`, `src/core/menu.ts`, `src/core/crumb.ts`): layout above; menu model derived from `COMMANDS` (category → entries with live key hints); dropdown overlay (mouse hover/click, F10/←/→/↑/↓/↵/esc); breadcrumb = heading path of the cursor line; status bar left `Ln x/y · n comments`, right mode badge + file name; body `wrapMode: "none"`; resize-safe.
+- Slice 8b — help + palette (owner: `src/ui/help.ts`, `src/ui/palette.ts`, `src/core/palette.ts`): `?` centered help grouped by category, key column live from `COMMANDS`; `/` palette = input + filtered list, ↵ runs the command id.
+- Slice 8c — comments end-to-end (owner: `src/ui/modal.ts`, `src/ui/clipboard.ts`, `src/core/comments.ts` glue): `c` modal (input, ↵ save, esc cancel) → `CommentStore` anchored to heading path / line; persist `.mdtation/comments.json` keyed by file; gutter `●` markers; `[`/`]` nav; `y` copies `copyFormat` via OSC-52 (+ stdout fallback); `send` writes `sendFormat` to stdout on quit.
+- Integration (orchestrator): wire overlay openers into the shell's command switch; one live pass in herdr; commit.
