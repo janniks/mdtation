@@ -37,6 +37,9 @@ describe("commands", () => {
         ["shift+g", "bottom"],
         ["q", "quit"],
         ["ctrl+c", "quit"],
+        ["ctrl+s", "save"],
+        ["x", "toggle"],
+        ["space", "toggle"],
         ["/", "palette"],
         ["c", "comment"],
         ["y", "copy"],
@@ -50,7 +53,7 @@ describe("commands", () => {
     });
 
     test("unknown chord yields nothing", () => {
-      assert.equal(matchKey("x"), undefined);
+      assert.equal(matchKey("z"), undefined);
     });
 
     test("first of two commands sharing a chord wins", () => {
@@ -75,7 +78,16 @@ describe("commands", () => {
     });
 
     test("deferred commands are no-ops on the viewport", () => {
-      for (const id of ["palette", "comment", "copy", "prevComment", "nextComment", "help"]) {
+      for (const id of [
+        "palette",
+        "comment",
+        "copy",
+        "prevComment",
+        "nextComment",
+        "help",
+        "save",
+        "toggle",
+      ]) {
         const a = reduceCommand(id, V(), TOTAL);
         assert.equal(a.quit, undefined);
         assert.equal(a.vp, undefined);
@@ -103,7 +115,7 @@ describe("commands", () => {
 
   describe("menuBar", () => {
     test("lists categories in first-seen order", () => {
-      assert.equal(menuBar(), "File   Navigate   Notes   Tools   Help");
+      assert.equal(menuBar(), "File   Navigate   Edit   Notes   Tools   Help");
     });
 
     test("empty catalog yields empty menu", () => {

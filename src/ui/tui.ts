@@ -10,6 +10,7 @@
  */
 import { createCliRenderer, TextRenderable } from "@opentui/core";
 import type { CliRenderer, KeyEvent, MouseEvent } from "@opentui/core";
+import { writeFile } from "node:fs/promises";
 import { basename } from "node:path";
 import { styled } from "./styled.ts";
 import type { Overlay } from "./overlay.ts";
@@ -21,10 +22,12 @@ import { copy } from "./clipboard.ts";
 import { CommentStore, copyFormat } from "../core/comment.ts";
 import { create, markers, storePath } from "../core/comments.ts";
 import { nextComment, prevComment } from "../core/nav.ts";
-import type { Document } from "../core/document.ts";
+import { parseDocument, type Document } from "../core/document.ts";
+import { box, toggle } from "../core/edit.ts";
+import { displayWidth } from "../core/unicode.ts";
 import { crumb } from "../core/crumb.ts";
 import { menus, specs, step } from "../core/menu.ts";
-import { render as renderFrame, statusBar } from "../core/renderer.ts";
+import { GUTTER_WIDTH, render as renderFrame, statusBar } from "../core/renderer.ts";
 import { clampViewport, createViewport, jumpToLine, pan, type Viewport } from "../core/viewport.ts";
 import { COMMANDS, matchKey, reduceCommand, toChord, type CommandId } from "../core/commands.ts";
 
@@ -35,7 +38,10 @@ const FOOTER = 1;
 
 export class TuiShell {
   readonly renderer: CliRenderer;
-  readonly doc: Document;
+  doc: Document;
+  dirty = false;
+  /** Set once `q` was refused on a dirty file; the next `q` discards. */
+  private guard = false;
   readonly store: CommentStore;
   private readonly file: string;
   overlay: Overlay | null = null;
@@ -152,13 +158,41 @@ export class TuiShell {
     if (row < 0 || row >= this.view.height || this.doc.lines.length === 0) {
       return;
     }
-    const line = this.view.offset + row;
-    this.view = { ...this.view, cursor: Math.min(line, this.doc.lines.length - 1) };
+    const line = Math.min(this.view.offset + row, this.doc.lines.length - 1);
+    this.view = { ...this.view, cursor: line };
+    const b = box(this.doc.lines[line] ?? "");
+    const col = e.x - this.text.x - GUTTER_WIDTH;
+    const left = b ? displayWidth(this.doc.lines[line]!.slice(0, b.at)) : -1;
+    if (b && col >= left && col <= left + 2) {
+      this.toggle();
+      return;
+    }
     this.draw();
   }
 
-  draw(mode = "VIEW"): void {
+  /** Flip the task box on the cursor line and mark the document dirty. */
+  private toggle(): void {
+    const text = toggle(this.doc.text, this.view.cursor);
+    if (text === null) {
+      this.draw("NO CHECKBOX");
+      return;
+    }
+    this.doc = parseDocument(text);
+    this.dirty = true;
+    this.draw();
+  }
+
+  private save(): void {
+    if (this.file) {
+      void writeFile(this.file, this.doc.text);
+    }
+    this.dirty = false;
+    this.draw("SAVED");
+  }
+
+  draw(mode = this.dirty ? "UNSAVED" : "VIEW"): void {
     const marks = markers(this.store, this.doc);
+    this.bar.label = this.dirty ? `${basename(this.file)} ●` : basename(this.file);
     this.crumb.text = crumb(this.doc, this.view.cursor);
     this.text.content = styled(
       renderFrame(this.doc, this.view, { color: true, markers: marks }).join("\n"),
@@ -222,6 +256,19 @@ export class TuiShell {
       case "copy":
         this.copy();
         return;
+      case "toggle":
+        this.toggle();
+        return;
+      case "save":
+        this.save();
+        return;
+      case "quit":
+        if (this.dirty && !this.guard) {
+          this.guard = true;
+          this.draw("UNSAVED · q again to discard · ^S saves");
+          return;
+        }
+        break;
       case "nextComment":
         this.view = nextComment(this.view, total, this.store, this.doc);
         this.draw();
@@ -249,6 +296,9 @@ export class TuiShell {
       return;
     }
     const id = matchKey(toChord(e))?.id as CommandId | undefined;
+    if (id !== "quit") {
+      this.guard = false;
+    }
     if (id) {
       e.preventDefault(); // keep the opening key out of an overlay's input
       this.run(id);

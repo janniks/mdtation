@@ -18,17 +18,19 @@ export interface Command {
 }
 
 /** The canonical command table. First-match-wins on key dispatch. Declaration
- * order also drives the menu-bar category order (File, Navigate, Notes, Tools,
+ * order also drives the menu-bar category order (File, Navigate, Edit, Notes, Tools,
  * Help — mirrors the spec's menu bar; an empty `View` is omitted until it has
  * commands). */
 export const COMMANDS = [
   { id: "quit", title: "Quit", category: "File", keys: ["q", "ctrl+c"] },
+  { id: "save", title: "Save", category: "File", keys: ["ctrl+s"] },
   { id: "cursorDown", title: "Cursor Down", category: "Navigate", keys: ["j", "down"] },
   { id: "cursorUp", title: "Cursor Up", category: "Navigate", keys: ["k", "up"] },
   { id: "pageDown", title: "Page Down", category: "Navigate", keys: ["ctrl+f"] },
   { id: "pageUp", title: "Page Up", category: "Navigate", keys: ["ctrl+b"] },
   { id: "top", title: "Top", category: "Navigate", keys: ["g"] },
   { id: "bottom", title: "Bottom", category: "Navigate", keys: ["shift+g"] },
+  { id: "toggle", title: "Toggle Checkbox", category: "Edit", keys: ["x", "space"] },
   { id: "comment", title: "New Comment", category: "Notes", keys: ["c"] },
   { id: "copy", title: "Copy Reference", category: "Notes", keys: ["y"] },
   { id: "prevComment", title: "Previous Comment", category: "Notes", keys: ["["] },
@@ -50,6 +52,8 @@ export const HANDLERS: { readonly [K in CommandId]: CmdHandler } = {
   top: (vp, total) => ({ vp: jumpToLine(vp, 0, total) }),
   bottom: (vp, total) => ({ vp: jumpToLine(vp, Math.max(0, total - 1), total) }),
   quit: () => ({ quit: true }),
+  save: () => ({}),
+  toggle: () => ({}),
   palette: () => ({}),
   comment: () => ({}),
   copy: () => ({}),

@@ -102,3 +102,11 @@ Unchecked entries are swept on occasional cleanup passes.
     - alternative: the modal re-implements editing from raw keys and never uses focus.
     - why: reuses OpenTUI's editing (cursor, backspace, paste) for free.
     - verdict: ?
+
+## 2026-08-20 — Phase 8d checkboxes
+
+- [ ] Checkbox toggling writes the document directly.
+    - choice: `x`/space/click flips `- [ ]` in the text, marks the file dirty (`●` + `UNSAVED`), `ctrl+s` writes it, `q` guards once.
+    - alternative: a preview/edit mode toggle, or an "edit recommendation" comment instead of touching the file.
+    - why: simplest UX, and the same dirty/save path serves future structured edits.
+    - verdict: ?

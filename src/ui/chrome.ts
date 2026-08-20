@@ -27,6 +27,7 @@ export class MenuBar {
   readonly node: BoxRenderable;
   private readonly boxes: BoxRenderable[] = [];
   private readonly labels: TextRenderable[] = [];
+  private readonly file: TextRenderable;
 
   constructor(
     renderer: CliRenderer,
@@ -68,16 +69,20 @@ export class MenuBar {
       justifyContent: "flex-end",
       backgroundColor: THEME.bar,
     });
-    right.add(
-      new TextRenderable(renderer, {
-        content: ` ${file} `,
-        fg: THEME.muted,
-        selectable: false,
-        wrapMode: "none",
-        truncate: true,
-      }),
-    );
+    this.file = new TextRenderable(renderer, {
+      content: ` ${file} `,
+      fg: THEME.muted,
+      selectable: false,
+      wrapMode: "none",
+      truncate: true,
+    });
+    right.add(this.file);
     this.node.add(right);
+  }
+
+  /** Replace the right-hand file label. */
+  set label(s: string) {
+    this.file.content = ` ${s} `;
   }
 
   /** Highlight menu `i` (null clears). */
