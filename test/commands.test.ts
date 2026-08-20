@@ -1,7 +1,7 @@
 import { strict as assert } from "node:assert";
 import { test, describe } from "node:test";
 import type { Command } from "../src/core/commands.ts";
-import { COMMANDS, matchKey, menuBar, reduceCommand, toChord } from "../src/core/commands.ts";
+import { COMMANDS, matchKey, reduceCommand, toChord } from "../src/core/commands.ts";
 import { createViewport, jumpToLine, moveCursor } from "../src/core/viewport.ts";
 
 const V = () => createViewport(0, 0, 80, 10);
@@ -122,16 +122,6 @@ describe("commands", () => {
       for (const c of COMMANDS) {
         assert.doesNotThrow(() => reduceCommand(c.id, V(), TOTAL));
       }
-    });
-  });
-
-  describe("menuBar", () => {
-    test("lists categories in first-seen order", () => {
-      assert.equal(menuBar(), "File   View   Navigate   Edit   Comments   Tools   Help");
-    });
-
-    test("empty catalog yields empty menu", () => {
-      assert.equal(menuBar([]), "");
     });
   });
 });

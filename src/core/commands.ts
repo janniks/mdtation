@@ -131,16 +131,3 @@ export function reduceCommand(id: string | undefined, vp: Viewport, total: numbe
   }
   return (HANDLERS as Record<string, CmdHandler>)[id]?.(vp, total) ?? {};
 }
-
-/** One menu-bar line, e.g. "File   View   Navigate   Edit   Notes   Tools   Help". */
-export function menuBar(commands: readonly Command[] = COMMANDS): string {
-  const seen = new Set<string>();
-  const cats: string[] = [];
-  for (const c of commands) {
-    if (!seen.has(c.category)) {
-      seen.add(c.category);
-      cats.push(c.category);
-    }
-  }
-  return cats.join("   ");
-}
