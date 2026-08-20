@@ -196,8 +196,7 @@ function bodyFor(
   const block = codeBlockAt(doc, line);
   if (block) {
     if (line === block.startLine || line === block.endLine) {
-      const rule = line === block.startLine && block.lang ? `${RULE} ${block.lang}` : RULE;
-      return paint(SGR.dim, markup ? raw : rule);
+      return paint(SGR.dim, markup ? raw : RULE);
     }
     return color && opts.syntax !== false ? highlight(raw, block.lang ?? null) : raw;
   }
@@ -263,7 +262,7 @@ function styleTable(row: string, opts: RenderOptions): string {
         : row.replace(/\|/g, paint(SGR.gray, "|"));
   }
   if (isSepRow(row)) {
-    return paint(SGR.dim, "\u2500".repeat(displayWidth(row)));
+    return paint(SGR.dim, "\u2500".repeat(displayWidth(row) - 4));
   }
   return row.slice(2, -2).replace(/ \| /g, ` ${paint(SGR.dim, "\u2502")} `);
 }

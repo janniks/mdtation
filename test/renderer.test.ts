@@ -82,9 +82,9 @@ describe("hide markup", () => {
     assert.deepEqual(out, ["  Hi", "  b b i i s c t"]);
   });
 
-  test("fence rows become rules with the language label", () => {
+  test("fence rows become plain rules", () => {
     const out = show("```ts\nconst x = 1\n```", { markup: false });
-    assert.deepEqual(out, [`  ${rule} ts`, "  const x = 1", `  ${rule}`]);
+    assert.deepEqual(out, [`  ${rule}`, "  const x = 1", `  ${rule}`]);
   });
 
   test("thematic breaks are rules; frontmatter opens blank and closes full-width", () => {
@@ -117,7 +117,7 @@ describe("hide markup", () => {
 
   test("tables drop edge pipes, use │ between cells and a rule for the separator", () => {
     const out = show("| a | bb |\n| - | - |\n| c | d |", { markup: false });
-    assert.deepEqual(out, ["  a │ bb", `  ${"─".repeat(10)}`, "  c │ d "]);
+    assert.deepEqual(out, ["  a │ bb", `  ${"─".repeat(6)}`, "  c │ d "]);
   });
 
   test("ragged source tables are re-laid from their cells in both modes", () => {

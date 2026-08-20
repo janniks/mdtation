@@ -34,6 +34,7 @@ export const COMMANDS = [
   { id: "viewCaret", title: "Next caret glyph", category: "View", keys: [], group: "Gutter" },
   { id: "viewMark", title: "Next comment glyph", category: "View", keys: [], group: "Gutter" },
   { id: "viewCrumb", title: "Show section crumb", category: "View", keys: [], group: "Section" },
+  { id: "viewMouse", title: "Capture mouse", category: "View", keys: ["shift+m"], group: "Mouse" },
   {
     id: "viewArchive",
     title: "Archive comments on copy",
@@ -81,6 +82,7 @@ export const HANDLERS: { readonly [K in CommandId]: CmdHandler } = {
   viewMark: () => ({}),
   viewCrumb: () => ({}),
   viewArchive: () => ({}),
+  viewMouse: () => ({}),
   editor: () => ({}),
   settings: () => ({}),
   toggle: () => ({}),

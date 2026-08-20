@@ -59,9 +59,9 @@ describe("commands", () => {
       assert.equal(matchKey("y"), undefined);
     });
 
-    test("view toggles have no chord", () => {
+    test("render toggles have no chord (menu, palette, help only)", () => {
       for (const c of COMMANDS) {
-        if (c.category === "View") assert.deepEqual(c.keys, []);
+        if (c.category === "View" && c.group === "Render") assert.deepEqual(c.keys, []);
       }
     });
 

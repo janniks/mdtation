@@ -90,6 +90,7 @@ export class TuiShell {
       viewFront: false,
       viewCrumb: true,
       viewArchive: false,
+      viewMouse: true,
     };
     this.view = clampViewport(this.fit(), doc.lines.length);
     this.bar = new MenuBar(renderer, this.spec, basename(file), {
@@ -385,6 +386,12 @@ export class TuiShell {
       case "viewEmphasis":
       case "viewSyntax":
       case "viewMarkup":
+      case "viewMouse":
+        // Off: the terminal keeps the mouse, so its native select-to-copy works; `M` turns it back on.
+        this.on.viewMouse = !this.on.viewMouse;
+        this.renderer.useMouse = this.on.viewMouse;
+        this.draw(this.on.viewMouse ? "MOUSE ON" : "MOUSE OFF · select freely · M to re-enable");
+        return;
       case "viewFront":
       case "viewCrumb":
       case "viewArchive":
