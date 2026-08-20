@@ -46,3 +46,32 @@ Unchecked entries are swept on occasional cleanup passes.
     - alternative: wire load-on-startup now (harmless no-op until modal lands).
     - why: avoid wiring integration against a deferred UI; the load/save seam is tested.
     - verdict: ?
+
+## 2026-08-19 — mdtation overnight polish
+
+- [ ] Tables: narrow-collapse vs overflow on panes narrower than the table.
+    - choice: let the row overflow as a single unwrapped frame line (current
+      behavior) rather than truncate or drop columns.
+    - alternative: collapse by abbreviating the widest columns on narrow panes (true
+      "narrow-collapse" from the spec).
+    - why: overflow is lossless and trivial; collapsing discards data and needs a
+      column-priority policy (which columns matter?) — defer until a real need.
+    - verdict: ?
+
+- [ ] Mouse handler unit test coverage.
+    - choice: no pure seam — `onMouseScroll`/`onMouseDown` live in `src/ui/tui.ts` and
+      translate `MouseEvent` -> `Viewport.moveCursor` inline, bound to the OpenTUI
+      `TextBufferRenderable`.
+    - alternative: extract `scrollLines(delta): number` (sign x 3) + `rowFromClick(y)`
+      into `src/core/nav.ts` and unit-test the math.
+    - why: the extract is ~3 lines; the wiring costs more than the logic is worth
+      (P02/P03). Mouse is tsc-verified + validated live in `w2:pC`.
+    - verdict: ?
+
+- [ ] Renderer `tableLayout` export.
+    - choice: `tableLayout` is `export`ed so `renderer-tables.test.ts` can unit-test column
+      packing without a `Document`/`Viewport` fixture.
+    - alternative: keep it module-private and only test through `render`.
+    - why: table packing is the interesting pure logic; testing it directly keeps the
+      render-golden assertions focused on guttering/gutter color.
+    - verdict: ?

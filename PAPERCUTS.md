@@ -30,3 +30,23 @@ Append-only detours / surprises that cost more than one attempt.
   `✖ test failed` + `test at <file>:1:1` when a test file fails to LOAD (e.g.
   missing `node:test` imports), NOT when an assertion fails. Read the full runner
   output (`tail`) to distinguish load-errors from assertion failures.
+- 2026-08-19 — `hardWrap` emoji panic was a UTF-16 off-by-unit, not by-code-point:
+  `text.slice(i, i+width)` over UTF-16 code units split a surrogate pair / wide CJK
+  char mid-sequence -> lone surrogate -> `Buffer.from`/OpenTUI UTF-8 encoder throws.
+  The fix (`wrapLine` in `src/core/unicode.ts`) breaks only on code-point boundaries
+  using per-code-point display widths (CJK=2, emoji pair=2, ZWJ/combining/VS=0); the
+  old `hardWrap` was deleted so any stale caller fails to compile. Repro: a line of
+  repeated emoji crashed before the fix.
+- 2026-08-19 — Table column-width "paradox": `displayWidth(emoji)=6` yet `sig` got 4
+  trailing spaces. The 4th space is NOT pad — it is the ` | ` join/close separator
+  in `| ${parts.join(" | ")} |`. `pad = widths[c] - displayWidth(cell)`; the join adds
+  one leading space per separator. Misread once; count via `JSON.stringify(out)`,
+  not by eye over monospace wide chars.
+- 2026-08-19 — `herdr pane run <pane> "<fullscreen-tui>" | head` SIGPIPE-kills the
+  launched TUI: closing the pipe tears down herdr before bun attaches to the pane's
+  PTY. Launch with `timeout N herdr pane run <pane> "bun src/bin.ts <file>"` (no pipe);
+  verify with `pgrep -af "bun src/bin.ts"`.
+- 2026-08-19 — `herdr pane read` of a wide-char/emoji pane mangles glyphs
+  (`\u2705`->`\uFFFD`, CJK cursor drift, ZWJ seqs split across the captured cursor)
+  but is NOT a crash — the TUI kept rendering and `Buffer.from(frame,"utf-8")`
+  round-trips cleanly. The unit tests assert the real byte-level invariant.

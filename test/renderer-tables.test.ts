@@ -77,6 +77,24 @@ describe("renderer tables", () => {
     assert.ok(frame[2]!.startsWith("  | "), frame[2]);
     assert.ok(frame[2]!.includes("x".repeat(60)));
   });
+
+  test("renders complex ZWJ family sequences without a lone-surrogate crash", () => {
+    const families = [
+      String.fromCodePoint(0x1f468, 0x200d, 0x1f469, 0x200d, 0x1f467), // 👨‍👩‍👧
+      String.fromCodePoint(0x1f469, 0x200d, 0x1f469, 0x200d, 0x1f467, 0x200d, 0x1f466), // 👩‍👩‍👧‍👦
+      String.fromCodePoint(0x1f9d1, 0x200d, 0x1f91d, 0x200d, 0x1f9d1), // 🧑‍🤝‍🧑
+    ];
+    for (const emoji of families) {
+      const md = `| n | sig |\n| --- | --- |\n| x | ${emoji} |\n`;
+      const doc = parseDocument(md);
+      const frame = render(doc, createViewport(0, 99, 80, 3));
+      Buffer.from(frame.join("\n"), "utf-8"); // no lone surrogate
+      assert.ok(
+        frame.some((l) => l.includes(emoji)),
+        `missing emoji in ${emoji}`,
+      );
+    }
+  });
 });
 
 describe("tableLayout (pure unit)", () => {
