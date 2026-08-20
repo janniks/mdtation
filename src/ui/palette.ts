@@ -1,4 +1,5 @@
-/** `/` command palette: input on top, filtered `COMMANDS` below, ↵ runs the selected id. */
+/** `/` command palette: input on top, filtered items (default `COMMANDS`) below, ↵ runs the selected id.
+ * With `stay`, the palette stays open and re-reads `items` after each run (settings mode). */
 import { BoxRenderable, InputRenderable, StyledText, TextRenderable, bg, dim } from "@opentui/core";
 import type { CliRenderer, KeyEvent, MouseEvent, TextChunk } from "@opentui/core";
 import { COMMANDS } from "../core/commands.ts";
@@ -12,18 +13,24 @@ export class Palette implements Overlay {
   readonly node: BoxRenderable;
   private input: InputRenderable;
   private list: TextRenderable;
-  private hits: Command[] = [...COMMANDS];
+  private hits: Command[];
   private sel = 0;
   private inner: number;
   private max: number;
+  private readonly items: () => readonly Command[];
+  private readonly stay: boolean;
 
   constructor(
     renderer: CliRenderer,
     private run: (id: string) => void,
     private close: () => void,
+    opts: { title?: string; items?: () => readonly Command[]; stay?: boolean } = {},
   ) {
+    this.items = opts.items ?? (() => COMMANDS);
+    this.stay = opts.stay ?? false;
+    this.hits = [...this.items()];
     this.inner = Math.min(48, Math.max(24, renderer.width - 4));
-    this.max = Math.max(1, Math.min(COMMANDS.length, renderer.height - 5));
+    this.max = Math.max(1, Math.min(this.hits.length, renderer.height - 5));
     const height = this.max + 4;
     this.node = new BoxRenderable(renderer, {
       position: "absolute",
@@ -35,18 +42,18 @@ export class Palette implements Overlay {
       border: true,
       borderColor: "#7aa2f7",
       backgroundColor: "#1a1b26",
-      title: " Command ",
+      title: ` ${opts.title ?? "Command"} `,
       titleAlignment: "center",
       flexDirection: "column",
     });
     this.input = new InputRenderable(renderer, {
       width: "100%",
-      placeholder: "type a command…",
+      placeholder: this.stay ? "↵ cycles the value" : "type a command…",
       backgroundColor: "#1a1b26",
       focusedBackgroundColor: "#1a1b26",
     });
     this.input.on("input", () => {
-      this.hits = filter(COMMANDS, this.input.value);
+      this.hits = filter(this.items(), this.input.value);
       this.sel = 0;
       this.draw();
     });
@@ -86,6 +93,12 @@ export class Palette implements Overlay {
     const from = Math.max(0, Math.min(this.sel - this.max + 1, this.hits.length - this.max));
     const c = this.hits[from + row];
     if (!c) return;
+    if (this.stay) {
+      this.run(c.id);
+      this.hits = filter(this.items(), this.input.value);
+      this.draw();
+      return;
+    }
     this.close();
     this.run(c.id);
   }

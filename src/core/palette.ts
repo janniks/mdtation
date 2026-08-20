@@ -1,5 +1,6 @@
 /** Pure models behind the help dialog and the command palette. Both derive from `COMMANDS`. */
 import type { Command } from "./commands.ts";
+import { hint as label } from "./menu.ts";
 
 /** Rank commands for `query`: title prefix > title substring > id/category substring. Empty query keeps catalog order. */
 export function filter(commands: readonly Command[], query: string): Command[] {
@@ -19,12 +20,9 @@ export function filter(commands: readonly Command[], query: string): Command[] {
     .map((x) => x.c);
 }
 
-/** Human label for the first chord: `ctrl+f` -> `^F`, `shift+g` -> `G`, else verbatim. */
+/** Human label for the first chord (see `menu.hint`). */
 export function hint(keys: readonly string[]): string {
-  const k = keys[0] ?? "";
-  if (k.startsWith("ctrl+")) return `^${k.slice(5).toUpperCase()}`;
-  if (k.startsWith("shift+")) return k.slice(6).toUpperCase();
-  return k;
+  return label(keys[0]);
 }
 
 export interface Row {

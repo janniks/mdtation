@@ -113,7 +113,7 @@ export class Dropdown implements Overlay {
       top: 1,
       left: Math.max(0, Math.min(spec.left, renderer.width - inner - 2)),
       width: inner + 2,
-      height: menu.entries.length + 2,
+      height: menu.entries.length + menu.entries.filter((e) => e.gap).length + 2,
       zIndex: 40,
       border: true,
       borderColor: THEME.border,
@@ -121,6 +121,16 @@ export class Dropdown implements Overlay {
       flexDirection: "column",
     });
     menu.entries.forEach((e, i) => {
+      if (e.gap) {
+        this.node.add(
+          new TextRenderable(renderer, {
+            content: "─".repeat(inner),
+            fg: THEME.muted,
+            selectable: false,
+            wrapMode: "none",
+          }),
+        );
+      }
       const row = new BoxRenderable(renderer, {
         height: 1,
         width: inner,

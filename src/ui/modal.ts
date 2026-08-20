@@ -6,6 +6,8 @@ import type { Overlay } from "./overlay.ts";
 export interface ModalOpts {
   readonly title: string;
   readonly quote: string;
+  /** Initial input text (for edits). */
+  readonly value?: string;
   readonly submit: (text: string) => void;
   readonly close: () => void;
 }
@@ -43,6 +45,9 @@ export class Modal implements Overlay {
       backgroundColor: "#303030",
       focusedBackgroundColor: "#303030",
     });
+    if (opts.value) {
+      this.input.value = opts.value;
+    }
     this.node.add(this.input);
     this.node.add(
       new TextRenderable(renderer, { content: "↵ save · esc cancel", fg: "#808080", width: inner }),

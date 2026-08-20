@@ -127,7 +127,7 @@ describe("commands", () => {
 
   describe("menuBar", () => {
     test("lists categories in first-seen order", () => {
-      assert.equal(menuBar(), "File   View   Navigate   Edit   Notes   Tools   Help");
+      assert.equal(menuBar(), "File   View   Navigate   Edit   Comments   Tools   Help");
     });
 
     test("empty catalog yields empty menu", () => {

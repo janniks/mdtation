@@ -12,6 +12,8 @@ export interface Entry {
   readonly hint: string;
   /** Set for toggles: rendered as `[x]` / `[ ]` before the title. */
   readonly checked?: boolean;
+  /** Draw a separator above: the command's `group` changed. */
+  readonly gap?: boolean;
 }
 
 export interface Menu {
@@ -38,7 +40,7 @@ const NAMES: Readonly<Record<string, string>> = {
   backspace: "⌫",
 };
 
-/** `ctrl+d` -> `^D`, `shift+g` -> `G`, `down` -> `↓`, `/` -> `/`. */
+/** `ctrl+d` -> `^d`, `shift+g` -> `G`, `down` -> `↓`, `/` -> `/`. Letters stay lowercase unless shift is part of the chord. */
 export function hint(chord: string | undefined): string {
   if (!chord) {
     return "";
@@ -48,7 +50,7 @@ export function hint(chord: string | undefined): string {
   const key = NAMES[name] ?? (name.length === 1 ? name : name[0]!.toUpperCase() + name.slice(1));
   let out = mods.includes("shift") ? key.toUpperCase() : key;
   if (mods.includes("alt")) out = `M-${out}`;
-  if (mods.includes("ctrl")) out = `^${out.toUpperCase()}`;
+  if (mods.includes("ctrl")) out = `^${out}`;
   return out;
 }
 
@@ -59,6 +61,7 @@ export function menus(
   state: (id: string) => boolean | undefined = () => undefined,
 ): Menu[] {
   const out: Menu[] = [];
+  const groups = new Map<string, string | undefined>();
   for (const c of commands) {
     const entry: Entry = { id: c.id, title: c.title, hint: hint(c.keys[0]) };
     const checked = state(c.id);
@@ -66,6 +69,10 @@ export function menus(
       (entry as { checked?: boolean }).checked = checked;
     }
     const menu = out.find((m) => m.label === c.category);
+    if (menu && groups.get(c.category) !== c.group) {
+      (entry as { gap?: boolean }).gap = true;
+    }
+    groups.set(c.category, c.group);
     if (menu) {
       (menu.entries as Entry[]).push(entry);
     } else {

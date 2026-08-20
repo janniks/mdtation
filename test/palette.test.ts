@@ -8,8 +8,8 @@ const CAT = [
   { id: "pageDown", title: "Page Down", category: "Navigate", keys: ["ctrl+d"] },
   { id: "top", title: "Top", category: "Navigate", keys: ["g"] },
   { id: "bottom", title: "Bottom", category: "Navigate", keys: ["shift+g"] },
-  { id: "comment", title: "New Comment", category: "Notes", keys: ["c"] },
-  { id: "copy", title: "Copy Reference", category: "Notes", keys: ["shift+c"] },
+  { id: "comment", title: "New Comment", category: "Comments", keys: ["c"] },
+  { id: "copy", title: "Copy Reference", category: "Comments", keys: ["shift+c"] },
 ];
 const ids = (q: string) => filter(CAT, q).map((c) => c.id);
 
@@ -24,7 +24,7 @@ describe("palette", () => {
 
   test("ranks title prefix over substring over id/category", () => {
     assert.deepEqual(ids("p"), ["pageDown", "top", "copy"]);
-    assert.deepEqual(ids("notes"), ["comment", "copy"]);
+    assert.deepEqual(ids("comments"), ["comment", "copy"]);
     assert.deepEqual(ids("pagedown"), ["pageDown"]);
   });
 
@@ -34,10 +34,10 @@ describe("palette", () => {
   });
 
   test("hint labels the first chord", () => {
-    assert.equal(hint(["ctrl+d"]), "^D");
+    assert.equal(hint(["ctrl+d"]), "^d");
     assert.equal(hint(["shift+g"]), "G");
     assert.equal(hint(["q", "ctrl+c"]), "q");
-    assert.equal(hint(["down"]), "down");
+    assert.equal(hint(["down"]), "↓");
     assert.equal(hint([]), "");
   });
 
@@ -45,7 +45,7 @@ describe("palette", () => {
     const r = rows(CAT);
     assert.deepEqual(
       r.map((x) => x.category),
-      ["File", "Navigate", "Notes"],
+      ["File", "Navigate", "Comments"],
     );
     assert.deepEqual(r[0]?.items, [{ title: "Quit", hint: "q" }]);
     assert.deepEqual(r[1]?.items.at(-1), { title: "Bottom", hint: "G" });

@@ -15,30 +15,44 @@ export interface Command {
   readonly title: string;
   readonly category: string;
   readonly keys: readonly string[];
+  /** Optional section inside the menu; a separator is drawn when it changes. */
+  readonly group?: string;
 }
 
 /** The canonical command table. First-match-wins on key dispatch. Declaration
  * order also drives the menu-bar category order (File, View, Navigate, Edit,
- * Notes, Tools, Help — mirrors the spec's menu bar). View toggles have no
+ * Comments, Tools, Help — mirrors the spec's menu bar). View toggles have no
  * chords on purpose: they are reached via the menu bar, palette, or help. */
 export const COMMANDS = [
   { id: "quit", title: "Quit", category: "File", keys: ["q", "ctrl+c"] },
   { id: "save", title: "Save", category: "File", keys: ["ctrl+s"] },
-  { id: "viewColor", title: "Color", category: "View", keys: [] },
-  { id: "viewEmphasis", title: "Color bold/italic", category: "View", keys: [] },
-  { id: "viewSyntax", title: "Syntax highlight", category: "View", keys: [] },
+  { id: "viewColor", title: "Color", category: "View", keys: [], group: "Render" },
+  { id: "viewEmphasis", title: "Color bold/italic", category: "View", keys: [], group: "Render" },
+  { id: "viewSyntax", title: "Syntax highlight", category: "View", keys: [], group: "Render" },
+  { id: "viewMarkup", title: "Hide markup", category: "View", keys: [], group: "Render" },
+  { id: "viewCaret", title: "Next caret glyph", category: "View", keys: [], group: "Gutter" },
+  { id: "viewCrumb", title: "Show section crumb", category: "View", keys: [], group: "Section" },
+  {
+    id: "viewArchive",
+    title: "Archive comments on copy",
+    category: "View",
+    keys: [],
+    group: "Comments",
+  },
   { id: "cursorDown", title: "Cursor Down", category: "Navigate", keys: ["j", "down"] },
   { id: "cursorUp", title: "Cursor Up", category: "Navigate", keys: ["k", "up"] },
   { id: "pageDown", title: "Page Down", category: "Navigate", keys: ["ctrl+d", "pagedown"] },
   { id: "pageUp", title: "Page Up", category: "Navigate", keys: ["ctrl+u", "pageup"] },
   { id: "top", title: "Top", category: "Navigate", keys: ["g"] },
   { id: "bottom", title: "Bottom", category: "Navigate", keys: ["shift+g"] },
-  { id: "toggle", title: "Toggle Checkbox", category: "Edit", keys: ["x", "space"] },
-  { id: "comment", title: "New Comment", category: "Notes", keys: ["c"] },
-  { id: "copy", title: "Copy Reference", category: "Notes", keys: ["shift+c"] },
-  { id: "prevComment", title: "Previous Comment", category: "Notes", keys: ["["] },
-  { id: "nextComment", title: "Next Comment", category: "Notes", keys: ["]"] },
+  { id: "toggle", title: "Toggle / Edit", category: "Edit", keys: ["x", "space"] },
+  { id: "comment", title: "New Comment", category: "Comments", keys: ["c"] },
+  { id: "copy", title: "Copy Reference", category: "Comments", keys: ["shift+c"] },
+  { id: "editor", title: "Show in editor", category: "Comments", keys: [] },
+  { id: "prevComment", title: "Previous Comment", category: "Comments", keys: ["["] },
+  { id: "nextComment", title: "Next Comment", category: "Comments", keys: ["]"] },
   { id: "palette", title: "Command Palette", category: "Tools", keys: ["/"] },
+  { id: "settings", title: "Settings", category: "Tools", keys: [] },
   { id: "help", title: "Help", category: "Help", keys: ["?"] },
 ] as const satisfies readonly Command[];
 
@@ -59,6 +73,12 @@ export const HANDLERS: { readonly [K in CommandId]: CmdHandler } = {
   viewColor: () => ({}),
   viewEmphasis: () => ({}),
   viewSyntax: () => ({}),
+  viewMarkup: () => ({}),
+  viewCaret: () => ({}),
+  viewCrumb: () => ({}),
+  viewArchive: () => ({}),
+  editor: () => ({}),
+  settings: () => ({}),
   toggle: () => ({}),
   palette: () => ({}),
   comment: () => ({}),

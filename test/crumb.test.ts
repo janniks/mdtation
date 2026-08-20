@@ -30,3 +30,9 @@ describe("crumb", () => {
     assert.equal(crumb(d, 2), "Top");
   });
 });
+
+test("crumb depth keeps the innermost parts", () => {
+  const d = parseDocument("# A\n## B\n### C\nx\n");
+  assert.equal(crumb(d, 3, 2), "B › C");
+  assert.equal(crumb(d, 3, 1), "C");
+});

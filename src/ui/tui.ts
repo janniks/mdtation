@@ -10,8 +10,11 @@
  */
 import { createCliRenderer, TextRenderable } from "@opentui/core";
 import type { CliRenderer, KeyEvent, MouseEvent } from "@opentui/core";
+import { spawnSync } from "node:child_process";
+import { writeFileSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
-import { basename } from "node:path";
+import { tmpdir } from "node:os";
+import { basename, join } from "node:path";
 import { styled } from "./styled.ts";
 import type { Overlay } from "./overlay.ts";
 import { Crumb, Dropdown, MenuBar, StatusBar } from "./chrome.ts";
@@ -20,28 +23,32 @@ import { Palette } from "./palette.ts";
 import { Modal } from "./modal.ts";
 import { copy } from "./clipboard.ts";
 import { CommentStore, copyFormat } from "../core/comment.ts";
-import { create, markers, storePath } from "../core/comments.ts";
+import { create, markers } from "../core/comments.ts";
+import { load, save } from "../core/store.ts";
+import { report } from "../core/report.ts";
+import { field, set } from "../core/front.ts";
+import { cycle, DEFAULTS, rows as settings, type Values } from "../core/settings.ts";
 import { nextComment, prevComment } from "../core/nav.ts";
 import { parseDocument, type Document } from "../core/document.ts";
 import { box, toggle } from "../core/edit.ts";
 import { displayWidth } from "../core/unicode.ts";
 import { crumb } from "../core/crumb.ts";
-import { loadConfig, type View } from "../core/config.ts";
+import { loadConfig } from "../core/config.ts";
 import { menus, specs, step } from "../core/menu.ts";
 import { GUTTER_WIDTH, render as renderFrame, statusBar } from "../core/renderer.ts";
-import { clampViewport, createViewport, jumpToLine, pan, type Viewport } from "../core/viewport.ts";
+import {
+  clampViewport,
+  createViewport,
+  jumpToLine,
+  moveCursor,
+  type Viewport,
+} from "../core/viewport.ts";
 import { COMMANDS, matchKey, reduceCommand, toChord, type CommandId } from "../core/commands.ts";
 
-/** Rows of chrome above the body (menu bar + breadcrumb). */
-const HEADER = 2;
 /** Rows of chrome below the body (status bar). */
 const FOOTER = 1;
-/** View-menu command -> the flag it flips. */
-const VIEW: Partial<Record<CommandId, keyof View>> = {
-  viewColor: "color",
-  viewEmphasis: "emphasis",
-  viewSyntax: "syntax",
-};
+/** Cursor glyphs cycled by `View › Next caret glyph`. */
+const CARETS = [">", "+", "▶", "›", "●"];
 
 export class TuiShell {
   readonly renderer: CliRenderer;
@@ -53,8 +60,11 @@ export class TuiShell {
   private readonly file: string;
   overlay: Overlay | null = null;
   private readonly spec = specs(menus(COMMANDS));
-  /** View toggles, seeded from `mdtation.json`; flips are session-only. */
-  private flags: View = loadConfig(process.cwd()).view;
+  /** View-menu toggles keyed by command id, seeded from `mdtation.json`; flips are session-only. */
+  private on: Record<string, boolean>;
+  /** Settings palette values (scroll margin, beta flags). */
+  private prefs: Values = DEFAULTS;
+  private glyph = 0;
   private readonly bar: MenuBar;
   private readonly crumb: Crumb;
   private readonly text: TextRenderable;
@@ -68,6 +78,15 @@ export class TuiShell {
     this.doc = doc;
     this.file = file;
     this.store = store;
+    const cfg = loadConfig(process.cwd()).view;
+    this.on = {
+      viewColor: cfg.color,
+      viewEmphasis: cfg.emphasis,
+      viewSyntax: cfg.syntax,
+      viewMarkup: false,
+      viewCrumb: true,
+      viewArchive: false,
+    };
     this.view = clampViewport(this.fit(), doc.lines.length);
     this.bar = new MenuBar(renderer, this.spec, basename(file), {
       hover: (i) => this.cur >= 0 && this.cur !== i && this.menuOpen(i),
@@ -102,8 +121,15 @@ export class TuiShell {
 
   private fit(): Viewport {
     const width = this.renderer.width || 80;
-    const height = Math.max(1, (this.renderer.height || 24) - HEADER - FOOTER);
-    return createViewport(this.view?.offset ?? 0, this.view?.cursor ?? 0, width, height);
+    const header = this.on.viewCrumb ? 2 : 1;
+    const height = Math.max(1, (this.renderer.height || 24) - header - FOOTER);
+    return createViewport(
+      this.view?.offset ?? 0,
+      this.view?.cursor ?? 0,
+      width,
+      height,
+      Number(this.prefs.margin),
+    );
   }
 
   /** Move the cursor to `line` (clamped, scrolled on-screen) and redraw. */
@@ -134,10 +160,7 @@ export class TuiShell {
 
   /** Live menu model: View entries carry their current check state. */
   private menus() {
-    return menus(COMMANDS, (id) => {
-      const k = VIEW[id as CommandId];
-      return k && this.flags[k];
-    });
+    return menus(COMMANDS, (id) => this.on[id]);
   }
 
   private menuOpen(i: number): void {
@@ -155,13 +178,13 @@ export class TuiShell {
     this.bar.active = i;
   }
 
-  /** Wheel pans the window; the cursor is dragged along so it stays visible. */
+  /** Wheel moves the cursor; the window follows once the cursor hits the scroll margin. */
   private wheel(e: MouseEvent): void {
     const dir = e.scroll?.direction;
     if (dir !== "up" && dir !== "down") {
       return;
     }
-    this.view = pan(this.view, dir === "down" ? 3 : -3, this.doc.lines.length);
+    this.view = moveCursor(this.view, dir === "down" ? 3 : -3, this.doc.lines.length);
     this.draw();
   }
 
@@ -179,23 +202,58 @@ export class TuiShell {
     const b = box(this.doc.lines[line] ?? "");
     const col = e.x - this.text.x - GUTTER_WIDTH;
     const left = b ? displayWidth(this.doc.lines[line]!.slice(0, b.at)) : -1;
-    if (b && col >= left && col <= left + 2) {
+    const f = this.prefs.front === "on" ? field(this.doc.lines, line) : null;
+    if ((b && col >= left && col <= left + 2) || (f && col > f.key.length)) {
       this.toggle();
       return;
     }
     this.draw();
   }
 
-  /** Flip the task box on the cursor line and mark the document dirty. */
+  /** Flip the task box on the cursor line, or edit a frontmatter field there; marks the document dirty. */
   private toggle(): void {
-    const text = toggle(this.doc.text, this.view.cursor);
+    const line = this.view.cursor;
+    const f = this.prefs.front === "on" ? field(this.doc.lines, line) : null;
+    if (f) {
+      this.open(
+        new Modal(this.renderer, {
+          title: `Edit ${f.key}`,
+          quote: this.doc.lines[line] ?? "",
+          value: f.value,
+          submit: (value) => this.edit(set(this.doc.text, line, value)),
+          close: () => this.close(),
+        }),
+      );
+      return;
+    }
+    this.edit(toggle(this.doc.text, line));
+  }
+
+  /** Replace the document text (null = nothing editable here). */
+  private edit(text: string | null): void {
     if (text === null) {
-      this.draw("NO CHECKBOX");
+      this.draw("NOTHING TO EDIT");
       return;
     }
     this.doc = parseDocument(text);
     this.dirty = true;
     this.draw();
+  }
+
+  /** Write all comments (with provenance) to a temp file and open it in `$EDITOR`. */
+  private editor(): void {
+    const path = join(tmpdir(), "mdtation-comments.md");
+    writeFileSync(path, report(this.store, this.doc, this.file));
+    this.renderer.suspend();
+    spawnSync(process.env.EDITOR ?? "vi", [path], { stdio: "inherit" });
+    this.renderer.resume();
+    this.draw();
+  }
+
+  private persist(): void {
+    if (this.file) {
+      void save(this.file, this.store);
+    }
   }
 
   private save(): void {
@@ -209,9 +267,17 @@ export class TuiShell {
   draw(mode = this.dirty ? "UNSAVED" : "VIEW"): void {
     const marks = markers(this.store, this.doc);
     this.bar.label = this.dirty ? `${basename(this.file)} ●` : basename(this.file);
-    this.crumb.text = crumb(this.doc, this.view.cursor);
+    this.crumb.node.visible = this.on.viewCrumb === true;
+    this.crumb.text = crumb(this.doc, this.view.cursor, Number(this.prefs.crumb) || Infinity);
     this.text.content = styled(
-      renderFrame(this.doc, this.view, { ...this.flags, markers: marks }).join("\n"),
+      renderFrame(this.doc, this.view, {
+        color: this.on.viewColor,
+        emphasis: this.on.viewEmphasis,
+        syntax: this.on.viewSyntax,
+        markup: !this.on.viewMarkup,
+        caret: CARETS[this.glyph],
+        markers: marks,
+      }).join("\n"),
     );
     this.status.update(statusBar(this.doc, this.view, { markers: marks }), mode);
     this.renderer.requestRender();
@@ -226,9 +292,7 @@ export class TuiShell {
         quote: this.doc.lines[line] ?? "",
         submit: (text) => {
           this.store.add(create(this.doc, line, text));
-          if (this.file) {
-            void this.store.save(storePath(this.file));
-          }
+          this.persist();
           this.close();
           this.draw("SAVED");
         },
@@ -237,16 +301,23 @@ export class TuiShell {
     );
   }
 
-  /** Copy the structured reference of the comment under the cursor (OSC-52 + file). */
+  /** Copy the structured reference of the comment under the cursor (OSC-52 + file).
+   * With `View › Archive comments on copy`, the comment is archived (recoverable via `--restore`). */
   private copy(): void {
     const c = this.store
-      .all()
+      .live()
       .find((x) => this.store.resolve(x.anchor, this.doc)?.startLine === this.view.cursor);
     if (!c) {
       this.draw("NO COMMENT HERE");
       return;
     }
-    copy(this.file || "mdtation.md", copyFormat(c, this.doc));
+    copy(copyFormat(c, this.doc));
+    if (this.on.viewArchive) {
+      this.store.archive(c.id);
+      this.persist();
+      this.draw("COPIED · ARCHIVED");
+      return;
+    }
     this.draw("COPIED");
   }
 
@@ -272,6 +343,26 @@ export class TuiShell {
       case "copy":
         this.copy();
         return;
+      case "editor":
+        this.editor();
+        return;
+      case "settings":
+        this.open(
+          new Palette(
+            this.renderer,
+            (x) => {
+              this.prefs = cycle(this.prefs, x.slice(4));
+              this.resize();
+            },
+            () => this.close(),
+            { title: "Settings", items: () => settings(this.prefs), stay: true },
+          ),
+        );
+        return;
+      case "viewCaret":
+        this.glyph = (this.glyph + 1) % CARETS.length;
+        this.draw();
+        return;
       case "toggle":
         this.toggle();
         return;
@@ -280,16 +371,18 @@ export class TuiShell {
         return;
       case "viewColor":
       case "viewEmphasis":
-      case "viewSyntax": {
-        const k = VIEW[id]!;
-        this.flags = { ...this.flags, [k]: !this.flags[k] };
+      case "viewSyntax":
+      case "viewMarkup":
+      case "viewCrumb":
+      case "viewArchive":
+        this.on[id] = !this.on[id];
+        this.view = clampViewport(this.fit(), total);
         this.draw();
         return;
-      }
       case "quit":
         if (this.dirty && !this.guard) {
           this.guard = true;
-          this.draw("UNSAVED · q again to discard · ^S saves");
+          this.draw("UNSAVED · q again to discard · ^s saves");
           return;
         }
         break;
@@ -345,6 +438,6 @@ export class TuiShell {
 
 /** Mount the fullscreen TUI for `doc`. `file` is shown in the menu bar. The shell runs until the user quits. */
 export async function runTui(doc: Document, file = ""): Promise<TuiShell> {
-  const store = file ? await CommentStore.load(storePath(file)) : new CommentStore();
+  const store = file ? await load(file) : new CommentStore();
   return new TuiShell(await createCliRenderer({ useMouse: true }), doc, file, store);
 }
