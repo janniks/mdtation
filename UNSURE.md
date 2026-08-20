@@ -118,3 +118,11 @@ Unchecked entries are swept on occasional cleanup passes.
     - alternative: sqlite (`bun:sqlite` is Bun-only, Node 22 has none without a native dep) or per-session files like hunk.
     - why: zero deps, one file to inspect or `--clear`, cwd-independent, no `.mdtation/` folder next to every markdown file.
     - verdict: ?
+
+## 2026-08-20 — Phase 8g archive
+
+- [ ] Archiving is a JSON `archived` flag on the comment record.
+    - choice: `Comment.archived?: boolean` in the same `comments.json`; `live()` filters it out of markers, nav, copy and the default report; `--archived` / `--restore <id,id>` reach the rest.
+    - alternative: sqlite, but `bun:sqlite` vs `node:sqlite` need two adapters and Node 22 lacks a stable one.
+    - why: one file, zero deps, and the `CommentStore` API stays the same if the backend is swapped later.
+    - verdict: ?

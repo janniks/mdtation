@@ -26,6 +26,8 @@ export interface Comment {
   readonly anchor: Anchor;
   readonly text: string;
   readonly createdAt: number;
+  /** Archived comments stay on disk but leave markers, nav, copy and the default report. */
+  readonly archived?: boolean;
 }
 
 export class CommentStore {
@@ -40,11 +42,28 @@ export class CommentStore {
   get(id: string): Comment | undefined {
     return this.comments.get(id);
   }
+  /** Every comment, archived included. */
   all(): readonly Comment[] {
     return [...this.comments.values()];
   }
+  /** Only comments that are not archived. */
+  live(): readonly Comment[] {
+    return this.all().filter((c) => !c.archived);
+  }
+  archive(id: string): boolean {
+    return this.flag(id, true);
+  }
+  restore(id: string): boolean {
+    return this.flag(id, false);
+  }
+  private flag(id: string, archived: boolean): boolean {
+    const c = this.comments.get(id);
+    if (!c) return false;
+    this.comments.set(id, { ...c, archived });
+    return true;
+  }
   byAnchor(anchor: Anchor): readonly Comment[] {
-    return [...this.comments.values()].filter((c) => sameAnchor(c.anchor, anchor));
+    return this.live().filter((c) => sameAnchor(c.anchor, anchor));
   }
   resolve(anchor: Anchor, doc: Document): Location | null {
     return resolveAnchor(anchor, doc);

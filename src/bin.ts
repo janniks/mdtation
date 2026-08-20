@@ -4,7 +4,8 @@ import { resolve } from "node:path";
 import { parseDocument, type Document } from "./core/document.ts";
 import { render as renderFrame } from "./core/renderer.ts";
 import { createViewport, DEFAULT_WIDTH } from "./core/viewport.ts";
-import { clear, home } from "./core/store.ts";
+import { clear, home, load, restore } from "./core/store.ts";
+import { report } from "./core/report.ts";
 
 runMain(
   defineCommand({
@@ -27,6 +28,15 @@ runMain(
       },
       clear: { type: "boolean", description: "Forget the comments saved for this file" },
       where: { type: "boolean", description: "Print the data dir holding comments.json" },
+      list: { type: "boolean", description: "Print the comments saved for this file and exit" },
+      archived: {
+        type: "boolean",
+        description: "Like --list, but include archived comments (marked in the provenance line)",
+      },
+      restore: {
+        type: "string",
+        description: "Restore archived comments by id (comma-separated) and exit",
+      },
     },
     async run({ args }) {
       const file = resolve(args.file);
@@ -38,6 +48,11 @@ runMain(
         console.error(`mdtation: cleared ${await clear(file)} comments for ${file}`);
         return;
       }
+      if (args.restore) {
+        const n = await restore(file, args.restore.split(",").filter(Boolean));
+        console.error(`mdtation: restored ${n} comments`);
+        return;
+      }
       let text: string;
       try {
         text = await readFile(file, "utf-8");
@@ -46,6 +61,10 @@ runMain(
         process.exit(1);
       }
       const doc = parseDocument(text);
+      if (args.list || args.archived) {
+        process.stdout.write(report(await load(file), doc, file, { archived: args.archived }));
+        return;
+      }
 
       if (!args.tui) {
         await stdoutRender(doc);

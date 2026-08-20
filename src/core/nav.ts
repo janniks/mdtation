@@ -8,14 +8,14 @@ import type { CommentStore } from "./comment.ts";
 import { jumpToLine } from "./viewport.ts";
 
 /**
- * Return sorted unique lines where any comment anchor resolves to within `doc`.
+ * Return sorted unique lines where any live comment anchor resolves to within `doc`.
  * Undefined lines are ignored. Duplicate lines (multiple comments on same line)
  * appear only once.
  */
 export function commentLines(store: CommentStore, doc: Document): readonly number[] {
   const lines = new Set<number>();
 
-  for (const c of store.all()) {
+  for (const c of store.live()) {
     const loc = store.resolve(c.anchor, doc);
     if (loc?.startLine !== undefined) {
       lines.add(loc.startLine);

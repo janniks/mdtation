@@ -29,6 +29,19 @@ describe("CommentStore", () => {
     assert.equal(s.remove("c1"), false);
   });
 
+  test("archive/restore flag without removing; live/byAnchor skip archived; JSON keeps flag", () => {
+    const s = new CommentStore();
+    s.add(heading(["title"], "note"));
+    assert.equal(s.archive("c1"), true);
+    assert.equal(s.archive("nope"), false);
+    assert.equal(s.all().length, 1);
+    assert.equal(s.live().length, 0);
+    assert.equal(s.byAnchor({ kind: "heading", slug: ["title"] }).length, 0);
+    assert.equal(CommentStore.fromJSON(s.toJSON()).get("c1")?.archived, true);
+    assert.equal(s.restore("c1"), true);
+    assert.equal(s.live().length, 1);
+  });
+
   test("byAnchor distinguishes heading vs line and path", () => {
     const s = new CommentStore();
     s.add(heading(["title", "sub"], "a", "h1"));

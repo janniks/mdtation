@@ -53,3 +53,19 @@ export async function clear(file: string): Promise<number> {
   await write(data);
   return n;
 }
+
+/** Archive `ids` for `file`; returns how many matched. */
+export async function archive(file: string, ids: readonly string[]): Promise<number> {
+  const store = await load(file);
+  const n = ids.filter((id) => store.archive(id)).length;
+  await save(file, store);
+  return n;
+}
+
+/** Restore archived `ids` for `file`; returns how many matched. */
+export async function restore(file: string, ids: readonly string[]): Promise<number> {
+  const store = await load(file);
+  const n = ids.filter((id) => store.restore(id)).length;
+  await save(file, store);
+  return n;
+}

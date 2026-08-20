@@ -27,6 +27,14 @@ describe("nav — comment navigation", () => {
     assert.deepEqual(commentLines(store, doc), [2, 4]);
   });
 
+  test("commentLines skips archived comments", () => {
+    const store = new CommentStore();
+    store.add(heading(["title", "sub"], "kept", "h1"));
+    store.add(line(4, "gone", "l1"));
+    store.archive("l1");
+    assert.deepEqual(commentLines(store, parse()), [2]);
+  });
+
   test("nextComment from start moves to first comment", () => {
     const store = new CommentStore();
     store.add(heading(["title", "sub"], "first", "c1"));
