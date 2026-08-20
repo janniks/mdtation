@@ -203,12 +203,8 @@ function bodyFor(
 ): string {
   const color = opts.color === true;
   const paint = (sgr: string, s: string) => (color ? `${sgr}${s}${SGR.reset}` : s);
-  // Frontmatter: the opening fence stays blank, the closing one is a full-width rule.
-  const close = fence(doc.lines);
-  if (close > 0 && line === 0) {
-    return "";
-  }
-  if (line === close) {
+  // Frontmatter: the closing fence is a full-width rule (the opener gets no row, see `hidden`).
+  if (line === fence(doc.lines)) {
     return paint(SGR.dim, "\u2500".repeat(cols));
   }
   const heading = headingAt(doc, line);
@@ -317,6 +313,23 @@ function markTables(rows: string[], flags: boolean[], start: number, doc: Docume
   }
 }
 
+/** Lines that get no row: the frontmatter opener and the blank run right after its closer. */
+export function hidden(doc: Document, line: number): boolean {
+  const close = fence(doc.lines);
+  if (close <= 0) {
+    return false;
+  }
+  if (line === 0) {
+    return true;
+  }
+  for (let i = close + 1; i <= line; i++) {
+    if (doc.lines[i]!.trim() !== "") {
+      return false;
+    }
+  }
+  return line > close;
+}
+
 export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): string[] {
   const counts = new Map<number, number>();
   for (const m of opts.markers ?? []) {
@@ -337,6 +350,9 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
   for (let i = start; i < end; i++) {
     const idx = i - start;
     const body = src[idx]!;
+    if (hidden(doc, i)) {
+      continue;
+    }
     if (flags[idx]) {
       const g = gutterFor(i, vp, cursorOn, counts, opts);
       lines.push(g + styleTable(body, opts));

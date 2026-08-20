@@ -36,7 +36,13 @@ import { displayWidth } from "../core/unicode.ts";
 import { crumb } from "../core/crumb.ts";
 import { loadConfig } from "../core/config.ts";
 import { menus, specs, step } from "../core/menu.ts";
-import { CHECKS, GUTTER_WIDTH, render as renderFrame, statusBar } from "../core/renderer.ts";
+import {
+  CHECKS,
+  GUTTER_WIDTH,
+  hidden,
+  render as renderFrame,
+  statusBar,
+} from "../core/renderer.ts";
 import {
   clampViewport,
   createViewport,
@@ -158,7 +164,7 @@ export class TuiShell {
         height,
         Number(this.prefs.margin),
       ),
-      first: this.on.viewFront ? 0 : this.first(),
+      first: this.on.viewFront ? 1 : this.first(),
     };
   }
 
@@ -223,7 +229,9 @@ export class TuiShell {
     if (dir !== "up" && dir !== "down") {
       return;
     }
+    const prev = this.view.cursor;
     this.view = moveCursor(this.view, dir === "down" ? 1 : -1, this.doc.lines.length);
+    this.settle(prev);
     this.draw();
   }
 
@@ -307,6 +315,18 @@ export class TuiShell {
     }
     this.dirty = false;
     this.draw("SAVED");
+  }
+
+  /** Step the cursor off a row-less line, continuing in the direction it came from. */
+  private settle(prev: number): void {
+    const dir = Math.sign(this.view.cursor - prev) || 1;
+    let c = this.view.cursor;
+    while (hidden(this.doc, c) && c + dir >= 0 && c + dir < this.doc.lines.length) {
+      c += dir;
+    }
+    if (c !== this.view.cursor) {
+      this.view = jumpToLine(this.view, c, this.doc.lines.length);
+    }
   }
 
   draw(mode = this.dirty ? "UNSAVED" : "VIEW"): void {
@@ -467,7 +487,9 @@ export class TuiShell {
     if (action.quit) {
       this.dispose();
     } else if (action.vp) {
+      const prev = this.view.cursor;
       this.view = action.vp;
+      this.settle(prev);
       this.draw();
     }
   }
