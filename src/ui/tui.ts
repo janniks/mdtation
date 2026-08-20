@@ -9,8 +9,18 @@
  * `Renderer.render`'s frame plus a menu-bar line; mouse (wheel/click) is
  * enabled but wired in a later slice.
  */
-import { createCliRenderer, TextRenderable } from "@opentui/core";
-import type { CliRenderer } from "@opentui/core";
+import {
+  bold,
+  createCliRenderer,
+  dim,
+  fg,
+  italic,
+  strikethrough,
+  StyledText,
+  TextRenderable,
+} from "@opentui/core";
+import type { CliRenderer, TextChunk } from "@opentui/core";
+import { spans, type Span } from "../core/ansi.ts";
 import type { Document } from "../core/document.ts";
 import { render as renderFrame, statusBar } from "../core/renderer.ts";
 import { clampViewport, createViewport, moveCursor, type Viewport } from "../core/viewport.ts";
@@ -25,6 +35,22 @@ function viewportFor(renderer: CliRenderer): Viewport {
   const width = renderer.width || 80;
   const height = Math.max(1, (renderer.height || 24) - MENU_HEIGHT - STATUS_HEIGHT);
   return createViewport(0, 0, width, height);
+}
+
+/** One styled chunk per SGR span. OpenTUI does not parse escape bytes itself. */
+function chunk(s: Span): TextChunk {
+  let c: TextChunk = { __isChunk: true, text: s.text };
+  if (s.fg) c = fg(s.fg)(c);
+  if (s.bold) c = bold(c);
+  if (s.dim) c = dim(c);
+  if (s.italic) c = italic(c);
+  if (s.strike) c = strikethrough(c);
+  return c;
+}
+
+/** SGR-escaped frame text -> OpenTUI StyledText. */
+function styled(text: string): StyledText {
+  return new StyledText(spans(text).map(chunk));
 }
 
 export class TuiShell {
@@ -74,12 +100,12 @@ export class TuiShell {
   };
 
   private draw = (): void => {
-    const width = this.vp.width;
-    const menu = menuBar(COMMANDS).padEnd(width).slice(0, width);
-    const status = statusBar(this.doc, this.vp, { color: true }).padEnd(width).slice(0, width);
-    this.text.content = [menu, ...renderFrame(this.doc, this.vp, { color: true }), status].join(
-      "\n",
-    );
+    const rows = [
+      menuBar(COMMANDS),
+      ...renderFrame(this.doc, this.vp, { color: true }),
+      statusBar(this.doc, this.vp, { color: true }),
+    ];
+    this.text.content = styled(rows.join("\n"));
     this.renderer.requestRender();
   };
 

@@ -50,3 +50,12 @@ Append-only detours / surprises that cost more than one attempt.
   (`\u2705`->`\uFFFD`, CJK cursor drift, ZWJ seqs split across the captured cursor)
   but is NOT a crash — the TUI kept rendering and `Buffer.from(frame,"utf-8")`
   round-trips cleanly. The unit tests assert the real byte-level invariant.
+- 2026-08-20 — OpenTUI `TextRenderable.content` does NOT parse ANSI/SGR. Feeding it
+  `render(..., {color:true})` strings made every escape byte occupy a cell: styled lines
+  lost their tails, the status bar read `Ln 1/1400 comment·`, and redraws after
+  navigation left garbage (the terminal interpreted the leaked bytes, so colors
+  "appeared" — which hid the bug). Fix: `src/core/ansi.ts` (`spans`) + `styled()` in
+  `src/ui/tui.ts` map SGR spans to `StyledText` chunks. Also never `.padEnd/.slice`
+  an SGR-laden string.
+- 2026-08-20 — `pkill -f "bun src/bin.ts"` kills the calling Claude shell too (the
+  pattern matches the `zsh -c` wrapper). Anchor it: `pkill -f "^bun src/bin.ts"`.
