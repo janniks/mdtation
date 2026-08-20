@@ -70,3 +70,12 @@ export function wrapLine(text: string, width: number): string[] {
   }
   return rows;
 }
+
+/** Total display columns a string occupies (sum of per-code-point widths). */
+export function displayWidth(s: string): number {
+  let n = 0;
+  for (const ch of s) {
+    n += colWidth(ch);
+  }
+  return n;
+}

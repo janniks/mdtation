@@ -12,7 +12,7 @@
 import type { Document, Heading } from "./document.ts";
 import type { Viewport } from "./viewport.ts";
 import { highlight } from "./syntax.ts";
-import { wrapLine } from "./unicode.ts";
+import { wrapLine, displayWidth } from "./unicode.ts";
 
 export interface RenderOptions {
   /** 0-based line indices that carry a comment. */
@@ -125,6 +125,83 @@ function bodyFor(line: number, raw: string, doc: Document, color: boolean): stri
   return styleList(raw) ?? styleInline(raw);
 }
 
+/** Does `line` look like a GFM table row: `|`-delimited with at least 2 cells. */
+function isTableRow(line: string): boolean {
+  const t = line.trim();
+  return /^\|.*\|$/.test(t) && t.split("|").length >= 4;
+}
+
+/** Is `line` a separator row (`| --- | :---- |` with optional colons)? */
+function isSepRow(line: string): boolean {
+  return parseCells(line).every((c) => /^-*:?-+:?\s*$/.test(c) && c.includes("-"));
+}
+
+/** Parse `| a | b |` into `["a","b"]`. */
+function parseCells(row: string): string[] {
+  const t = row.trim();
+  return t
+    .slice(1, -1)
+    .split("|")
+    .map((c) => c.trim());
+}
+
+/** Align a run of plain table rows into even-width columns. */
+export function tableLayout(rows: string[]): string[] {
+  const cellRows = rows.map(parseCells);
+  const ncol = Math.max(...cellRows.map((c) => c.length));
+  const widths: number[] = Array.from({ length: ncol }, () => 0);
+  for (const cells of cellRows) {
+    for (let c = 0; c < cells.length; c++) {
+      widths[c] = Math.max(widths[c]!, displayWidth(cells[c]!));
+    }
+  }
+  const out = cellRows.map((cells) => {
+    const parts: string[] = [];
+    for (let c = 0; c < ncol; c++) {
+      const cell = cells[c] ?? "";
+      const pad = widths[c]! - displayWidth(cell);
+      parts.push(cell + " ".repeat(Math.max(0, pad)));
+    }
+    return `| ${parts.join(" | ")} |`;
+  });
+  return out;
+}
+
+/** Style an aligned table row: gray borders, dimmed separator. */
+function colorTable(row: string, sep: boolean): string {
+  if (sep) {
+    return `${SGR.dim}${row}${SGR.reset}`;
+  }
+  return row.replace(/\|/g, `${SGR.gray}|${SGR.reset}`);
+}
+
+/** Detect runs of table rows (whose 2nd line is a separator) and align them.
+ * Lines inside fenced code blocks are never treated as tables. Mutates `rows`
+ * in place and records which rows are tables in `flags`. */
+function markTables(rows: string[], flags: boolean[], start: number, doc: Document): void {
+  const n = rows.length;
+  let i = 0;
+  while (i < n) {
+    const sl = start + i;
+    if (codeBlockAt(doc, sl) || !isTableRow(rows[i]!)) {
+      i++;
+      continue;
+    }
+    let j = i;
+    while (j < n && !codeBlockAt(doc, start + j) && isTableRow(rows[j]!)) {
+      j++;
+    }
+    const laid = tableLayout(rows.slice(i, j));
+    if (laid.length >= 2 && isSepRow(laid[1]!)) {
+      for (let k = 0; k < laid.length; k++) {
+        rows[i + k] = laid[k]!;
+        flags[i + k] = true;
+      }
+    }
+    i = j;
+  }
+}
+
 export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): string[] {
   const markers = new Set(opts.markers ?? []);
   const color = opts.color === true;
@@ -133,10 +210,22 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
   const height = Math.max(0, vp.height);
   const end = Math.min(doc.lines.length, start + height);
   const colWidth = Math.max(1, vp.width - GUTTER_WIDTH);
+  const src: string[] = [];
+  for (let i = start; i < end; i++) {
+    src.push(doc.lines[i] ?? "");
+  }
+  const flags: boolean[] = Array.from({ length: src.length }, () => false);
+  markTables(src, flags, start, doc);
   const lines: string[] = [];
   for (let i = start; i < end; i++) {
-    const raw = doc.lines[i] ?? "";
-    const chunks = wrapLine(raw, colWidth);
+    const idx = i - start;
+    const body = src[idx]!;
+    if (flags[idx]) {
+      const g = gutterFor(i, vp, cursorOn, markers, color);
+      lines.push(g + (color ? colorTable(body, isSepRow(body)) : body));
+      continue;
+    }
+    const chunks = wrapLine(body, colWidth);
     chunks.forEach((chunk, ri) => {
       const g = ri === 0 ? gutterFor(i, vp, cursorOn, markers, color) : "  ";
       lines.push(g + bodyFor(i, chunk, doc, color));
