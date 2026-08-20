@@ -53,6 +53,6 @@ describe("palette", () => {
       rows(COMMANDS).flatMap((x) => x.items).length,
       COMMANDS.filter((c) => c.keys.length).length,
     );
-    assert.ok(rows(COMMANDS).every((r) => r.items.every((i) => i.hint)));
+    assert.ok(rows(COMMANDS).every((x) => x.items.every((i) => i.hint)));
   });
 });
