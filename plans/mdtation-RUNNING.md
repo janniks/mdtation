@@ -122,6 +122,7 @@ Pure models live in `src/core` with node tests; `src/ui` only wires OpenTUI.
 | 8l | edit-extras | done | Comment modal is a `TextareaRenderable`: ↵ saves, ⇧↵ inserts a newline (verified live in herdr). `src/core/table.ts` (`cell`/`align`): clicking a header or separator cell cycles that column `--- :--- :---: ---:`. Checkbox styles (`View › Next checkbox style`: `[x] ☑ ● ◉ ✓`). `View › Capture mouse` (`M`) releases the mouse so herdr's select-to-copy works. 195 tests. |
 | 8m | mouse-polish | done | Status/badge separators are two spaces. Comment modal footer `esc cancel  ↵ save` is clickable; a click outside cancels only while the box is empty, otherwise it is swallowed (body, menu bar, status bar) so typed text never gets lost and the cursor row stays put. `Overlay.away()/place()`: help, palette, modal re-center and Show-all refits on terminal resize. Quit hint clears when the 2 s window closes. |
 | 8n | comment-edit | done | `e` (Comments › Edit comment) reopens the comment box prefilled; several comments on the row go through a palette chooser first. Status bar adds `N here  (e to edit)` while the cursor sits on a commented row. `here()` shared with copy. |
+| 8o | view-regroup | done | `View › Show menu bar` (`m`) hides the bar (header height follows). View sections: unnamed (menu bar, mouse, crumb), `Markdown` (color, emphasis, syntax, marks, pipes, frontmatter, fences, checkbox), `Style` (caret). |
 
 ## Later
 

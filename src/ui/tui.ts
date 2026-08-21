@@ -110,6 +110,7 @@ export class TuiShell {
       viewPipes: true,
       viewFront: false,
       viewCrumb: true,
+      viewBar: true,
       viewArchive: false,
       viewMouse: true,
     };
@@ -174,7 +175,7 @@ export class TuiShell {
 
   private fit(): Viewport {
     const width = this.renderer.width || 80;
-    const header = this.on.viewCrumb ? 2 : 1;
+    const header = Number(this.on.viewCrumb) + Number(this.on.viewBar);
     const height = Math.max(1, (this.renderer.height || 24) - header - FOOTER);
     return {
       ...createViewport(
@@ -408,6 +409,7 @@ export class TuiShell {
     const marks = markers(this.store, this.doc);
     this.bar.dirty = this.dirty;
     this.crumb.node.visible = this.on.viewCrumb === true;
+    this.bar.node.visible = this.on.viewBar === true;
     this.crumb.text = crumb(this.doc, this.view.cursor, Number(this.prefs.crumb) || Infinity);
     this.text.content = styled(
       renderFrame(this.doc, this.view, {
@@ -572,6 +574,7 @@ export class TuiShell {
       case "viewPipes":
       case "viewFront":
       case "viewCrumb":
+      case "viewBar":
       case "viewArchive":
         this.on[id] = !this.on[id];
         this.remember();

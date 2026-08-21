@@ -23,11 +23,11 @@ describe("menu", () => {
     assert.deepEqual(m[2]!.entries[0], { id: "comment", title: "New Comment", hint: "c" });
     assert.ok(!m.some((x) => x.label === "Navigate")); // menu: false, still in help
     assert.equal(m[0]!.entries[0]!.hint, "q");
-    assert.equal(m[1]!.entries[0]!.hint, "");
+    assert.equal(m[1]!.entries[0]!.hint, "m");
   });
 
   test("state marks entries checkable", () => {
-    const m = menus(COMMANDS, (id) => (id === "viewColor" ? false : undefined));
+    const m = menus(COMMANDS, (id) => (id === "viewBar" ? false : undefined));
     assert.equal(m[1]!.entries[0]!.checked, false);
     assert.equal("checked" in m[1]!.entries[1]!, false);
     assert.equal(prefix(m[1]!.entries[0]!), "[ ] ");
