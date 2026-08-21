@@ -75,3 +75,4 @@ Append-only detours / surprises that cost more than one attempt.
   or typing starves. `renderer.root.remove(node)` takes the child, not an id — an id
   throws silently inside OpenTUI and wedges the key loop.
 - 2026-08-20: `process.stdout.write` of OSC-52 inside the running OpenTUI shell never reaches the terminal (the renderer owns stdout); use `renderer.copyToClipboardOSC52(text)`. Drag-selection "worked" only because OpenTUI copies natively.
+- 2026-08-21: `TextareaRenderable` with `initialValue` leaves the cursor at offset 0; call `gotoBufferEnd()` after focus or typing prepends (showed up as "(edited)inline heading…" during a live test).
