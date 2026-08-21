@@ -467,6 +467,7 @@ export class TuiShell {
           () => this.close(),
           {
             title: "Edit which comment",
+            hint: "type to filter…",
             items: () =>
               list.map((x) => ({
                 id: x.id,

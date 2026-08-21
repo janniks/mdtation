@@ -26,7 +26,7 @@ export class Palette implements Overlay {
     renderer: CliRenderer,
     private run: (id: string) => void,
     private close: () => void,
-    opts: { title?: string; items?: () => readonly Command[]; stay?: boolean } = {},
+    opts: { title?: string; hint?: string; items?: () => readonly Command[]; stay?: boolean } = {},
   ) {
     this.renderer = renderer;
     this.items = opts.items ?? (() => COMMANDS);
@@ -50,7 +50,7 @@ export class Palette implements Overlay {
     this.place();
     this.input = new InputRenderable(renderer, {
       width: "100%",
-      placeholder: this.stay ? "↵ cycles the value" : "type a command…",
+      placeholder: opts.hint ?? (this.stay ? "↵ cycles the value" : "type a command…"),
       backgroundColor: "#1a1b26",
       focusedBackgroundColor: "#1a1b26",
     });

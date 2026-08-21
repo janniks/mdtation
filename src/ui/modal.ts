@@ -73,6 +73,7 @@ export class Modal implements Overlay {
     );
     this.node.add(foot);
     this.input.focus();
+    this.input.gotoBufferEnd();
   }
 
   /** Size the input to its lines (1–4) so a single line stays compact. */
