@@ -60,7 +60,7 @@ export const CHECKS = [
 
 /** Heading level (1-6) -> accent color. */
 const HEADING_COLOR: Readonly<Record<number, string>> = {
-  1: SGR.red,
+  1: SGR.white,
   2: SGR.cyan,
   3: SGR.blue,
   4: SGR.magenta,

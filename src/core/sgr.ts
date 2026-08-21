@@ -11,6 +11,7 @@ export const SGR = {
   green: "\x1b[32m",
   yellow: "\x1b[33m",
   red: "\x1b[31m",
+  white: "\x1b[97m",
   cyan: "\x1b[36m",
   blue: "\x1b[34m",
   magenta: "\x1b[35m",

@@ -20,9 +20,9 @@ test("renderer stays plain by default (golden regression)", () => {
 test("color=true styles headings, inline, fenced code, and syntax", () => {
   const doc = parseDocument("# H1\n\n**bold** text\n\n```ts\nconst n = 1; // c\n```\n");
   const frame = render(doc, createViewport(0, 0, 80, 24), { color: true });
-  // line 0: green cursor gutter + bold red heading
+  // line 0: green cursor gutter + bold bright-white heading
   assert.ok(
-    frame[0]?.startsWith(`${ESC}[32m>${ESC}[0m ${ESC}[1m${ESC}[31m# H1${ESC}[0m`),
+    frame[0]?.startsWith(`${ESC}[32m>${ESC}[0m ${ESC}[1m${ESC}[97m# H1${ESC}[0m`),
     frame[0],
   );
   // line 2: inline bold
