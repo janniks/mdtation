@@ -28,8 +28,6 @@ export interface RenderOptions {
   readonly syntax?: boolean;
   /** One-column cursor glyph. Default `>`. */
   readonly caret?: string;
-  /** One-column glyph for a row with one comment. Default `✦`. */
-  readonly mark?: string;
   /** Index into `CHECKS`: how task boxes are drawn. Default 0 (`[ ]`/`[x]`). */
   readonly check?: number;
   /** Show heading `#` marks. Default true. */
@@ -152,8 +150,8 @@ function wrapStyled(text: string, width: number): string[] {
   return rows;
 }
 
-/** Gutter cell: caret on the cursor line, else the mark for one comment or the count.
- * A commented row keeps its background even under the caret. */
+/** Gutter cell: caret on the cursor line, else a comment mark (`▶`, or the count past one).
+ * In color the mark is a yellow background instead, kept even under the caret. */
 function gutterFor(
   line: number,
   vp: Viewport,
@@ -163,14 +161,17 @@ function gutterFor(
 ): string {
   const cursor = line === vp.cursor && cursorOn;
   const n = counts.get(line) ?? 0;
+  const color = opts.color === true;
   const g = cursor
     ? (opts.caret ?? ">")
     : n === 0
       ? " "
       : n === 1
-        ? (opts.mark ?? "✦")
+        ? color
+          ? " "
+          : "▶"
         : String(Math.min(n, 9));
-  if (opts.color !== true || (!cursor && n === 0)) {
+  if (!color || (!cursor && n === 0)) {
     return `${g} `;
   }
   return `${paint(true, n > 0 ? SGR.bgYellow + SGR.black : SGR.green, g)} `;

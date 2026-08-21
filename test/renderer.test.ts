@@ -33,7 +33,7 @@ describe("renderer", () => {
     const frame = render(doc, createViewport(0, 0, 80, doc.lines.length), {
       markers: [3],
     });
-    assert.equal(frame[3]!, "✦ hello");
+    assert.equal(frame[3]!, "▶ hello");
   });
 
   test("cursor gutter wins over a comment marker", () => {
@@ -66,7 +66,7 @@ test("gutter shows the comment count past one, and a custom caret", () => {
   assert.equal(render(doc, vp, { markers: [1, 1, 2] })[1], "2 b");
   assert.equal(render(doc, vp, { caret: "▶" })[0], "▶ a");
   const color = render(doc, vp, { color: true, markers: [1] })[1];
-  assert.equal(color, "\x1b[43m\x1b[30m✦\x1b[0m b");
+  assert.equal(color, "\x1b[43m\x1b[30m \x1b[0m b");
   const both = render(doc, createViewport(0, 1, 80, 3), { color: true, markers: [1] })[1];
   assert.equal(both, "\x1b[43m\x1b[30m>\x1b[0m b");
 });

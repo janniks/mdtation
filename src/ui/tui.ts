@@ -63,7 +63,6 @@ const AGAIN = 2000;
 const CYCLES = {
   viewFences: ["ticks", "fence", "hide"],
   viewCaret: [">", "+", "▶", "›", "●"],
-  viewMark: ["✦", "●", "◆", "▌", "■", "•", "none"],
   viewCheck: CHECKS.map((c) => c[1]),
 } as const;
 type Cycle = keyof typeof CYCLES;
@@ -85,7 +84,7 @@ export class TuiShell {
   /** Settings palette values (scroll margin, beta flags). */
   private prefs: Values = DEFAULTS;
   /** Current index per cycler. */
-  private pick: Record<Cycle, number> = { viewFences: 0, viewCaret: 0, viewMark: 0, viewCheck: 0 };
+  private pick: Record<Cycle, number> = { viewFences: 0, viewCaret: 0, viewCheck: 0 };
   private timer: ReturnType<typeof setTimeout> | null = null;
   private readonly bar: MenuBar;
   private readonly crumb: Crumb;
@@ -359,7 +358,6 @@ export class TuiShell {
     return {
       fences: this.value("viewFences"),
       caret: this.value("viewCaret"),
-      mark: this.value("viewMark") === "none" ? " " : this.value("viewMark"), // none = bg only
       check: this.pick.viewCheck,
     };
   }
@@ -498,7 +496,6 @@ export class TuiShell {
         return;
       case "viewFences":
       case "viewCaret":
-      case "viewMark":
       case "viewCheck":
         this.pick[id] = (this.pick[id] + 1) % CYCLES[id].length;
         this.remember();
