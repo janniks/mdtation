@@ -65,6 +65,7 @@ const CYCLES = {
   viewFences: ["ticks", "fence", "hide"],
   viewCaret: [">", "+", "▶", "›", "●"],
   viewCheck: CHECKS.map((c) => c[1]),
+  viewCopy: ["simple", "detailed"],
 } as const;
 type Cycle = keyof typeof CYCLES;
 
@@ -85,7 +86,7 @@ export class TuiShell {
   /** Settings palette values (scroll margin, beta flags). */
   private prefs: Values = DEFAULTS;
   /** Current index per cycler. */
-  private pick: Record<Cycle, number> = { viewFences: 0, viewCaret: 0, viewCheck: 0 };
+  private pick: Record<Cycle, number> = { viewFences: 0, viewCaret: 0, viewCheck: 0, viewCopy: 0 };
   private timer: ReturnType<typeof setTimeout> | null = null;
   private readonly bar: MenuBar;
   private readonly crumb: Crumb;
@@ -112,7 +113,6 @@ export class TuiShell {
       viewCrumb: true,
       viewBar: true,
       viewArchive: false,
-      viewDetail: false,
       viewMouse: true,
     };
     const saved = loadPrefs();
@@ -344,7 +344,7 @@ export class TuiShell {
   /** Write all comments (with provenance) to a temp file and open it in `$EDITOR`. */
   private editor(): void {
     const path = join(tmpdir(), "mdtation-comments.md");
-    writeFileSync(path, report(this.store, this.doc, this.file, { detail: this.on.viewDetail }));
+    writeFileSync(path, report(this.store, this.doc, this.file, { mode: this.value("viewCopy") }));
     this.renderer.suspend();
     spawnSync(process.env.EDITOR ?? "vi", [path], { stdio: "inherit" });
     this.renderer.resume();
@@ -492,7 +492,7 @@ export class TuiShell {
       this.draw("NO COMMENT HERE");
       return;
     }
-    copy(copyFormat(c, this.doc, this.on.viewDetail), this.renderer);
+    copy(copyFormat(c, this.doc, this.value("viewCopy")), this.renderer);
     // OSC-52 is fire-and-forget: over SSH/remote the terminal may accept it without reaching the host clipboard.
     const note = this.renderer.capabilities?.remote ? "  remote: if empty, press a" : "";
     if (this.on.viewArchive) {
@@ -536,7 +536,7 @@ export class TuiShell {
         this.open(
           new All(
             this.renderer,
-            report(this.store, this.doc, this.file, { detail: this.on.viewDetail }),
+            report(this.store, this.doc, this.file, { mode: this.value("viewCopy") }),
             () => this.close(),
           ),
         );
@@ -558,6 +558,7 @@ export class TuiShell {
       case "viewFences":
       case "viewCaret":
       case "viewCheck":
+      case "viewCopy":
         this.pick[id] = (this.pick[id] + 1) % CYCLES[id].length;
         this.remember();
         this.draw();
@@ -581,7 +582,6 @@ export class TuiShell {
       case "viewCrumb":
       case "viewBar":
       case "viewArchive":
-      case "viewDetail":
         this.on[id] = !this.on[id];
         this.remember();
         this.view = clampViewport(this.fit(), total);

@@ -75,7 +75,7 @@ export const COMMANDS = [
     keys: [],
     group: "Options",
   },
-  { id: "viewDetail", title: "Detailed copy", category: "Comments", keys: [], group: "Options" },
+  { id: "viewCopy", title: "Copy format", category: "Comments", keys: [], group: "Options" },
   { id: "help", title: "Help", category: "Help", keys: ["?"] },
 ] as const satisfies readonly Command[];
 
@@ -106,7 +106,7 @@ export const HANDLERS: { readonly [K in CommandId]: CmdHandler } = {
   viewCheck: () => ({}),
   viewCrumb: () => ({}),
   viewArchive: () => ({}),
-  viewDetail: () => ({}),
+  viewCopy: () => ({}),
   viewMouse: () => ({}),
   editor: () => ({}),
   all: () => ({}),

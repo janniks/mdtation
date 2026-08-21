@@ -108,21 +108,24 @@ describe("copyFormat", () => {
   });
 
   test("detail: crumb and indented preview of the line", () => {
-    assert.equal(copyFormat(line(4, "todo"), doc(), true), "Line 5  Title / Sub\n    text\n> todo");
+    assert.equal(
+      copyFormat(line(4, "todo"), doc(), "detailed"),
+      "Line 5  Title / Sub\n    text\n> todo",
+    );
   });
 
   test("detail clips crumb segments and the preview", () => {
     const long = parseDocument(`# ${"h".repeat(40)}\n\n${"x".repeat(100)}\n`);
-    const out = copyFormat(line(2, "n"), long, true);
+    const out = copyFormat(line(2, "n"), long, "detailed");
     assert.equal(out.split("\n")[0], `Line 3  ${"h".repeat(23)}…`);
     assert.equal(out.split("\n")[1], `    ${"x".repeat(79)}…`);
   });
 
   test("detail skips the preview on a blank line", () => {
-    assert.equal(copyFormat(line(3, "n"), doc(), true), "Line 4  Title / Sub\n> n");
+    assert.equal(copyFormat(line(3, "n"), doc(), "detailed"), "Line 4  Title / Sub\n> n");
   });
 
   test("unknown anchor: unresolved line, no detail", () => {
-    assert.equal(copyFormat(heading(["missing"], "x"), doc(), true), "Line ?\n> x");
+    assert.equal(copyFormat(heading(["missing"], "x"), doc(), "detailed"), "Line ?\n> x");
   });
 });

@@ -111,6 +111,8 @@ function eq(a: readonly string[], b: readonly string[]): boolean {
   return a.length === b.length && a.every((s, i) => s === b[i]);
 }
 
+export type Mode = "simple" | "detailed";
+
 /** Longest crumb segment / line preview kept in the detailed format (token budget). */
 const SEG = 24;
 const PREVIEW = 80;
@@ -120,14 +122,14 @@ function clip(s: string, n: number): string {
 }
 
 /** The pasteable reference: `Line N` + the note as a blockquote.
- * `detail` adds the section crumb (segments clipped) and an indented preview of the line. */
-export function copyFormat(comment: Comment, doc: Document, detail = false): string {
+ * `detailed` adds the section crumb (segments clipped) and an indented preview of the line. */
+export function copyFormat(comment: Comment, doc: Document, mode: Mode = "simple"): string {
   const loc = resolveAnchor(comment.anchor, doc);
   const quote = comment.text
     .split("\n")
     .map((l) => `> ${l}`)
     .join("\n");
-  if (!detail || !loc) {
+  if (mode === "simple" || !loc) {
     return `Line ${loc ? loc.startLine + 1 : "?"}\n${quote}`;
   }
   const path = crumb(doc, loc.startLine)
