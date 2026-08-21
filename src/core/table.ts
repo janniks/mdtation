@@ -36,21 +36,40 @@ export function isSep(line: string): boolean {
   return isRow(line) && cells(line).every((c) => SEP.test(c));
 }
 
-/** Align a run of plain table rows into even-width columns. */
-export function layout(rows: readonly string[]): string[] {
+/** Pad `text` to `w` columns per the separator's alignment (`:--` left, `--:` right, `:-:` center). */
+function pad(text: string, w: number, sep: string): string {
+  const gap = Math.max(0, w - displayWidth(text));
+  const left =
+    sep.startsWith(":") && sep.endsWith(":") ? Math.floor(gap / 2) : sep.endsWith(":") ? gap : 0;
+  return " ".repeat(left) + text + " ".repeat(gap - left);
+}
+
+/** Align a run of table rows into even-width columns, honouring the separator's alignment.
+ * With `pipes` off the separator row is drawn as a rule later, so its colons do not widen a column. */
+export function layout(rows: readonly string[], pipes = true): string[] {
   const grid = rows.map(cells);
   const ncol = Math.max(...grid.map((c) => c.length));
+  const seps = grid.length >= 2 && grid[1]!.every((c) => SEP.test(c)) ? grid[1]! : [];
   const widths: number[] = Array.from({ length: ncol }, () => 0);
   for (const row of grid) {
-    for (let c = 0; c < row.length; c++) {
-      widths[c] = Math.max(widths[c]!, displayWidth(row[c]!));
+    if (pipes || row !== seps) {
+      for (let c = 0; c < row.length; c++) {
+        widths[c] = Math.max(widths[c]!, displayWidth(row[c]!));
+      }
     }
   }
   return grid.map((row) => {
     const parts: string[] = [];
     for (let c = 0; c < ncol; c++) {
-      const text = row[c] ?? "";
-      parts.push(text + " ".repeat(Math.max(0, widths[c]! - displayWidth(text))));
+      const sep = seps[c] ?? "";
+      if (row === seps) {
+        // Stretch the dashes so the separator spans its column, colons kept at the edges.
+        const l = sep.startsWith(":") ? ":" : "";
+        const r = sep.endsWith(":") ? ":" : "";
+        parts.push(l + "-".repeat(Math.max(1, widths[c]! - l.length - r.length)) + r);
+      } else {
+        parts.push(pad(row[c] ?? "", widths[c]!, sep));
+      }
     }
     return `| ${parts.join(" | ")} |`;
   });

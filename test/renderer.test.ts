@@ -77,7 +77,7 @@ const show = (src: string, opts = {}) =>
 const hide = { hashes: false, marks: false, fences: "fence", pipes: false } as const;
 
 describe("hide markup", () => {
-  const rule = "─".repeat(20);
+  const rule = "─".repeat(78);
 
   test("strips inline marks, link urls and heading hashes", () => {
     const out = show("## Hi\n**b** __b__ *i* _i_ ~~s~~ `c` [t](http://x)", { ...hide });
@@ -122,7 +122,7 @@ describe("hide markup", () => {
     const src = "a|bb\n--|--\n|ccc | d\n| e|f|";
     assert.deepEqual(show(src), [
       "  | a   | bb |",
-      "  | --  | -- |",
+      "  | --- | -- |",
       "  | ccc | d  |",
       "  | e   | f  |",
     ]);

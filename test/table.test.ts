@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 import { test, describe } from "node:test";
-import { align, cell } from "../src/core/table.ts";
+import { align, cell, layout } from "../src/core/table.ts";
 
 const doc = [
   "# T",
@@ -69,5 +69,19 @@ describe("table", () => {
       assert.equal(align("| a | b |\n| --- | --- |", 1, -1), null);
       assert.equal(align("| a | b |\n| --- | --- |", 5, 0), null);
     });
+  });
+});
+
+describe("layout alignment", () => {
+  const rows = ["| a | b | c |", "| :-- | :-: | --: |", "| xxxx | y | zz |"];
+  test("pads cells per the separator and stretches the dashes", () => {
+    assert.deepEqual(layout(rows), [
+      "| a    |  b  |   c |",
+      "| :--- | :-: | --: |",
+      "| xxxx |  y  |  zz |",
+    ]);
+  });
+  test("without pipes the separator's colons do not widen a column", () => {
+    assert.equal(layout(["| a | b |", "| :---: | --- |", "| 1 | 2 |"], false)[2], "| 1 | 2 |");
   });
 });

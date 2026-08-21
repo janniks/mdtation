@@ -66,7 +66,7 @@ describe("renderer tables", () => {
     // no lone surrogate -> the whole frame round-trips through UTF-8
     Buffer.from(frame.join("\n"), "utf-8");
     assert.equal(frame[0]!, "  | name | sig    |");
-    assert.equal(frame[1]!, "  | ---  | ---    |");
+    assert.equal(frame[1]!, "  | ---- | ------ |");
     assert.equal(frame[2]!, `  | 团队 | ${emoji} |`);
   });
 

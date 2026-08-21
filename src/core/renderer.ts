@@ -57,7 +57,6 @@ export const CHECKS = [
 ] as const;
 
 /** Thin rule drawn for thematic breaks and (in hide-markup mode) fence rows. */
-const RULE = "\u2500".repeat(20);
 
 /** Heading level (1-6) -> accent color. */
 const HEADING_COLOR: Readonly<Record<number, string>> = {
@@ -234,7 +233,7 @@ function bodyFor(
     return color && opts.syntax !== false ? highlight(raw, block.lang ?? null) : raw;
   }
   if (isRule(raw)) {
-    return paint(color, SGR.dim, RULE);
+    return paint(color, SGR.dim, "\u2500".repeat(cols));
   }
   if (prose(doc, line, opts) && !prose(doc, line - 1, opts)) {
     let text = raw;
@@ -270,7 +269,13 @@ function styleTable(row: string, opts: RenderOptions): string {
 /** Detect runs of table rows (whose 2nd line is a separator) and align them.
  * Lines inside fenced code blocks are never treated as tables. Mutates `rows`
  * in place and records which rows are tables in `flags`. */
-function markTables(rows: string[], flags: boolean[], start: number, doc: Document): void {
+function markTables(
+  rows: string[],
+  flags: boolean[],
+  start: number,
+  doc: Document,
+  pipes: boolean,
+): void {
   const n = rows.length;
   let i = 0;
   while (i < n) {
@@ -283,7 +288,7 @@ function markTables(rows: string[], flags: boolean[], start: number, doc: Docume
     while (j < n && !codeBlockAt(doc, start + j) && isRow(rows[j]!)) {
       j++;
     }
-    const laid = layout(rows.slice(i, j));
+    const laid = layout(rows.slice(i, j), pipes);
     if (laid.length >= 2 && isSep(laid[1]!)) {
       for (let k = 0; k < laid.length; k++) {
         rows[i + k] = laid[k]!;
@@ -335,7 +340,7 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
     src.push(doc.lines[i] ?? "");
   }
   const flags: boolean[] = Array.from({ length: src.length }, () => false);
-  markTables(src, flags, start, doc);
+  markTables(src, flags, start, doc, opts.pipes !== false);
   const lines: string[] = [];
   for (let i = start; i < end; i++) {
     const idx = i - start;

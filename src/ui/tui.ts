@@ -305,7 +305,7 @@ export class TuiShell {
       return;
     }
     // Clicking a header or separator cell cycles that column's alignment.
-    const t = cell(this.doc.lines, line, col);
+    const t = this.on.viewPipes ? cell(this.doc.lines, line, col) : null;
     if (t && (t.row === 0 || line === t.sep)) {
       this.edit(align(this.doc.text, t.sep, t.col));
       return;
