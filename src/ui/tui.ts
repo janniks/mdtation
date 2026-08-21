@@ -440,11 +440,11 @@ export class TuiShell {
     }
     copy(copyFormat(c, this.doc), this.renderer);
     // OSC-52 is fire-and-forget: over SSH/remote the terminal may accept it without reaching the host clipboard.
-    const note = this.renderer.capabilities?.remote ? " · remote: if empty, press a" : "";
+    const note = this.renderer.capabilities?.remote ? " | remote: if empty, press a" : "";
     if (this.on.viewArchive) {
       this.store.archive(c.id);
       this.persist();
-      this.draw(`COPIED · ARCHIVED${note}`);
+      this.draw(`COPIED | ARCHIVED${note}`);
       return;
     }
     this.draw(`COPIED${note}`);
@@ -508,7 +508,7 @@ export class TuiShell {
         // Off: the terminal keeps the mouse, so its native select-to-copy works; `M` turns it back on.
         this.on.viewMouse = !this.on.viewMouse;
         this.renderer.useMouse = this.on.viewMouse;
-        this.draw(this.on.viewMouse ? "MOUSE ON" : "MOUSE OFF · select freely · M to re-enable");
+        this.draw(this.on.viewMouse ? "MOUSE ON" : "MOUSE OFF | select freely | M to re-enable");
         return;
       case "viewColor":
       case "viewEmphasis":
@@ -528,7 +528,7 @@ export class TuiShell {
         if (this.dirty && Date.now() - this.guard > AGAIN) {
           this.guard = Date.now();
           this.draw(
-            `Press ${hint(this.chord) || "^c"} again to exit with unsaved changes · ^s saves`,
+            `Press ${hint(this.chord) || "^c"} again to exit with unsaved changes | ^s saves`,
           );
           return;
         }

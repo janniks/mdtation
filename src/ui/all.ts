@@ -26,7 +26,7 @@ export class All implements Overlay {
       border: true,
       borderColor: THEME.badge,
       backgroundColor: THEME.panel,
-      title: " All comments · esc closes · select to copy ",
+      title: " All comments | esc closes | select to copy ",
       titleAlignment: "center",
       paddingLeft: 1,
       paddingRight: 1,

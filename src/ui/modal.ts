@@ -51,7 +51,7 @@ export class Modal implements Overlay {
     this.node.add(this.input);
     this.node.add(
       new TextRenderable(renderer, {
-        content: "esc cancel · ↵ save".padStart(inner),
+        content: "esc cancel | ↵ save".padStart(inner),
         fg: "#808080",
         width: inner,
       }),

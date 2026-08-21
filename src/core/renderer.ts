@@ -314,12 +314,12 @@ export function statusBar(doc: Document, vp: Viewport, opts: RenderOptions = {})
   const count = opts.markers?.length ?? 0;
   const cur = Math.min(vp.cursor + 1, doc.lines.length);
   const plural = count === 1 ? "" : "s";
-  const plain = `Ln ${cur}/${doc.lines.length} · ${count} comment${plural}`;
+  const plain = `Ln ${cur}/${doc.lines.length} | ${count} comment${plural}`;
   if (!opts.color) {
     return plain;
   }
   const num = SGR.green;
   const label = SGR.dim;
   const mode = SGR.gray;
-  return `${label}Ln${SGR.reset} ${num}${cur}/${doc.lines.length}${SGR.reset} · ${num}${count}${SGR.reset} comment${plural} · ${mode}view${SGR.reset}`;
+  return `${label}Ln${SGR.reset} ${num}${cur}/${doc.lines.length}${SGR.reset} | ${num}${count}${SGR.reset} comment${plural} | ${mode}view${SGR.reset}`;
 }
