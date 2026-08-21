@@ -6,11 +6,13 @@ import { COMMANDS } from "../core/commands.ts";
 import type { Command } from "../core/commands.ts";
 import { hint } from "../core/menu.ts";
 import { filter } from "../core/palette.ts";
+import { center } from "./overlay.ts";
 import type { Overlay } from "./overlay.ts";
 import { chunk } from "./styled.ts";
 
 export class Palette implements Overlay {
   readonly node: BoxRenderable;
+  private readonly renderer: CliRenderer;
   private input: InputRenderable;
   private list: TextRenderable;
   private hits: Command[];
@@ -26,6 +28,7 @@ export class Palette implements Overlay {
     private close: () => void,
     opts: { title?: string; items?: () => readonly Command[]; stay?: boolean } = {},
   ) {
+    this.renderer = renderer;
     this.items = opts.items ?? (() => COMMANDS);
     this.stay = opts.stay ?? false;
     this.hits = [...this.items()];
@@ -37,8 +40,6 @@ export class Palette implements Overlay {
       zIndex: 100,
       width: this.inner + 2,
       height,
-      left: Math.max(0, Math.floor((renderer.width - this.inner - 2) / 2)),
-      top: Math.max(0, Math.floor((renderer.height - height) / 2)),
       border: true,
       borderColor: "#7aa2f7",
       backgroundColor: "#1a1b26",
@@ -46,6 +47,7 @@ export class Palette implements Overlay {
       titleAlignment: "center",
       flexDirection: "column",
     });
+    this.place();
     this.input = new InputRenderable(renderer, {
       width: "100%",
       placeholder: this.stay ? "↵ cycles the value" : "type a command…",
@@ -101,6 +103,10 @@ export class Palette implements Overlay {
     }
     this.close();
     this.run(c.id);
+  }
+
+  place(): void {
+    center(this.node, this.renderer);
   }
 
   key(e: KeyEvent): boolean {

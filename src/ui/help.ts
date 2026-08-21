@@ -3,13 +3,16 @@ import { BoxRenderable, StyledText, TextRenderable, bold, dim } from "@opentui/c
 import type { CliRenderer, KeyEvent } from "@opentui/core";
 import { COMMANDS } from "../core/commands.ts";
 import { rows } from "../core/palette.ts";
+import { center } from "./overlay.ts";
 import type { Overlay } from "./overlay.ts";
 import { chunk } from "./styled.ts";
 
 export class Help implements Overlay {
   readonly node: BoxRenderable;
+  private readonly renderer: CliRenderer;
 
   constructor(renderer: CliRenderer, close: () => void) {
+    this.renderer = renderer;
     const sections = rows(COMMANDS);
     const items = sections.flatMap((s) => s.items);
     const inner = Math.min(
@@ -23,8 +26,6 @@ export class Help implements Overlay {
       zIndex: 100,
       width: inner + 2,
       height,
-      left: Math.max(0, Math.floor((renderer.width - inner - 2) / 2)),
-      top: Math.max(0, Math.floor((renderer.height - height) / 2)),
       border: true,
       borderColor: "#7aa2f7",
       backgroundColor: "#1a1b26",
@@ -33,6 +34,7 @@ export class Help implements Overlay {
       flexDirection: "column",
       onMouseUp: close,
     });
+    this.place();
     for (const s of sections) {
       this.node.add(
         new TextRenderable(renderer, { content: new StyledText([bold(chunk(s.category))]) }),
@@ -54,6 +56,10 @@ export class Help implements Overlay {
   }
 
   private close: () => void;
+
+  place(): void {
+    center(this.node, this.renderer);
+  }
 
   key(e: KeyEvent): boolean {
     if (e.name === "escape" || e.name === "?" || e.name === "q") this.close();

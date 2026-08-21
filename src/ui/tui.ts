@@ -125,7 +125,7 @@ export class TuiShell {
     this.view = clampViewport(this.fit(), doc.lines.length);
     this.bar = new MenuBar(renderer, this.spec, basename(file), {
       hover: (i) => this.cur >= 0 && this.cur !== i && this.menuOpen(i),
-      toggle: (i) => (this.cur === i ? this.close() : this.menuOpen(i)),
+      toggle: (i) => this.outside() || (this.cur === i ? this.close() : this.menuOpen(i)),
     });
     this.crumb = new Crumb(renderer);
     this.text = new TextRenderable(renderer, {
@@ -139,7 +139,7 @@ export class TuiShell {
       onMouseScroll: (e) => this.wheel(e),
       onMouseDown: (e) => this.click(e),
     });
-    this.status = new StatusBar(renderer, { click: () => this.close() });
+    this.status = new StatusBar(renderer, { click: () => this.outside() || this.close() });
     renderer.root.flexDirection = "column";
     for (const n of [this.bar.node, this.crumb.node, this.text, this.status.node]) {
       renderer.root.add(n);
@@ -266,9 +266,23 @@ export class TuiShell {
     this.draw();
   }
 
+  /** A click outside an overlay that handles them: close it if it agrees, and swallow the click either way. */
+  private outside(): boolean {
+    if (!this.overlay?.away) {
+      return false;
+    }
+    if (this.overlay.away()) {
+      this.close();
+    }
+    return true;
+  }
+
   private click(e: MouseEvent): void {
     if (this.overlay instanceof Dropdown) {
       this.close();
+      return;
+    }
+    if (this.outside()) {
       return;
     }
     const row = e.y - this.text.y;
@@ -440,11 +454,11 @@ export class TuiShell {
     }
     copy(copyFormat(c, this.doc), this.renderer);
     // OSC-52 is fire-and-forget: over SSH/remote the terminal may accept it without reaching the host clipboard.
-    const note = this.renderer.capabilities?.remote ? " | remote: if empty, press a" : "";
+    const note = this.renderer.capabilities?.remote ? "  remote: if empty, press a" : "";
     if (this.on.viewArchive) {
       this.store.archive(c.id);
       this.persist();
-      this.draw(`COPIED | ARCHIVED${note}`);
+      this.draw(`COPIED  ARCHIVED${note}`);
       return;
     }
     this.draw(`COPIED${note}`);
@@ -528,7 +542,7 @@ export class TuiShell {
         if (this.dirty && Date.now() - this.guard > AGAIN) {
           this.guard = Date.now();
           this.draw(
-            `Press ${hint(this.chord) || "^c"} again to exit with unsaved changes | ^s saves`,
+            `Press ${hint(this.chord) || "^c"} again to exit with unsaved changes  ^s saves`,
           );
           // The hint leaves with the window, so its disappearance says "too late".
           setTimeout(() => {
@@ -586,6 +600,7 @@ export class TuiShell {
 
   private resize(): void {
     this.view = clampViewport(this.fit(), this.doc.lines.length);
+    this.overlay?.place?.();
     this.draw();
   }
 

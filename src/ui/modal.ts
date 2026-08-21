@@ -1,6 +1,7 @@
-/** Centered comment modal: quoted target line, a one-line input that grows with newlines (shift+↵), esc cancel / ↵ save. */
+/** Centered comment modal: quoted target line, a one-line input that grows with newlines (shift+↵), esc cancel / ↵ save (both clickable). */
 import { BoxRenderable, TextareaRenderable, TextRenderable } from "@opentui/core";
 import type { CliRenderer, KeyEvent } from "@opentui/core";
+import { center } from "./overlay.ts";
 import type { Overlay } from "./overlay.ts";
 
 export interface ModalOpts {
@@ -14,18 +15,18 @@ export interface ModalOpts {
 
 export class Modal implements Overlay {
   readonly node: BoxRenderable;
+  private readonly renderer: CliRenderer;
   private readonly input: TextareaRenderable;
   private readonly opts: ModalOpts;
 
   constructor(renderer: CliRenderer, opts: ModalOpts) {
     this.opts = opts;
+    this.renderer = renderer;
     const width = Math.max(30, Math.min(60, renderer.width - 4));
     const height = 5;
     this.node = new BoxRenderable(renderer, {
       id: "mdtation-modal",
       position: "absolute",
-      left: Math.max(0, Math.floor((renderer.width - width) / 2)),
-      top: Math.max(0, Math.floor((renderer.height - height) / 2)),
       width,
       height,
       zIndex: 10,
@@ -36,6 +37,7 @@ export class Modal implements Overlay {
       paddingLeft: 1,
       paddingRight: 1,
     });
+    this.place();
     const inner = width - 4;
     const quote = opts.quote.length > inner ? opts.quote.slice(0, inner - 1) + "…" : opts.quote;
     this.node.add(new TextRenderable(renderer, { content: quote, fg: "#808080", width: inner }));
@@ -49,13 +51,27 @@ export class Modal implements Overlay {
     });
     this.input.on("input", () => this.grow());
     this.node.add(this.input);
-    this.node.add(
+    const foot = new BoxRenderable(renderer, {
+      width: inner,
+      height: 1,
+      flexDirection: "row",
+      justifyContent: "flex-end",
+    });
+    foot.add(
       new TextRenderable(renderer, {
-        content: "esc cancel | ↵ save".padStart(inner),
+        content: "esc cancel",
         fg: "#808080",
-        width: inner,
+        onMouseUp: () => this.cancel(),
       }),
     );
+    foot.add(
+      new TextRenderable(renderer, {
+        content: "  ↵ save",
+        fg: "#808080",
+        onMouseUp: () => this.save(),
+      }),
+    );
+    this.node.add(foot);
     this.input.focus();
   }
 
@@ -65,23 +81,41 @@ export class Modal implements Overlay {
     if (rows !== this.input.height) {
       this.input.height = rows;
       this.node.height = rows + 4;
+      this.place();
     }
+  }
+
+  private cancel(): void {
+    this.opts.close();
+  }
+
+  private save(): void {
+    const text = this.input.plainText.trim();
+    if (text) {
+      this.opts.submit(text);
+      this.opts.close();
+    }
+  }
+
+  /** A click outside cancels only while the box is still empty; typed text is never lost to a stray click. */
+  away(): boolean {
+    return !this.input.plainText.trim();
+  }
+
+  place(): void {
+    center(this.node, this.renderer);
   }
 
   key(e: KeyEvent): boolean {
     if (e.name === "escape") {
-      this.opts.close();
+      this.cancel();
     } else if ((e.name === "return" || e.name === "enter") && e.shift) {
       e.preventDefault();
       this.input.insertText("\n");
       this.grow();
     } else if (e.name === "return" || e.name === "enter") {
       e.preventDefault();
-      const text = this.input.plainText.trim();
-      if (text) {
-        this.opts.submit(text);
-        this.opts.close();
-      }
+      this.save();
     }
     return true;
   }

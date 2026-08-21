@@ -6,12 +6,14 @@ import { THEME } from "./chrome.ts";
 
 export class All implements Overlay {
   readonly node: BoxRenderable;
+  private readonly renderer: CliRenderer;
   private readonly text: TextRenderable;
   private readonly lines: string[];
-  private readonly rows: number;
+  private rows: number;
   private top = 0;
 
   constructor(renderer: CliRenderer, report: string, close: () => void) {
+    this.renderer = renderer;
     this.lines = report.split("\n");
     const width = Math.max(20, renderer.width - 4);
     const height = Math.max(5, renderer.height - 4);
@@ -49,6 +51,16 @@ export class All implements Overlay {
   private scroll(delta: number): void {
     this.top = Math.max(0, Math.min(this.top + delta, this.lines.length - this.rows));
     this.text.content = this.lines.slice(this.top, this.top + this.rows).join("\n");
+  }
+
+  /** Fill the terminal minus a 2-cell margin. */
+  place(): void {
+    this.node.width = Math.max(20, this.renderer.width - 4);
+    this.node.height = Math.max(5, this.renderer.height - 4);
+    this.rows = this.node.height - 2;
+    this.text.width = this.node.width - 4;
+    this.text.height = this.rows;
+    this.scroll(0);
   }
 
   key(e: KeyEvent): boolean {
