@@ -13,7 +13,7 @@ export class Help implements Overlay {
     const sections = rows(COMMANDS);
     const items = sections.flatMap((s) => s.items);
     const inner = Math.min(
-      Math.max(24, ...items.map((i) => i.title.length + i.hint.length + 4)),
+      Math.max(24, ...items.map((i) => i.title.length + i.hint.length + 6)),
       Math.max(24, renderer.width - 4),
     );
     const lines = sections.length * 2 + items.length + 1;

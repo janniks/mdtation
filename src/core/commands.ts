@@ -17,6 +17,8 @@ export interface Command {
   readonly keys: readonly string[];
   /** Optional section inside the menu; a separator is drawn when it changes. */
   readonly group?: string;
+  /** `false` keeps the command out of the menu bar (still in help and the palette). */
+  readonly menu?: boolean;
 }
 
 /** The canonical command table. First-match-wins on key dispatch. Declaration
@@ -41,12 +43,24 @@ export const COMMANDS = [
   { id: "viewCheck", title: "Checkbox", category: "View", keys: [], group: "Style" },
   { id: "viewCrumb", title: "Show section crumb", category: "View", keys: [], group: "Section" },
   { id: "viewMouse", title: "Capture mouse", category: "View", keys: ["shift+m"], group: "Mouse" },
-  { id: "cursorDown", title: "Cursor Down", category: "Navigate", keys: ["j", "down"] },
-  { id: "cursorUp", title: "Cursor Up", category: "Navigate", keys: ["k", "up"] },
-  { id: "pageDown", title: "Page Down", category: "Navigate", keys: ["ctrl+d", "pagedown"] },
-  { id: "pageUp", title: "Page Up", category: "Navigate", keys: ["ctrl+u", "pageup"] },
-  { id: "top", title: "Top", category: "Navigate", keys: ["g"] },
-  { id: "bottom", title: "Bottom", category: "Navigate", keys: ["shift+g"] },
+  {
+    id: "cursorDown",
+    title: "Cursor Down",
+    category: "Navigate",
+    keys: ["j", "down"],
+    menu: false,
+  },
+  { id: "cursorUp", title: "Cursor Up", category: "Navigate", keys: ["k", "up"], menu: false },
+  {
+    id: "pageDown",
+    title: "Page Down",
+    category: "Navigate",
+    keys: ["ctrl+d", "pagedown"],
+    menu: false,
+  },
+  { id: "pageUp", title: "Page Up", category: "Navigate", keys: ["ctrl+u", "pageup"], menu: false },
+  { id: "top", title: "Top", category: "Navigate", keys: ["g"], menu: false },
+  { id: "bottom", title: "Bottom", category: "Navigate", keys: ["shift+g"], menu: false },
   { id: "comment", title: "New Comment", category: "Comments", keys: ["c"] },
   { id: "copy", title: "Copy comments to clipboard", category: "Comments", keys: ["shift+c"] },
   { id: "all", title: "Show all", category: "Comments", keys: ["a"] },

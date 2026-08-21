@@ -63,6 +63,9 @@ export function menus(
   const out: Menu[] = [];
   const groups = new Map<string, string | undefined>();
   for (const c of commands) {
+    if (c.menu === false) {
+      continue;
+    }
     const entry: Entry = { id: c.id, title: c.title, hint: hint(c.keys[0]) };
     const checked = state(c.id);
     if (typeof checked === "string") {
