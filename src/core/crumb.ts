@@ -13,5 +13,5 @@ export function crumb(doc: Document, line: number, depth = Infinity): string {
     parts.unshift(h.text);
     level = h.level;
   }
-  return parts.slice(-depth).join(" › ");
+  return parts.slice(-depth).join(" / ");
 }

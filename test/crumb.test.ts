@@ -16,12 +16,12 @@ describe("crumb", () => {
 
   test("heading line counts as inside its own section", () => {
     assert.equal(crumb(doc, 1), "Title");
-    assert.equal(crumb(doc, 3), "Title › Section");
+    assert.equal(crumb(doc, 3), "Title / Section");
   });
 
   test("walks up by level", () => {
-    assert.equal(crumb(doc, 6), "Title › Section › Sub");
-    assert.equal(crumb(doc, 8), "Title › Other");
+    assert.equal(crumb(doc, 6), "Title / Section / Sub");
+    assert.equal(crumb(doc, 8), "Title / Other");
     assert.equal(crumb(doc, 10), "Two");
   });
 
@@ -33,6 +33,6 @@ describe("crumb", () => {
 
 test("crumb depth keeps the innermost parts", () => {
   const d = parseDocument("# A\n## B\n### C\nx\n");
-  assert.equal(crumb(d, 3, 2), "B › C");
+  assert.equal(crumb(d, 3, 2), "B / C");
   assert.equal(crumb(d, 3, 1), "C");
 });
