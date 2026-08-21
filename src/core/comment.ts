@@ -9,6 +9,7 @@
  */
 import { findHeading } from "./document.ts";
 import type { Document } from "./document.ts";
+import { crumb } from "./crumb.ts";
 
 export type Anchor =
   | { readonly kind: "heading"; readonly slug: readonly string[] }
@@ -95,25 +96,6 @@ export function resolveAnchor(anchor: Anchor, doc: Document): Location | null {
 }
 
 /** Human label for a heading anchor, e.g. "## Architecture / The model". */
-function headingLabel(slug: readonly string[], doc: Document): string | null {
-  const parts: string[] = [];
-  for (let i = 1; i <= slug.length; i++) {
-    const h = findHeading(doc, slug.slice(0, i));
-    if (!h) {
-      return null;
-    }
-    parts.push(h.text);
-  }
-  const leaf = findHeading(doc, slug);
-  if (!leaf) {
-    return null;
-  }
-  return `${hashes(leaf.level)} ${parts.join(" / ")}`;
-}
-
-function hashes(level: number): string {
-  return "#".repeat(level);
-}
 
 function sameAnchor(a: Anchor, b: Anchor): boolean {
   if (a.kind === "heading" && b.kind === "heading") {
@@ -129,15 +111,30 @@ function eq(a: readonly string[], b: readonly string[]): boolean {
   return a.length === b.length && a.every((s, i) => s === b[i]);
 }
 
-/** The structured, pasteable reference: an HTML comment naming the target + a
- * blockquote with the note. Matches the format in specs/mdtation.md. */
-export function copyFormat(comment: Comment, doc: Document): string {
-  const { anchor } = comment;
-  if (anchor.kind === "heading") {
-    const h = findHeading(doc, anchor.slug);
-    const label = headingLabel(anchor.slug, doc) ?? anchor.slug.join(" / ");
-    const line = h ? ` (line ${h.startLine})` : "";
-    return `<!-- mdtation comment on \`${label}\`${line} -->\n> ${comment.text}`;
+/** Longest crumb segment / line preview kept in the detailed format (token budget). */
+const SEG = 24;
+const PREVIEW = 80;
+
+function clip(s: string, n: number): string {
+  return s.length > n ? s.slice(0, n - 1) + "…" : s;
+}
+
+/** The pasteable reference: `Line N` + the note as a blockquote.
+ * `detail` adds the section crumb (segments clipped) and an indented preview of the line. */
+export function copyFormat(comment: Comment, doc: Document, detail = false): string {
+  const loc = resolveAnchor(comment.anchor, doc);
+  const quote = comment.text
+    .split("\n")
+    .map((l) => `> ${l}`)
+    .join("\n");
+  if (!detail || !loc) {
+    return `Line ${loc ? loc.startLine + 1 : "?"}\n${quote}`;
   }
-  return `<!-- mdtation comment on line ${anchor.n} -->\n> ${comment.text}`;
+  const path = crumb(doc, loc.startLine)
+    .split(" / ")
+    .map((s) => clip(s, SEG))
+    .join(" / ");
+  const head = `Line ${loc.startLine + 1}${path ? `  ${path}` : ""}`;
+  const src = doc.lines[loc.startLine]?.trim() ?? "";
+  return [head, ...(src ? [`    ${clip(src, PREVIEW)}`] : []), quote].join("\n");
 }

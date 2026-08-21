@@ -92,7 +92,7 @@ hovering an annotated line. Navigation reuses hunk's keys (`j/k`, `Ctrl-f/b`, `G
 
   > fix the heading level here
   ```
-  — a markdown blockquote with a comment, prefixed by an HTML comment that names the
+  — a `Line N` header (detailed mode adds the clipped section crumb and a line preview) above a markdown blockquote with the comment, no HTML comments; formerly an HTML comment naming the
   target heading path + line. Pasteable into Claude Code / Codex; parseable back into an
   anchor by re-scanning headings.
 - **Send-to-CLI channel:** v1 = `mdtation send` prints the reference to **stdout** (pipe to

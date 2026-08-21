@@ -98,21 +98,31 @@ describe("resolveAnchor", () => {
 });
 
 describe("copyFormat", () => {
-  test("heading reference names the target and line", () => {
-    const c = heading(["title", "sub"], "fix the heading level here");
-    assert.equal(
-      copyFormat(c, doc()),
-      `<!-- mdtation comment on \`## Title / Sub\` (line 2) -->\n> fix the heading level here`,
-    );
+  test("compact: line number (1-based) and the quoted note", () => {
+    assert.equal(copyFormat(heading(["title", "sub"], "fix"), doc()), "Line 3\n> fix");
+    assert.equal(copyFormat(line(4, "todo"), doc()), "Line 5\n> todo");
   });
 
-  test("line reference names the line number", () => {
-    const c = line(4, "todo");
-    assert.equal(copyFormat(c, doc()), `<!-- mdtation comment on line 4 -->\n> todo`);
+  test("multi-line notes quote every line", () => {
+    assert.equal(copyFormat(line(4, "a\nb"), doc()), "Line 5\n> a\n> b");
   });
 
-  test("unknown heading anchor omits the line and falls back to the slug", () => {
-    const c = heading(["missing"], "x");
-    assert.equal(copyFormat(c, doc()), `<!-- mdtation comment on \`missing\` -->\n> x`);
+  test("detail: crumb and indented preview of the line", () => {
+    assert.equal(copyFormat(line(4, "todo"), doc(), true), "Line 5  Title / Sub\n    text\n> todo");
+  });
+
+  test("detail clips crumb segments and the preview", () => {
+    const long = parseDocument(`# ${"h".repeat(40)}\n\n${"x".repeat(100)}\n`);
+    const out = copyFormat(line(2, "n"), long, true);
+    assert.equal(out.split("\n")[0], `Line 3  ${"h".repeat(23)}…`);
+    assert.equal(out.split("\n")[1], `    ${"x".repeat(79)}…`);
+  });
+
+  test("detail skips the preview on a blank line", () => {
+    assert.equal(copyFormat(line(3, "n"), doc(), true), "Line 4  Title / Sub\n> n");
+  });
+
+  test("unknown anchor: unresolved line, no detail", () => {
+    assert.equal(copyFormat(heading(["missing"], "x"), doc(), true), "Line ?\n> x");
   });
 });

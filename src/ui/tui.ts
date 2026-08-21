@@ -112,6 +112,7 @@ export class TuiShell {
       viewCrumb: true,
       viewBar: true,
       viewArchive: false,
+      viewDetail: false,
       viewMouse: true,
     };
     const saved = loadPrefs();
@@ -343,7 +344,7 @@ export class TuiShell {
   /** Write all comments (with provenance) to a temp file and open it in `$EDITOR`. */
   private editor(): void {
     const path = join(tmpdir(), "mdtation-comments.md");
-    writeFileSync(path, report(this.store, this.doc, this.file));
+    writeFileSync(path, report(this.store, this.doc, this.file, { detail: this.on.viewDetail }));
     this.renderer.suspend();
     spawnSync(process.env.EDITOR ?? "vi", [path], { stdio: "inherit" });
     this.renderer.resume();
@@ -491,7 +492,7 @@ export class TuiShell {
       this.draw("NO COMMENT HERE");
       return;
     }
-    copy(copyFormat(c, this.doc), this.renderer);
+    copy(copyFormat(c, this.doc, this.on.viewDetail), this.renderer);
     // OSC-52 is fire-and-forget: over SSH/remote the terminal may accept it without reaching the host clipboard.
     const note = this.renderer.capabilities?.remote ? "  remote: if empty, press a" : "";
     if (this.on.viewArchive) {
@@ -533,7 +534,11 @@ export class TuiShell {
         return;
       case "all":
         this.open(
-          new All(this.renderer, report(this.store, this.doc, this.file), () => this.close()),
+          new All(
+            this.renderer,
+            report(this.store, this.doc, this.file, { detail: this.on.viewDetail }),
+            () => this.close(),
+          ),
         );
         return;
       case "settings":
@@ -576,6 +581,7 @@ export class TuiShell {
       case "viewCrumb":
       case "viewBar":
       case "viewArchive":
+      case "viewDetail":
         this.on[id] = !this.on[id];
         this.remember();
         this.view = clampViewport(this.fit(), total);
