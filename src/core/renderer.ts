@@ -315,7 +315,7 @@ export function statusBar(doc: Document, vp: Viewport, opts: RenderOptions = {})
   const cur = Math.min(vp.cursor + 1, doc.lines.length);
   const plural = count === 1 ? "" : "s";
   const here = opts.markers?.filter((m) => m === vp.cursor).length ?? 0;
-  const hint = here ? `  ${here} here, e edits` : "";
+  const hint = here ? `  ${here} here  (e to edit)` : "";
   if (!opts.color) {
     return `Ln ${cur}/${doc.lines.length}  ${count} comment${plural}${hint}`;
   }

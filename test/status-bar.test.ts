@@ -32,7 +32,7 @@ describe("statusBar", () => {
     const doc = parseDocument("a\nb\nc");
     assert.equal(
       statusBar(doc, createViewport(0, 0, 80, 24), { markers: [0, 0, 2] }),
-      "Ln 1/3  3 comments  2 here, e edits",
+      "Ln 1/3  3 comments  2 here  (e to edit)",
     );
     assert.equal(
       statusBar(doc, createViewport(0, 1, 80, 24), { markers: [0, 0, 2] }),
