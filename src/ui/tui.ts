@@ -36,7 +36,7 @@ import { align, cell } from "../core/table.ts";
 import { displayWidth } from "../core/unicode.ts";
 import { crumb } from "../core/crumb.ts";
 import { loadConfig } from "../core/config.ts";
-import { menus, specs, step } from "../core/menu.ts";
+import { hint, menus, specs, step } from "../core/menu.ts";
 import {
   CHECKS,
   GUTTER_WIDTH,
@@ -55,6 +55,9 @@ import { COMMANDS, matchKey, reduceCommand, toChord, type CommandId } from "../c
 
 /** Rows of chrome below the body (status bar). */
 const FOOTER = 1;
+/** Window for the second quit on unsaved changes (Claude Code uses the same 2 s). */
+const AGAIN = 2000;
+
 /** View › Style cyclers: each pick moves to the next value; the menu shows the current one. */
 const CYCLES = {
   viewFences: ["ticks", "fence", "hide"],
@@ -68,8 +71,10 @@ export class TuiShell {
   readonly renderer: CliRenderer;
   doc: Document;
   dirty = false;
-  /** Set once `q` was refused on a dirty file; the next `q` discards. */
-  private guard = false;
+  /** When quit was last refused on a dirty file; a second quit within `AGAIN` ms exits anyway. */
+  private guard = 0;
+  /** Chord of the key being dispatched (for the status hint). */
+  private chord = "";
   readonly store: CommentStore;
   private readonly file: string;
   overlay: Overlay | null = null;
@@ -503,9 +508,11 @@ export class TuiShell {
         this.draw();
         return;
       case "quit":
-        if (this.dirty && !this.guard) {
-          this.guard = true;
-          this.draw("UNSAVED · q again to discard · ^s saves");
+        if (this.dirty && Date.now() - this.guard > AGAIN) {
+          this.guard = Date.now();
+          this.draw(
+            `Press ${hint(this.chord) || "^c"} again to exit with unsaved changes · ^s saves`,
+          );
           return;
         }
         break;
@@ -537,9 +544,10 @@ export class TuiShell {
       this.menuOpen(0);
       return;
     }
-    const id = matchKey(toChord(e))?.id as CommandId | undefined;
+    this.chord = toChord(e);
+    const id = matchKey(this.chord)?.id as CommandId | undefined;
     if (id !== "quit") {
-      this.guard = false;
+      this.guard = 0;
     }
     if (id) {
       e.preventDefault(); // keep the opening key out of an overlay's input
