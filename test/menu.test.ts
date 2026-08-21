@@ -37,8 +37,8 @@ describe("menu", () => {
 
   test("specs pack labels after a one-column gutter", () => {
     const s = specs(menus(COMMANDS));
-    assert.deepEqual(s[0], { id: "file", label: "File", left: 1, width: 6 });
-    assert.deepEqual(s[1], { id: "view", label: "View", left: 7, width: 6 });
+    assert.deepEqual(s[0], { id: "file", label: "File", left: 0, width: 6 });
+    assert.deepEqual(s[1], { id: "view", label: "View", left: 6, width: 6 });
   });
 
   test("width fits the longest title + hint", () => {

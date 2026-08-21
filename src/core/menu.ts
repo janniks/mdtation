@@ -95,7 +95,7 @@ export function specs(all: readonly Menu[]): Spec[] {
     out.push({
       id: m.label.toLowerCase(),
       label: m.label,
-      left: prev ? prev.left + prev.width : 1,
+      left: prev ? prev.left + prev.width : 0,
       width: displayWidth(m.label) + 2,
     });
   }

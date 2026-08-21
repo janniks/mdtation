@@ -42,7 +42,6 @@ export class MenuBar {
       height: 1,
       width: "100%",
       flexDirection: "row",
-      paddingLeft: 1,
       backgroundColor: THEME.bar,
     });
     specs.forEach((s, i) => {
