@@ -108,13 +108,14 @@ export class MenuBar {
 export class Dropdown implements Overlay {
   readonly node: BoxRenderable;
   private readonly rows: BoxRenderable[] = [];
-  private index = 0;
+  index = 0;
 
   constructor(
     renderer: CliRenderer,
     private readonly menu: Menu,
     spec: Spec,
     private readonly on: { run(id: string): void; close(): void; switch(delta: number): void },
+    at = 0,
   ) {
     const inner = Math.min(width(menu), Math.max(20, renderer.width - 4));
     this.node = new BoxRenderable(renderer, {
@@ -167,7 +168,7 @@ export class Dropdown implements Overlay {
       this.node.add(row);
       this.rows.push(row);
     });
-    this.focus(0);
+    this.focus(Math.min(at, this.rows.length - 1));
   }
 
   private focus(i: number): void {

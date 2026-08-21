@@ -227,16 +227,28 @@ export class TuiShell {
     return menus(COMMANDS, (id) => (id in CYCLES ? this.value(id as Cycle) : this.on[id]));
   }
 
-  private menuOpen(i: number): void {
+  private menuOpen(i: number, at = 0): void {
     this.open(
-      new Dropdown(this.renderer, this.menus()[i]!, this.spec[i]!, {
-        run: (id) => {
-          this.close();
-          this.run(id as CommandId);
+      new Dropdown(
+        this.renderer,
+        this.menus()[i]!,
+        this.spec[i]!,
+        {
+          run: (id) => {
+            // Toggles and cyclers keep the menu open (rebuilt in place); anything else closes it.
+            const keep = this.on[id] !== undefined || id in CYCLES;
+            const row = (this.overlay as Dropdown).index;
+            this.close();
+            this.run(id as CommandId);
+            if (keep) {
+              this.menuOpen(i, row);
+            }
+          },
+          close: () => this.close(),
+          switch: (d) => this.menuOpen(step(i, d, this.spec.length)),
         },
-        close: () => this.close(),
-        switch: (d) => this.menuOpen(step(i, d, this.spec.length)),
-      }),
+        at,
+      ),
     );
     this.cur = i;
     this.bar.active = i;
