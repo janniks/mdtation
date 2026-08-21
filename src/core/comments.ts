@@ -10,8 +10,15 @@ export function anchorFor(doc: Document, line: number): Anchor {
   return h ? { kind: "heading", slug: h.path } : { kind: "line", n: line };
 }
 
-export function create(doc: Document, line: number, text: string, now = Date.now()): Comment {
-  return { id: now.toString(36), anchor: anchorFor(doc, line), text, createdAt: now };
+export function create(
+  doc: Document,
+  line: number,
+  text: string,
+  now = Date.now(),
+  quote?: string,
+): Comment {
+  const c: Comment = { id: now.toString(36), anchor: anchorFor(doc, line), text, createdAt: now };
+  return quote ? { ...c, quote } : c;
 }
 
 /** One entry per live comment: its resolved line (duplicates = several comments on a line). */

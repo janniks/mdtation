@@ -125,6 +125,12 @@ describe("copyFormat", () => {
     assert.equal(copyFormat(line(3, "n"), doc(), "detailed"), "Line 4  Title / Sub\n> n");
   });
 
+  test("a selection is carried in full, in both modes, instead of the line preview", () => {
+    const c = { ...line(4, "n"), quote: "te\nxt" };
+    assert.equal(copyFormat(c, doc()), "Line 5\n    te\n    xt\n> n");
+    assert.equal(copyFormat(c, doc(), "detailed"), "Line 5  Title / Sub\n    te\n    xt\n> n");
+  });
+
   test("unknown anchor: unresolved line, no detail", () => {
     assert.equal(copyFormat(heading(["missing"], "x"), doc(), "detailed"), "Line ?\n> x");
   });

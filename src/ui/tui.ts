@@ -66,6 +66,7 @@ const CYCLES = {
   viewCaret: [">", "+", "▶", "›", "●"],
   viewCheck: CHECKS.map((c) => c[1]),
   viewCopy: ["simple", "detailed"],
+  viewQuote: ["bar", ">", "hide"],
 } as const;
 type Cycle = keyof typeof CYCLES;
 
@@ -86,8 +87,16 @@ export class TuiShell {
   /** Settings palette values (scroll margin, beta flags). */
   private prefs: Values = DEFAULTS;
   /** Current index per cycler. */
-  private pick: Record<Cycle, number> = { viewFences: 0, viewCaret: 0, viewCheck: 0, viewCopy: 0 };
+  private pick: Record<Cycle, number> = {
+    viewFences: 0,
+    viewCaret: 0,
+    viewCheck: 0,
+    viewCopy: 0,
+    viewQuote: 0,
+  };
   private timer: ReturnType<typeof setTimeout> | null = null;
+  /** Clears a transient status badge after `AGAIN` ms. */
+  private fade: ReturnType<typeof setTimeout> | null = null;
   private readonly bar: MenuBar;
   private readonly crumb: Crumb;
   private readonly text: TextRenderable;
@@ -150,7 +159,7 @@ export class TuiShell {
       renderer.root.add(n);
     }
     renderer.useMouse = true;
-    // Drag-select in the body copies like a terminal would (hunk does the same via OSC-52).
+    // Drag-select in the body opens a comment on the selection (stored verbatim, see `Comment.quote`).
     renderer.on("selection", (s: Selection) => {
       // Rows after the first start at column 0, so drop their 2-col gutter.
       const text = s.isDragging
@@ -162,9 +171,13 @@ export class TuiShell {
             .join("\n")
             .trim();
       if (text) {
-        copy(text, renderer);
+        const row = Math.min(s.anchor.y, s.focus.y) - this.text.y;
         renderer.clearSelection();
-        this.draw("COPIED SELECTION");
+        this.view = {
+          ...this.view,
+          cursor: Math.max(0, Math.min(this.view.offset + row, this.doc.lines.length - 1)),
+        };
+        this.comment(undefined, text);
       }
     });
     renderer.keyInput.on("keypress", this.onKey);
@@ -376,6 +389,7 @@ export class TuiShell {
   private style() {
     return {
       fences: this.value("viewFences"),
+      quote: this.value("viewQuote"),
       flow: this.on.viewFlow,
       indent: this.on.viewIndent,
       caret: this.value("viewCaret"),
@@ -430,19 +444,24 @@ export class TuiShell {
     );
     this.status.update(statusBar(this.doc, this.view, { markers: marks }), mode);
     this.renderer.requestRender();
+    if (this.fade) {
+      clearTimeout(this.fade);
+    }
+    this.fade = mode === "VIEW" || mode === "UNSAVED" ? null : setTimeout(() => this.draw(), AGAIN);
   }
 
-  /** Open the comment modal for the cursor line; ↵ adds + persists the comment. */
-  /** Open the comment box on the cursor row; `c` (existing comment) turns it into an edit. */
-  private comment(c?: Comment): void {
+  /** Open the comment box on the cursor row; `c` (existing comment) turns it into an edit,
+   * `sel` (drag-selected text) is kept on the comment and shown instead of the line. */
+  private comment(c?: Comment, sel?: string): void {
     const line = this.view.cursor;
+    const shown = sel ?? c?.quote ?? this.doc.lines[line] ?? "";
     this.open(
       new Modal(this.renderer, {
-        title: c ? "Edit comment" : "Comment",
-        quote: this.doc.lines[line] ?? "",
+        title: c ? "Edit comment" : sel ? "Comment on selection" : "Comment",
+        quote: shown.split("\n")[0]! + (shown.includes("\n") ? " …" : ""),
         value: c?.text,
         submit: (text) => {
-          this.store.add(c ? { ...c, text } : create(this.doc, line, text));
+          this.store.add(c ? { ...c, text } : create(this.doc, line, text, Date.now(), sel));
           this.persist();
           this.close();
           this.draw("SAVED");
@@ -563,6 +582,7 @@ export class TuiShell {
       case "viewCaret":
       case "viewCheck":
       case "viewCopy":
+      case "viewQuote":
         this.pick[id] = (this.pick[id] + 1) % CYCLES[id].length;
         this.remember();
         this.draw();
@@ -599,13 +619,6 @@ export class TuiShell {
           this.draw(
             `Press ${hint(this.chord) || "^c"} again to exit with unsaved changes  ^s saves`,
           );
-          // The hint leaves with the window, so its disappearance says "too late".
-          setTimeout(() => {
-            if (this.guard && Date.now() - this.guard >= AGAIN) {
-              this.guard = 0;
-              this.draw();
-            }
-          }, AGAIN);
           return;
         }
         break;

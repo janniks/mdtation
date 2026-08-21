@@ -175,3 +175,11 @@ describe("prose", () => {
     assert.deepEqual(out, ["> aaaa bbbb ", "  cccc dddd"]);
   });
 });
+
+test("blockquote styles: bar (default), > as written, hide", () => {
+  const doc = parseDocument("> a\n>> b\n");
+  const vp = createViewport(0, 0, 80, 2);
+  assert.deepEqual(render(doc, vp), ["> │ a", "  │ │ b"]);
+  assert.deepEqual(render(doc, vp, { quote: ">" }), ["> > a", "  >> b"]);
+  assert.deepEqual(render(doc, vp, { quote: "hide" }), [">   a", "      b"]);
+});

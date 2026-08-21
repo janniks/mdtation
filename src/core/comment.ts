@@ -26,6 +26,8 @@ export interface Comment {
   readonly id: string;
   readonly anchor: Anchor;
   readonly text: string;
+  /** Text the comment was made on (drag-select), copied verbatim into the reference. */
+  readonly quote?: string;
   readonly createdAt: number;
   /** Archived comments stay on disk but leave markers, nav, copy and the default report. */
   readonly archived?: boolean;
@@ -121,22 +123,24 @@ function clip(s: string, n: number): string {
   return s.length > n ? s.slice(0, n - 1) + "…" : s;
 }
 
-/** The pasteable reference: `Line N` + the note as a blockquote.
- * `detailed` adds the section crumb (segments clipped) and an indented preview of the line. */
+/** The pasteable reference: `Line N`, the selected text (if any) indented in full, the note as a blockquote.
+ * `detailed` adds the section crumb (segments clipped) and, without a selection, a clipped preview of the line. */
 export function copyFormat(comment: Comment, doc: Document, mode: Mode = "simple"): string {
   const loc = resolveAnchor(comment.anchor, doc);
-  const quote = comment.text
+  const note = comment.text
     .split("\n")
     .map((l) => `> ${l}`)
     .join("\n");
-  if (mode === "simple" || !loc) {
-    return `Line ${loc ? loc.startLine + 1 : "?"}\n${quote}`;
+  let head = `Line ${loc ? loc.startLine + 1 : "?"}`;
+  let src = comment.quote ?? "";
+  if (mode === "detailed" && loc) {
+    const path = crumb(doc, loc.startLine)
+      .split(" / ")
+      .map((s) => clip(s, SEG))
+      .join(" / ");
+    head += path ? `  ${path}` : "";
+    src ||= clip(doc.lines[loc.startLine]?.trim() ?? "", PREVIEW);
   }
-  const path = crumb(doc, loc.startLine)
-    .split(" / ")
-    .map((s) => clip(s, SEG))
-    .join(" / ");
-  const head = `Line ${loc.startLine + 1}${path ? `  ${path}` : ""}`;
-  const src = doc.lines[loc.startLine]?.trim() ?? "";
-  return [head, ...(src ? [`    ${clip(src, PREVIEW)}`] : []), quote].join("\n");
+  const body = src ? src.split("\n").map((l) => `    ${l}`) : [];
+  return [head, ...body, note].join("\n");
 }

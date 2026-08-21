@@ -124,6 +124,8 @@ Pure models live in `src/core` with node tests; `src/ui` only wires OpenTUI.
 | 8n | comment-edit | done | `e` (Comments › Edit comment) reopens the comment box prefilled; several comments on the row go through a palette chooser first. Status bar adds `N here  (e to edit)` while the cursor sits on a commented row. `here()` shared with copy. |
 | 8o | view-regroup | done | `View › Show menu bar` (`m`) hides the bar (header height follows). View sections: unnamed (menu bar, mouse, crumb), `Markdown` (color, emphasis, syntax, marks, pipes, frontmatter, fences, checkbox), `Style` (caret). |
 | 8p | copy-format | done | Copy/report format is plain markdown: `Line N` + blockquote, no HTML comments, no file path. `Comments › Options › Copy format` `[simple]/[detailed]`: detailed adds the section crumb (segments clipped to 24 chars) and an indented preview of the line (80 chars). Archived listings add an `id …` line for `--restore`. |
+| 8q | prose-tables | done | `View › Prose`: Flow paragraphs (one-sentence-per-line source renders as one wrapped block; continuation lines get no row), Indent paragraphs. Fence rule as wide as the code; `---` rules span the width. Table cells padded per separator alignment (header too); without pipes the colons do not widen columns and click-align is off. H1 bright white. |
+| 8r | select-comment | done | Drag-select opens `Comment on selection`; the text is stored on `Comment.quote` and copied in full (indented) in both copy modes. `View › Markdown › Blockquote` `[bar]/[>]/[hide]`, bar = dim `│` per level + gray text. Transient status badges (`SAVED`, `COPIED`…) fade after 2 s like the quit hint. |
 
 ## Later
 

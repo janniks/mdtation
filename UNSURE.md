@@ -161,3 +161,15 @@ Unchecked entries are swept on occasional cleanup passes.
     - verdict: ?
 - [ ] Default comment glyph `✦`, default caret `>`, default checkbox `[x]`; all cycle from the View menu until the user picks.
     - verdict: ?
+
+## 2026-08-21 — plans/mdtation-RUNNING.md (8q/8r)
+
+- [ ] Flow paragraphs hide continuation lines, so a comment anchored on one of them loses its gutter marker while flow is on.
+  - alternative: show a combined count on the paragraph's first row
+  - why: keeps `hidden()` the single mechanism; flow is off by default
+- [ ] Drag-select maps the selection's first screen row to a document line like click does (`offset + row`), ignoring wrapped/hidden rows above it.
+  - alternative: a row→line table built during render
+  - why: same approximation the click handler already makes; fix both together later
+- [ ] Blockquote text is painted gray as "less contrast"; inline bold/italic resets inside it fall back to the normal color.
+  - alternative: re-apply gray after every reset
+  - why: simple; rarely visible

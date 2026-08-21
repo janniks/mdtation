@@ -38,6 +38,8 @@ export interface RenderOptions {
   readonly fences?: "ticks" | "fence" | "hide";
   /** Show table pipes and the separator row as written (else bars and a rule). Default true. */
   readonly pipes?: boolean;
+  /** Blockquotes: `bar` a dim `│` per level, `>` as written, `hide` indent only. Default `bar`. */
+  readonly quote?: "bar" | ">" | "hide";
   /** Flow a paragraph's lines (one sentence per line in source) into one wrapped block. Default false. */
   readonly flow?: boolean;
   /** Indent the first line of each paragraph, book style. Default false. */
@@ -234,6 +236,13 @@ function bodyFor(
   }
   if (isRule(raw)) {
     return paint(color, SGR.dim, "\u2500".repeat(cols));
+  }
+  const q = /^(\s*)((?:>\s?)+)(.*)$/.exec(raw);
+  if (q && opts.quote !== ">") {
+    const depth = q[2]!.split(">").length - 1;
+    const lead =
+      opts.quote === "hide" ? "  ".repeat(depth) : paint(color, SGR.gray, "│ ".repeat(depth));
+    return q[1] + lead + paint(color, SGR.gray, styleInline(q[3]!, opts));
   }
   if (prose(doc, line, opts) && !prose(doc, line - 1, opts)) {
     let text = raw;
