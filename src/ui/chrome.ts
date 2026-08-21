@@ -142,7 +142,7 @@ export class Dropdown implements Overlay {
             top: rows,
             left: -1,
             content: `├─ ${e.group} ${"─".repeat(Math.max(0, inner - displayWidth(e.group) - 3))}┤`,
-            fg: THEME.muted,
+            fg: THEME.border,
             selectable: false,
             wrapMode: "none",
           }),

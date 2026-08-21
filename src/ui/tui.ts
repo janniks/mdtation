@@ -21,6 +21,7 @@ import { Crumb, Dropdown, MenuBar, StatusBar } from "./chrome.ts";
 import { Help } from "./help.ts";
 import { Palette } from "./palette.ts";
 import { Modal } from "./modal.ts";
+import { All } from "./all.ts";
 import { copy } from "./clipboard.ts";
 import { CommentStore, copyFormat } from "../core/comment.ts";
 import { create, markers } from "../core/comments.ts";
@@ -440,13 +441,15 @@ export class TuiShell {
       return;
     }
     copy(copyFormat(c, this.doc), this.renderer);
+    // OSC-52 is fire-and-forget: over SSH/remote the terminal may accept it without reaching the host clipboard.
+    const note = this.renderer.capabilities?.remote ? " · remote: if empty, press a" : "";
     if (this.on.viewArchive) {
       this.store.archive(c.id);
       this.persist();
-      this.draw("COPIED · ARCHIVED");
+      this.draw(`COPIED · ARCHIVED${note}`);
       return;
     }
-    this.draw("COPIED");
+    this.draw(`COPIED${note}`);
   }
 
   /** Run a command by id. */
@@ -473,6 +476,11 @@ export class TuiShell {
         return;
       case "editor":
         this.editor();
+        return;
+      case "all":
+        this.open(
+          new All(this.renderer, report(this.store, this.doc, this.file), () => this.close()),
+        );
         return;
       case "settings":
         this.open(
@@ -589,5 +597,10 @@ export class TuiShell {
 /** Mount the fullscreen TUI for `doc`. `file` is shown in the menu bar. The shell runs until the user quits. */
 export async function runTui(doc: Document, file = ""): Promise<TuiShell> {
   const store = file ? await load(file) : new CommentStore();
-  return new TuiShell(await createCliRenderer({ useMouse: true, exitOnCtrlC: false }), doc, file, store);
+  return new TuiShell(
+    await createCliRenderer({ useMouse: true, exitOnCtrlC: false }),
+    doc,
+    file,
+    store,
+  );
 }
