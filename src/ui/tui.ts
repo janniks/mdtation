@@ -24,6 +24,7 @@ import { Modal } from "./modal.ts";
 import { All } from "./all.ts";
 import { copy } from "./clipboard.ts";
 import { CommentStore, copyFormat } from "../core/comment.ts";
+import type { Comment } from "../core/comment.ts";
 import { create, markers } from "../core/comments.ts";
 import { load, save } from "../core/store.ts";
 import { load as loadPrefs, save as savePrefs } from "../core/prefs.ts";
@@ -425,14 +426,16 @@ export class TuiShell {
   }
 
   /** Open the comment modal for the cursor line; ↵ adds + persists the comment. */
-  private comment(): void {
+  /** Open the comment box on the cursor row; `c` (existing comment) turns it into an edit. */
+  private comment(c?: Comment): void {
     const line = this.view.cursor;
     this.open(
       new Modal(this.renderer, {
-        title: "Comment",
+        title: c ? "Edit comment" : "Comment",
         quote: this.doc.lines[line] ?? "",
+        value: c?.text,
         submit: (text) => {
-          this.store.add(create(this.doc, line, text));
+          this.store.add(c ? { ...c, text } : create(this.doc, line, text));
           this.persist();
           this.close();
           this.draw("SAVED");
@@ -442,12 +445,45 @@ export class TuiShell {
     );
   }
 
+  /** Live comments anchored on the cursor row. */
+  private here(): readonly Comment[] {
+    return this.store
+      .live()
+      .filter((x) => this.store.resolve(x.anchor, this.doc)?.startLine === this.view.cursor);
+  }
+
+  /** `e`: edit the comment on the cursor row; with several, pick one first. */
+  private amend(): void {
+    const list = this.here();
+    if (list.length === 0) {
+      this.draw("NO COMMENT HERE");
+    } else if (list.length === 1) {
+      this.comment(list[0]);
+    } else {
+      this.open(
+        new Palette(
+          this.renderer,
+          (id) => this.comment(this.store.get(id)),
+          () => this.close(),
+          {
+            title: "Edit which comment",
+            items: () =>
+              list.map((x) => ({
+                id: x.id,
+                title: x.text.split("\n")[0]!,
+                category: "",
+                keys: [],
+              })),
+          },
+        ),
+      );
+    }
+  }
+
   /** Copy the structured reference of the comment under the cursor (OSC-52 + file).
    * With `View › Archive comments on copy`, the comment is archived (recoverable via `--restore`). */
   private copy(): void {
-    const c = this.store
-      .live()
-      .find((x) => this.store.resolve(x.anchor, this.doc)?.startLine === this.view.cursor);
+    const c = this.here()[0];
     if (!c) {
       this.draw("NO COMMENT HERE");
       return;
@@ -482,6 +518,9 @@ export class TuiShell {
         return;
       case "comment":
         this.comment();
+        return;
+      case "edit":
+        this.amend();
         return;
       case "copy":
         this.copy();

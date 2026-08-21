@@ -309,17 +309,18 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
   return lines;
 }
 
-/** Status line: cursor position, comment count, mode. */
+/** Status line: cursor position, comment count, an edit hint when the cursor row has comments, mode. */
 export function statusBar(doc: Document, vp: Viewport, opts: RenderOptions = {}): string {
   const count = opts.markers?.length ?? 0;
   const cur = Math.min(vp.cursor + 1, doc.lines.length);
   const plural = count === 1 ? "" : "s";
-  const plain = `Ln ${cur}/${doc.lines.length}  ${count} comment${plural}`;
+  const here = opts.markers?.filter((m) => m === vp.cursor).length ?? 0;
+  const hint = here ? `  ${here} here, e edits` : "";
   if (!opts.color) {
-    return plain;
+    return `Ln ${cur}/${doc.lines.length}  ${count} comment${plural}${hint}`;
   }
   const num = SGR.green;
   const label = SGR.dim;
   const mode = SGR.gray;
-  return `${label}Ln${SGR.reset} ${num}${cur}/${doc.lines.length}${SGR.reset}  ${num}${count}${SGR.reset} comment${plural}  ${mode}view${SGR.reset}`;
+  return `${label}Ln${SGR.reset} ${num}${cur}/${doc.lines.length}${SGR.reset}  ${num}${count}${SGR.reset} comment${plural}${hint && `${mode}${hint}${SGR.reset}`}  ${mode}view${SGR.reset}`;
 }
