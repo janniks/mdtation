@@ -589,5 +589,5 @@ export class TuiShell {
 /** Mount the fullscreen TUI for `doc`. `file` is shown in the menu bar. The shell runs until the user quits. */
 export async function runTui(doc: Document, file = ""): Promise<TuiShell> {
   const store = file ? await load(file) : new CommentStore();
-  return new TuiShell(await createCliRenderer({ useMouse: true }), doc, file, store);
+  return new TuiShell(await createCliRenderer({ useMouse: true, exitOnCtrlC: false }), doc, file, store);
 }
