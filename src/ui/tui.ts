@@ -530,6 +530,13 @@ export class TuiShell {
           this.draw(
             `Press ${hint(this.chord) || "^c"} again to exit with unsaved changes | ^s saves`,
           );
+          // The hint leaves with the window, so its disappearance says "too late".
+          setTimeout(() => {
+            if (this.guard && Date.now() - this.guard >= AGAIN) {
+              this.guard = 0;
+              this.draw();
+            }
+          }, AGAIN);
           return;
         }
         break;
