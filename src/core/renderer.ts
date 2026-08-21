@@ -38,6 +38,10 @@ export interface RenderOptions {
   readonly fences?: "ticks" | "fence" | "hide";
   /** Show table pipes and the separator row as written (else bars and a rule). Default true. */
   readonly pipes?: boolean;
+  /** Flow a paragraph's lines (one sentence per line in source) into one wrapped block. Default false. */
+  readonly flow?: boolean;
+  /** Indent the first line of each paragraph, book style. Default false. */
+  readonly indent?: boolean;
 }
 
 /** Width (in columns) of the gutter prepended to every rendered line. */
@@ -72,6 +76,34 @@ function headingAt(doc: Document, line: number): Heading | undefined {
 /** Return the fenced code block covering `line`, if any. */
 function codeBlockAt(doc: Document, line: number) {
   return doc.codeBlocks.find((b) => line >= b.startLine && line <= b.endLine);
+}
+
+/** Rule standing in for a fence: as wide as the block's longest line (at least 3, at most `cols`). */
+function fenceRule(
+  doc: Document,
+  block: { startLine: number; endLine: number },
+  cols: number,
+): string {
+  const w = Math.max(3, ...doc.lines.slice(block.startLine + 1, block.endLine).map(displayWidth));
+  return "\u2500".repeat(Math.min(cols, w));
+}
+
+/** Plain paragraph text: not a heading, code, rule, table row, quote, list, or frontmatter. */
+function prose(doc: Document, line: number, opts: RenderOptions): boolean {
+  const raw = doc.lines[line];
+  if (raw === undefined || !raw.trim()) {
+    return false;
+  }
+  const close = fence(doc.lines);
+  return !(
+    (close > 0 && line <= close) ||
+    headingAt(doc, line) ||
+    codeBlockAt(doc, line) ||
+    isRule(raw) ||
+    isRow(raw) ||
+    /^\s*>/.test(raw) ||
+    styleList(raw, opts) !== undefined
+  );
 }
 
 /** Minimal inline markdown: `**bold**`, `*italic*`, `` `code` ``, `~~strike~~`, links.
@@ -197,12 +229,23 @@ function bodyFor(
   const block = codeBlockAt(doc, line);
   if (block) {
     if (line === block.startLine || line === block.endLine) {
-      return paint(color, SGR.dim, opts.fences === "fence" ? RULE : raw);
+      return paint(color, SGR.dim, opts.fences === "fence" ? fenceRule(doc, block, cols) : raw);
     }
     return color && opts.syntax !== false ? highlight(raw, block.lang ?? null) : raw;
   }
   if (isRule(raw)) {
     return paint(color, SGR.dim, RULE);
+  }
+  if (prose(doc, line, opts) && !prose(doc, line - 1, opts)) {
+    let text = raw;
+    if (opts.flow) {
+      const parts = [raw.trim()];
+      for (let i = line + 1; prose(doc, i, opts); i++) {
+        parts.push(doc.lines[i]!.trim());
+      }
+      text = parts.join(" ");
+    }
+    return styleInline(opts.indent ? `  ${text}` : text, opts);
   }
   return styleList(raw, opts) ?? styleInline(raw, opts);
 }
@@ -253,6 +296,9 @@ function markTables(rows: string[], flags: boolean[], start: number, doc: Docume
 
 /** Lines that get no row: the frontmatter opener and the blank run right after its closer. */
 export function hidden(doc: Document, line: number, opts: RenderOptions = {}): boolean {
+  if (opts.flow && prose(doc, line, opts) && prose(doc, line - 1, opts)) {
+    return true;
+  }
   if (opts.fences === "hide") {
     const block = codeBlockAt(doc, line);
     if (block && (line === block.startLine || line === block.endLine)) {

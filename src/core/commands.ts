@@ -42,6 +42,8 @@ export const COMMANDS = [
   { id: "viewFront", title: "Show frontmatter", category: "View", keys: [], group: "Markdown" },
   { id: "viewFences", title: "Code fences", category: "View", keys: [], group: "Markdown" },
   { id: "viewCheck", title: "Checkbox", category: "View", keys: [], group: "Markdown" },
+  { id: "viewFlow", title: "Flow paragraphs", category: "View", keys: [], group: "Prose" },
+  { id: "viewIndent", title: "Indent paragraphs", category: "View", keys: [], group: "Prose" },
   { id: "viewCaret", title: "Caret", category: "View", keys: [], group: "Style" },
   {
     id: "cursorDown",
@@ -104,6 +106,8 @@ export const HANDLERS: { readonly [K in CommandId]: CmdHandler } = {
   viewFront: () => ({}),
   viewCaret: () => ({}),
   viewCheck: () => ({}),
+  viewFlow: () => ({}),
+  viewIndent: () => ({}),
   viewCrumb: () => ({}),
   viewArchive: () => ({}),
   viewCopy: () => ({}),

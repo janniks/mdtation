@@ -2,7 +2,7 @@ import { strict as assert } from "node:assert";
 import { test, describe } from "node:test";
 import { createViewport } from "../src/core/viewport.ts";
 import { parseDocument } from "../src/core/document.ts";
-import { render } from "../src/core/renderer.ts";
+import { hidden, render } from "../src/core/renderer.ts";
 
 // No trailing newline -> 8 clean lines, easy to assert exactly.
 const md = "# A\n## B\n### C\nhello\n```ts\nconst x = 1\n```\n# D";
@@ -86,7 +86,7 @@ describe("hide markup", () => {
 
   test("fence rows become plain rules", () => {
     const out = show("```ts\nconst x = 1\n```", { ...hide });
-    assert.deepEqual(out, [`  ${rule}`, "  const x = 1", `  ${rule}`]);
+    assert.deepEqual(out, [`  ${"─".repeat(11)}`, "  const x = 1", `  ${"─".repeat(11)}`]);
   });
 
   test("thematic breaks are rules; frontmatter drops its opener and closes full-width", () => {
@@ -151,6 +151,27 @@ test("fence styles: ticks as written, fence as a rule, hide drops the rows", () 
   const doc = parseDocument("```ts\nx\n```\n");
   const vp = createViewport(0, 0, 80, 3);
   assert.equal(render(doc, vp, { fences: "ticks" })[0], "> ```ts");
-  assert.equal(render(doc, vp, { fences: "fence" })[0], `> ${"─".repeat(20)}`);
+  assert.equal(render(doc, vp, { fences: "fence" })[0], "> ───"); // min 3 wide
   assert.deepEqual(render(doc, vp, { fences: "hide" }), ["  x"]);
+});
+
+describe("prose", () => {
+  const src = "# T\n\nOne.\nTwo.\n\n- item\nThree.\n";
+  const vp = createViewport(0, 0, 80, 10);
+  test("flow joins a paragraph's lines into one row and hides the rest", () => {
+    const out = render(parseDocument(src), vp, { flow: true });
+    assert.deepEqual(out, ["> # T", "  ", "  One. Two.", "  ", "  - item", "  Three.", "  "]);
+    assert.equal(hidden(parseDocument(src), 3, { flow: true }), true);
+    assert.equal(hidden(parseDocument(src), 2, { flow: true }), false);
+  });
+  test("indent prefixes the first line of each paragraph only", () => {
+    const out = render(parseDocument(src), vp, { indent: true });
+    assert.deepEqual(out.slice(2, 4), ["    One.", "  Two."]);
+  });
+  test("flow wraps the joined text", () => {
+    const out = render(parseDocument("aaaa bbbb\ncccc dddd"), createViewport(0, 0, 12, 5), {
+      flow: true,
+    });
+    assert.deepEqual(out, ["> aaaa bbbb ", "  cccc dddd"]);
+  });
 });

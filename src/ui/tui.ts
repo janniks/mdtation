@@ -112,6 +112,8 @@ export class TuiShell {
       viewFront: false,
       viewCrumb: true,
       viewBar: true,
+      viewFlow: false,
+      viewIndent: false,
       viewArchive: false,
       viewMouse: true,
     };
@@ -374,6 +376,8 @@ export class TuiShell {
   private style() {
     return {
       fences: this.value("viewFences"),
+      flow: this.on.viewFlow,
+      indent: this.on.viewIndent,
       caret: this.value("viewCaret"),
       check: this.pick.viewCheck,
     };
@@ -581,6 +585,8 @@ export class TuiShell {
       case "viewFront":
       case "viewCrumb":
       case "viewBar":
+      case "viewFlow":
+      case "viewIndent":
       case "viewArchive":
         this.on[id] = !this.on[id];
         this.remember();
