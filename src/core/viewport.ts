@@ -130,6 +130,29 @@ export function jumpToLine(vp: Viewport, line: number, total: number): Viewport 
   return withCursorVisible({ ...vp, cursor: line, offset: line }, total);
 }
 
+/** Re-fit `offset` so the cursor keeps `margin` *rendered rows* on each side.
+ * `rows(line)` is how many screen rows a line takes (0 when hidden, >1 when wrapped);
+ * the line-based clamp above only knows 1 row per line. */
+export function settle(vp: Viewport, total: number, rows: (line: number) => number): Viewport {
+  if (total <= 0 || vp.height <= 0) {
+    return vp;
+  }
+  const first = vp.first ?? 0;
+  const m = gap(vp);
+  const sum = (a: number, b: number) => {
+    let n = 0;
+    for (let i = a; i < b; i++) n += rows(i);
+    return n;
+  };
+  let offset = Math.min(vp.offset, vp.cursor);
+  // Rows above the cursor inside the window must reach the margin (unless at the top).
+  while (offset > first && sum(offset, vp.cursor) < m) offset--;
+  // Rows from the window top through the cursor plus the margin below must fit.
+  const after = Math.min(m, sum(vp.cursor + 1, total));
+  while (offset < vp.cursor && sum(offset, vp.cursor + 1) + after > vp.height) offset++;
+  return { ...vp, offset };
+}
+
 /** 0-based row of the cursor within the window, or -1 if it's off-screen. */
 export function cursorRow(vp: Viewport): number {
   const row = vp.cursor - vp.offset;

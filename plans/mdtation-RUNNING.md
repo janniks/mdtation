@@ -131,6 +131,7 @@ Pure models live in `src/core` with node tests; `src/ui` only wires OpenTUI.
 | 8u | marks-kept | done | Show inline marks + Color/Show text decoration: with marks on, styling wraps the marks (`**b**` in bold) instead of stripping them; `styleInline` is a single-pass regex so bold spans are never re-matched by italic. |
 | 8v | archive-sweep | done | `Archive > Remove after` setting `[1d/7d/30d/1y/never]` (default 30d). `archive()` stamps `archivedAt`, `restore()` clears it, `CommentStore.sweep(ttl)` runs at TUI start and persists when something went. |
 | 8w | palette-verbs | done | Command palette reads `Hide …` for `Show …` toggles that are on (`verbs()` in commands.ts); menu bar keeps its `[x]` checkboxes. |
+| 8x | smooth-scroll | done | Scroll margin now counts screen rows: `settle(vp,total,rows)` in viewport.ts re-fits `offset` after every draw using `span()` (0 rows hidden, N rows wrapped); renderer fills the screen past hidden lines; `settle()` in tui no longer re-anchors via `jumpToLine`. Show frontmatter no longer skips line 0 in files without frontmatter. |
 
 ## Later
 

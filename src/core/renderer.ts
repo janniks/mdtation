@@ -397,7 +397,8 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
   const cursorOn = vp.cursor >= vp.offset && vp.cursor < vp.offset + vp.height;
   const start = Math.max(0, vp.offset);
   const height = Math.max(0, vp.height);
-  const end = Math.min(doc.lines.length, start + height);
+  // Hidden lines take no row, so look past `height` lines to fill the screen.
+  const end = Math.min(doc.lines.length, start + 2 * height);
   const cols = Math.max(1, vp.width - GUTTER_WIDTH);
   const src: string[] = [];
   for (let i = start; i < end; i++) {
@@ -406,7 +407,7 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
   const flags: boolean[] = Array.from({ length: src.length }, () => false);
   markTables(src, flags, start, doc, opts.pipes !== false);
   const lines: string[] = [];
-  for (let i = start; i < end; i++) {
+  for (let i = start; i < end && lines.length < height; i++) {
     const idx = i - start;
     const body = src[idx]!;
     if (hidden(doc, i, opts)) {
@@ -422,6 +423,15 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
     });
   }
   return lines;
+}
+
+/** Screen rows `line` takes: 0 when hidden, more than 1 when it wraps. */
+export function span(doc: Document, line: number, vp: Viewport, opts: RenderOptions = {}): number {
+  if (hidden(doc, line, opts)) {
+    return 0;
+  }
+  const cols = Math.max(1, vp.width - GUTTER_WIDTH);
+  return wrapStyled(bodyFor(line, doc.lines[line] ?? "", doc, opts, cols), cols).length;
 }
 
 /** Status line: cursor position, comment count, an edit hint when the cursor row has comments, mode. */

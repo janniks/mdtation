@@ -161,7 +161,7 @@ test("fence styles: ticks as written, fence as a rule, hide drops the rows", () 
   const vp = createViewport(0, 0, 80, 3);
   assert.equal(render(doc, vp, { fences: "ticks" })[0], "> ```ts");
   assert.equal(render(doc, vp, { fences: "fence" })[0], "> ───"); // min 3 wide
-  assert.deepEqual(render(doc, vp, { fences: "hide" }), ["  x"]);
+  assert.deepEqual(render(doc, vp, { fences: "hide" }), ["  x", "  "]); // fills the freed row
 });
 
 describe("prose", () => {

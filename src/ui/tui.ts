@@ -44,6 +44,7 @@ import {
   GUTTER_WIDTH,
   hidden,
   render as renderFrame,
+  span,
   statusBar,
 } from "../core/renderer.ts";
 import {
@@ -51,6 +52,7 @@ import {
   createViewport,
   jumpToLine,
   moveCursor,
+  settle,
   type Viewport,
 } from "../core/viewport.ts";
 import {
@@ -224,7 +226,8 @@ export class TuiShell {
         height,
         Number(this.prefs.margin),
       ),
-      first: this.on.viewFront ? 1 : this.first(),
+      // Shown frontmatter starts under its opener; without any, line 0 (often the H1) stays reachable.
+      first: this.on.viewFront && end(this.doc.lines) > 0 ? 1 : this.first(),
     };
   }
 
@@ -461,7 +464,8 @@ export class TuiShell {
       c += dir;
     }
     if (c !== this.view.cursor) {
-      this.view = jumpToLine(this.view, c, this.doc.lines.length);
+      // Not `jumpToLine`: that re-anchors the window on the cursor and makes the page snap.
+      this.view = moveCursor(this.view, c - this.view.cursor, this.doc.lines.length);
     }
   }
 
@@ -470,19 +474,22 @@ export class TuiShell {
     this.crumb.node.visible = this.on.viewCrumb === true;
     this.bar.node.visible = this.on.viewBar === true;
     this.crumb.text = crumb(this.doc, this.view.cursor, Number(this.prefs.crumb) || Infinity);
+    const opts = {
+      color: this.on.viewColor,
+      emphasis: this.on.viewEmphasis,
+      syntax: this.on.viewSyntax,
+      hashes: this.on.viewHashes,
+      marks: this.on.viewMarks,
+      deco: this.on.viewDeco,
+      links: this.on.viewLinks,
+      pipes: this.on.viewPipes,
+      ...this.style(),
+    };
+    // Keep the scroll margin honest in screen rows (hidden lines take none, wrapped ones several).
+    const total = this.doc.lines.length;
+    this.view = settle(this.view, total, (l) => span(this.doc, l, this.view, opts));
     this.text.content = styled(
-      renderFrame(this.doc, this.view, {
-        color: this.on.viewColor,
-        emphasis: this.on.viewEmphasis,
-        syntax: this.on.viewSyntax,
-        hashes: this.on.viewHashes,
-        marks: this.on.viewMarks,
-        deco: this.on.viewDeco,
-        links: this.on.viewLinks,
-        pipes: this.on.viewPipes,
-        ...this.style(),
-        markers: marks,
-      }).join("\n"),
+      renderFrame(this.doc, this.view, { ...opts, markers: marks }).join("\n"),
     );
     this.status.update(statusBar(this.doc, this.view, { markers: marks }));
     // `View > Status badge` picks its corner; file name + edit state take the other one.
