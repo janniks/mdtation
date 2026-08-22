@@ -32,8 +32,10 @@ export interface RenderOptions {
   readonly check?: number;
   /** Show heading `#` marks. Default true. */
   readonly hashes?: boolean;
-  /** Show inline marks (`**`, `_`, backticks, link urls). Default true. */
+  /** Show inline marks (`**`, `_`, backticks). Default true. */
   readonly marks?: boolean;
+  /** Show link urls after the label. Default true. */
+  readonly links?: boolean;
   /** Code fence rows: `ticks` as written, `fence` a thin rule, `hide` no row. Default `ticks`. */
   readonly fences?: "ticks" | "fence" | "hide";
   /** Show table pipes and the separator row as written (else bars and a rule). Default true. */
@@ -110,24 +112,27 @@ function prose(doc: Document, line: number, opts: RenderOptions): boolean {
  * Marks are dropped whenever the inner text gets styled or markup is hidden. */
 function styleInline(text: string, opts: RenderOptions): string {
   const emphasis = opts.color === true && opts.emphasis !== false;
-  const markup = opts.marks !== false;
-  if (!emphasis && markup) {
-    return text;
-  }
+  const links = opts.links !== false;
   // Links first: later rules emit `\x1b[` escapes that would match the link's `[`.
-  return text
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, t: string, u: string) => {
-      const label = paint(emphasis, SGR.underline + SGR.blue, t);
-      return markup ? `${label} ${paint(emphasis, SGR.dim, `(${u})`)}` : label;
-    })
-    .replace(/\*\*(.+?)\*\*|__(.+?)__/g, (_, a: string, b: string) =>
-      paint(emphasis, SGR.bold + SGR.yellow, a ?? b),
-    )
-    .replace(/`([^`]+)`/g, (_, p: string) => paint(emphasis, SGR.gray, p))
-    .replace(/~~(.+?)~~/g, (_, p: string) => paint(emphasis, SGR.strike, p))
-    .replace(/\*([^*]+?)\*|\b_([^_]+?)_\b/g, (_, a: string, b: string) =>
-      paint(emphasis, SGR.italic + SGR.magenta, a ?? b),
-    );
+  let out =
+    emphasis || !links
+      ? text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, t: string, u: string) => {
+          const label = paint(emphasis, SGR.underline + SGR.blue, t);
+          return links ? `${label} ${paint(emphasis, SGR.dim, `(${u})`)}` : label;
+        })
+      : text;
+  if (emphasis || opts.marks === false) {
+    out = out
+      .replace(/\*\*(.+?)\*\*|__(.+?)__/g, (_, a: string, b: string) =>
+        paint(emphasis, SGR.bold + SGR.yellow, a ?? b),
+      )
+      .replace(/`([^`]+)`/g, (_, p: string) => paint(emphasis, SGR.gray, p))
+      .replace(/~~(.+?)~~/g, (_, p: string) => paint(emphasis, SGR.strike, p))
+      .replace(/\*([^*]+?)\*|\b_([^_]+?)_\b/g, (_, a: string, b: string) =>
+        paint(emphasis, SGR.italic + SGR.magenta, a ?? b),
+      );
+  }
+  return out;
 }
 
 /** Color the bullet/number of a markdown list item; `undefined` for non-list lines. */

@@ -74,7 +74,7 @@ test("gutter shows the comment count past one, and a custom caret", () => {
 const show = (src: string, opts = {}) =>
   render(parseDocument(src), createViewport(0, 99, 80, 99), opts);
 
-const hide = { hashes: false, marks: false, fences: "fence", pipes: false } as const;
+const hide = { hashes: false, marks: false, links: false, fences: "fence", pipes: false } as const;
 
 describe("hide markup", () => {
   const rule = "─".repeat(78);
@@ -189,4 +189,9 @@ test("blockquote stays gray after inline styles inside it", () => {
     color: true,
   });
   assert.equal(out[0], "  \x1b[90m│ \x1b[0m\x1b[90mhas \x1b[1m\x1b[33mb\x1b[0m\x1b[90m in\x1b[0m");
+});
+
+test("links toggle is independent of inline marks", () => {
+  assert.equal(show("**b** [t](http://x)", { marks: false })[0], "  b [t](http://x)");
+  assert.equal(show("**b** [t](http://x)", { links: false })[0], "  **b** t");
 });
