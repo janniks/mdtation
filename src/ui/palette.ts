@@ -64,6 +64,7 @@ export class Palette implements Overlay {
       height: this.max,
       selectable: false,
       onMouseUp: (e: MouseEvent) => this.pick(e.y - this.list.y),
+      onMouseMove: (e: MouseEvent) => this.hover(e.y - this.list.y),
     });
     this.node.add(this.input);
     this.node.add(
@@ -97,6 +98,15 @@ export class Palette implements Overlay {
     this.list.content = new StyledText(
       out.length ? out.slice(0, -1) : [dim(chunk("  no matches"))],
     );
+  }
+
+  /** Mouse over a row moves the highlight there (same as arrowing to it). */
+  private hover(row: number): void {
+    const from = Math.max(0, Math.min(this.sel - this.max + 1, this.hits.length - this.max));
+    if (row >= 0 && from + row < this.hits.length && from + row !== this.sel) {
+      this.sel = from + row;
+      this.draw();
+    }
   }
 
   private pick(row: number, dir = 1): void {
