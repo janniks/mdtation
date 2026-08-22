@@ -9,12 +9,23 @@ export const SETTINGS = [
   },
   { id: "crumb", title: "Section > Crumb depth", values: ["all", "1", "2", "3", "4", "5", "6"] },
   { id: "front", title: "Beta > Frontmatter editing", values: ["on", "off"] },
+  { id: "purge", title: "Archive > Remove after", values: ["1d", "7d", "30d", "1y", "never"] },
 ] as const;
+
+const DAY = 86_400_000;
+/** Archive retention in ms per `purge` value; `never` is Infinity. */
+export const TTL: Record<string, number> = {
+  "1d": DAY,
+  "7d": 7 * DAY,
+  "30d": 30 * DAY,
+  "1y": 365 * DAY,
+  never: Infinity,
+};
 
 export type Id = (typeof SETTINGS)[number]["id"];
 export type Values = Record<Id, string>;
 
-export const DEFAULTS: Values = { margin: "3", crumb: "all", front: "on" };
+export const DEFAULTS: Values = { margin: "3", crumb: "all", front: "on", purge: "30d" };
 
 /** Move setting `id` by `dir` steps through its values (wrapping). Unknown ids are ignored. */
 export function cycle(v: Values, id: string, dir = 1): Values {

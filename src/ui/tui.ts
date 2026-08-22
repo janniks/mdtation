@@ -30,7 +30,7 @@ import { load, save } from "../core/store.ts";
 import { load as loadPrefs, save as savePrefs } from "../core/prefs.ts";
 import { report } from "../core/report.ts";
 import { end, field, set } from "../core/front.ts";
-import { cycle, DEFAULTS, rows as settings, type Values } from "../core/settings.ts";
+import { cycle, DEFAULTS, rows as settings, TTL, type Values } from "../core/settings.ts";
 import { nextComment, prevComment } from "../core/nav.ts";
 import { parseDocument, type Document } from "../core/document.ts";
 import { box, toggle } from "../core/edit.ts";
@@ -145,6 +145,9 @@ export class TuiShell {
       }
     }
     this.prefs = { ...this.prefs, ...saved.values } as Values;
+    if (this.store.sweep(TTL[this.prefs.purge] ?? Infinity)) {
+      this.persist();
+    }
     for (const k of Object.keys(this.pick) as Cycle[]) {
       this.pick[k] = (saved.picks[k] ?? 0) % CYCLES[k].length;
     }

@@ -31,6 +31,8 @@ export interface Comment {
   readonly createdAt: number;
   /** Archived comments stay on disk but leave markers, nav, copy and the default report. */
   readonly archived?: boolean;
+  /** When it was archived; drives `sweep`. */
+  readonly archivedAt?: number;
 }
 
 export class CommentStore {
@@ -53,17 +55,29 @@ export class CommentStore {
   live(): readonly Comment[] {
     return this.all().filter((c) => !c.archived);
   }
-  archive(id: string): boolean {
-    return this.flag(id, true);
-  }
-  restore(id: string): boolean {
-    return this.flag(id, false);
-  }
-  private flag(id: string, archived: boolean): boolean {
+  archive(id: string, now = Date.now()): boolean {
     const c = this.comments.get(id);
     if (!c) return false;
-    this.comments.set(id, { ...c, archived });
+    this.comments.set(id, { ...c, archived: true, archivedAt: now });
     return true;
+  }
+  restore(id: string): boolean {
+    const c = this.comments.get(id);
+    if (!c) return false;
+    const { archived: _a, archivedAt: _t, ...rest } = c;
+    this.comments.set(id, rest);
+    return true;
+  }
+  /** Drop comments archived longer than `ttl` ms ago; returns how many went. */
+  sweep(ttl: number, now = Date.now()): number {
+    let n = 0;
+    for (const c of this.all()) {
+      if (c.archived && now - (c.archivedAt ?? c.createdAt) > ttl) {
+        this.comments.delete(c.id);
+        n++;
+      }
+    }
+    return n;
   }
   byAnchor(anchor: Anchor): readonly Comment[] {
     return this.live().filter((c) => sameAnchor(c.anchor, anchor));

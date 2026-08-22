@@ -174,3 +174,14 @@ Unchecked entries are swept on occasional cleanup passes.
   - alternative: re-apply gray after every reset
   - why: simple; rarely visible
   - verdict: it was visible; gray is re-armed after each reset now (2026-08-22)
+
+## 2026-08-22 — archive retention
+- [ ] Default `Archive > Remove after` is `30d`.
+  - alternative: `never` (safest) or `7d`.
+  - why: user wants archive as an undo buffer, not a graveyard; 30d feels like the usual "trash" window.
+- [ ] Sweep runs only on TUI start, not on `--list`/`--archived`.
+  - alternative: sweep in `store.load` for every path.
+  - why: the setting lives in prefs, which the store module does not read; keeps `store.ts` dumb.
+- [ ] Comments archived before this change carry no `archivedAt`; their `createdAt` counts instead.
+  - alternative: treat them as archived now.
+  - why: no migration code while users are few (P02b).

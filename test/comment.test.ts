@@ -42,6 +42,20 @@ describe("CommentStore", () => {
     assert.equal(s.live().length, 1);
   });
 
+  test("sweep drops comments archived longer than ttl; restore clears the stamp", () => {
+    const s = CommentStore.fromJSON(["c1", "c2", "c3"].map((id) => heading(["title"], id, id)));
+    s.archive("c1", 1000);
+    s.archive("c2", 5000);
+    assert.equal(s.sweep(3000, 6000), 1);
+    assert.deepEqual(
+      s.all().map((c) => c.id),
+      ["c2", "c3"],
+    );
+    assert.equal(s.sweep(Infinity, 1e12), 0);
+    s.restore("c2");
+    assert.equal("archivedAt" in s.get("c2")!, false);
+  });
+
   test("byAnchor distinguishes heading vs line and path", () => {
     const s = new CommentStore();
     s.add(heading(["title", "sub"], "a", "h1"));
