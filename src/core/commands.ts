@@ -74,20 +74,14 @@ export const COMMANDS = [
   { id: "editor", title: "Show in editor", category: "Comments", keys: [] },
   { id: "copy", title: "Copy comments to clipboard", category: "Comments", keys: ["shift+c"] },
   {
-    id: "viewArchive",
-    title: "Archive on copy",
-    category: "Comments",
-    keys: [],
-    group: "Options",
-  },
-  { id: "viewCopy", title: "Copy format", category: "Comments", keys: [], group: "Options" },
-  {
     id: "viewSelect",
     title: "Select to comment",
     category: "Comments",
     keys: [],
     group: "Options",
   },
+  { id: "viewArchive", title: "Archive on copy", category: "Comments", keys: [], group: "Options" },
+  { id: "viewCopy", title: "Copy format", category: "Comments", keys: [], group: "Options" },
   { id: "help", title: "Help", category: "Help", keys: ["?"] },
 ] as const satisfies readonly Command[];
 
