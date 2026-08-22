@@ -74,6 +74,7 @@ const CYCLES = {
   viewCheck: CHECKS.map((c) => c[1]),
   viewCopy: ["simple", "detailed"],
   viewQuote: ["bar", ">", "hide"],
+  viewStatus: ["bottom", "top"],
 } as const;
 type Cycle = keyof typeof CYCLES;
 
@@ -100,6 +101,7 @@ export class TuiShell {
     viewCheck: 0,
     viewCopy: 0,
     viewQuote: 0,
+    viewStatus: 0,
   };
   private timer: ReturnType<typeof setTimeout> | null = null;
   /** Clears a transient status badge after `AGAIN` ms. */
@@ -147,7 +149,7 @@ export class TuiShell {
       this.pick[k] = (saved.picks[k] ?? 0) % CYCLES[k].length;
     }
     this.view = clampViewport(this.fit(), doc.lines.length);
-    this.bar = new MenuBar(renderer, this.spec, basename(file), {
+    this.bar = new MenuBar(renderer, this.spec, {
       hover: (i) => this.cur >= 0 && this.cur !== i && this.menuOpen(i),
       toggle: (i) => this.outside() || (this.cur === i ? this.close() : this.menuOpen(i)),
     });
@@ -461,7 +463,6 @@ export class TuiShell {
 
   draw(mode = this.dirty ? "UNSAVED" : "VIEW"): void {
     const marks = markers(this.store, this.doc);
-    this.bar.dirty = this.dirty;
     this.crumb.node.visible = this.on.viewCrumb === true;
     this.bar.node.visible = this.on.viewBar === true;
     this.crumb.text = crumb(this.doc, this.view.cursor, Number(this.prefs.crumb) || Infinity);
@@ -479,7 +480,12 @@ export class TuiShell {
         markers: marks,
       }).join("\n"),
     );
-    this.status.update(statusBar(this.doc, this.view, { markers: marks }), mode);
+    this.status.update(statusBar(this.doc, this.view, { markers: marks }));
+    // `View > Status badge` picks its corner; file name + edit state take the other one.
+    const top = this.value("viewStatus") === "top";
+    const name = { state: this.dirty ? "(unsaved changes)" : "", file: basename(this.file) };
+    this.bar.tail.set(top ? { badge: mode } : name);
+    this.status.tail.set(top ? name : { badge: mode });
     this.renderer.requestRender();
     if (this.fade) {
       clearTimeout(this.fade);
@@ -628,6 +634,7 @@ export class TuiShell {
       case "viewCheck":
       case "viewCopy":
       case "viewQuote":
+      case "viewStatus":
         this.step(id, 1);
         return;
       case "save":

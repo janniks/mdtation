@@ -127,6 +127,7 @@ Pure models live in `src/core` with node tests; `src/ui` only wires OpenTUI.
 | 8q | prose-tables | done | `View › Prose`: Flow paragraphs (one-sentence-per-line source renders as one wrapped block; continuation lines get no row), Indent paragraphs. Fence rule as wide as the code; `---` rules span the width. Table cells padded per separator alignment (header too); without pipes the colons do not widen columns and click-align is off. H1 bright white. |
 | 8r | select-comment | done | Drag-select opens `Comment on selection`; the text is stored on `Comment.quote` and copied in full (indented) in both copy modes. `View › Markdown › Blockquote` `[bar]/[>]/[hide]`, bar = dim `│` per level + gray text. Transient status badges (`SAVED`, `COPIED`…) fade after 2 s like the quit hint. |
 | 8s | settings-popup | done | Settings popup lists the menu cyclers too (`View › Code fences [hide]` …); `←`/`→` step any row back/forward, `↵` forward; finer numeric values (margin 0–10, crumb depth all/1–6); footer hint `esc close  ← → or ↵ change`. Values shown verbatim (fixes a crash when the caret was `+`). Word-wrap at spaces. `Comments › Select to comment` toggle, `Show links` / `Show text decoration` toggles. |
+| 8t | status-corner | done | `View > Status badge` `[bottom]/[top]`: top puts the mode/badge row in the menu bar (clear of the herdr copy popup) and moves file name + `(unsaved changes)` to the status row. `Tail` in chrome.ts is the shared right-end slot of both bars. Palette rows highlight on hover. |
 
 ## Later
 

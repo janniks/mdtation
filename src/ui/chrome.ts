@@ -28,13 +28,12 @@ export class MenuBar {
   readonly node: BoxRenderable;
   private readonly boxes: BoxRenderable[] = [];
   private readonly labels: TextRenderable[] = [];
-  private readonly file: TextRenderable;
-  private readonly state: TextRenderable;
+  /** Right end: edit state, file name and/or the mode badge (what goes where is the shell's call). */
+  readonly tail: Tail;
 
   constructor(
     renderer: CliRenderer,
     specs: readonly Spec[],
-    file: string,
     on: { hover(i: number): void; toggle(i: number): void },
   ) {
     this.node = new BoxRenderable(renderer, {
@@ -64,34 +63,8 @@ export class MenuBar {
       this.boxes.push(box);
       this.labels.push(label);
     });
-    const right = new BoxRenderable(renderer, {
-      flexGrow: 1,
-      height: 1,
-      flexDirection: "row",
-      justifyContent: "flex-end",
-      backgroundColor: THEME.bar,
-    });
-    this.state = new TextRenderable(renderer, {
-      content: "",
-      fg: THEME.warn,
-      selectable: false,
-      wrapMode: "none",
-    });
-    right.add(this.state);
-    this.file = new TextRenderable(renderer, {
-      content: ` ${file} `,
-      fg: THEME.muted,
-      selectable: false,
-      wrapMode: "none",
-      truncate: true,
-    });
-    right.add(this.file);
-    this.node.add(right);
-  }
-
-  /** Show or clear the edit state left of the file name. */
-  set dirty(on: boolean) {
-    this.state.content = on ? "(unsaved changes)" : "";
+    this.tail = new Tail(renderer);
+    this.node.add(this.tail.node);
   }
 
   /** Highlight menu `i` (null clears). */
@@ -225,24 +198,23 @@ export class Crumb {
   }
 }
 
-/** Left info text, right mode badge. */
-export class StatusBar {
+/** Right end of a bar: `(unsaved changes)`, the file name, and the mode badge, each optional. */
+export class Tail {
   readonly node: BoxRenderable;
-  private readonly left: TextRenderable;
+  private readonly state: TextRenderable;
+  private readonly file: TextRenderable;
   private readonly badge: TextRenderable;
 
-  constructor(renderer: CliRenderer, on: { click(): void }) {
+  constructor(renderer: CliRenderer) {
     this.node = new BoxRenderable(renderer, {
-      id: "statusbar",
-      height: 1,
-      width: "100%",
-      flexDirection: "row",
-      paddingLeft: 1,
-      backgroundColor: THEME.bar,
-      onMouseUp: () => on.click(),
-    });
-    this.left = new TextRenderable(renderer, {
       flexGrow: 1,
+      height: 1,
+      flexDirection: "row",
+      justifyContent: "flex-end",
+      backgroundColor: THEME.bar,
+    });
+    this.state = new TextRenderable(renderer, { content: "", fg: THEME.warn, selectable: false });
+    this.file = new TextRenderable(renderer, {
       content: "",
       fg: THEME.muted,
       selectable: false,
@@ -256,12 +228,47 @@ export class StatusBar {
       selectable: false,
       wrapMode: "none",
     });
-    this.node.add(this.left);
-    this.node.add(this.badge);
+    for (const t of [this.state, this.file, this.badge]) {
+      this.node.add(t);
+    }
   }
 
-  update(info: string, mode: string): void {
+  set(parts: { state?: string; file?: string; badge?: string }): void {
+    this.state.content = parts.state ? `${parts.state} ` : "";
+    this.file.content = parts.file ? ` ${parts.file} ` : "";
+    this.badge.content = parts.badge ? ` ${parts.badge} ` : "";
+  }
+}
+
+/** Left info text, right `Tail`. */
+export class StatusBar {
+  readonly node: BoxRenderable;
+  private readonly left: TextRenderable;
+  readonly tail: Tail;
+
+  constructor(renderer: CliRenderer, on: { click(): void }) {
+    this.node = new BoxRenderable(renderer, {
+      id: "statusbar",
+      height: 1,
+      width: "100%",
+      flexDirection: "row",
+      paddingLeft: 1,
+      backgroundColor: THEME.bar,
+      onMouseUp: () => on.click(),
+    });
+    this.left = new TextRenderable(renderer, {
+      content: "",
+      fg: THEME.muted,
+      selectable: false,
+      wrapMode: "none",
+      truncate: true,
+    });
+    this.tail = new Tail(renderer);
+    this.node.add(this.left);
+    this.node.add(this.tail.node);
+  }
+
+  update(info: string): void {
     this.left.content = info;
-    this.badge.content = ` ${mode} `;
   }
 }
