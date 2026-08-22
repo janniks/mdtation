@@ -626,7 +626,7 @@ export class TuiShell {
         if (this.dirty && Date.now() - this.guard > AGAIN) {
           this.guard = Date.now();
           this.draw(
-            `Press ${hint(this.chord) || "^c"} again to exit with unsaved changes  ^s saves`,
+            `Press ${hint(this.chord) || "^c"} again to exit with unsaved changes  ^s to save`,
           );
           return;
         }
