@@ -63,7 +63,7 @@ const AGAIN = 2000;
 /** View › Style cyclers: each pick moves to the next value; the menu shows the current one. */
 const CYCLES = {
   viewFences: ["ticks", "fence", "hide"],
-  viewCaret: [">", "+", "▶", "›", "●"],
+  viewCaret: [">", "+", "●"],
   viewCheck: CHECKS.map((c) => c[1]),
   viewCopy: ["simple", "detailed"],
   viewQuote: ["bar", ">", "hide"],
