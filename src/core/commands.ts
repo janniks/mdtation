@@ -36,7 +36,7 @@ export const COMMANDS = [
   { id: "viewCrumb", title: "Show section crumb", category: "View", keys: [] },
   { id: "viewCaret", title: "Line caret", category: "View", keys: [] },
   { id: "viewDeco", title: "Show text decoration", category: "View", keys: [], group: "Text" },
-  { id: "viewEmphasis", title: "Color bold/italic", category: "View", keys: [], group: "Text" },
+  { id: "viewEmphasis", title: "Color text decoration", category: "View", keys: [], group: "Text" },
   { id: "viewMarks", title: "Show inline marks", category: "View", keys: [], group: "Text" },
   { id: "viewLinks", title: "Show links", category: "View", keys: [], group: "Text" },
   { id: "viewHashes", title: "Show heading marks", category: "View", keys: [], group: "Blocks" },
