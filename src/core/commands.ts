@@ -34,7 +34,7 @@ export const COMMANDS = [
   { id: "viewMouse", title: "Capture mouse", category: "View", keys: ["shift+m"] },
   { id: "viewBar", title: "Show menu bar", category: "View", keys: ["m"] },
   { id: "viewCrumb", title: "Show section crumb", category: "View", keys: [] },
-  { id: "viewCaret", title: "Caret", category: "View", keys: [] },
+  { id: "viewCaret", title: "Line caret", category: "View", keys: [] },
   { id: "viewDeco", title: "Show text decoration", category: "View", keys: [], group: "Text" },
   { id: "viewEmphasis", title: "Color bold/italic", category: "View", keys: [], group: "Text" },
   { id: "viewMarks", title: "Show inline marks", category: "View", keys: [], group: "Text" },
