@@ -554,7 +554,7 @@ export class TuiShell {
     }
     copy(copyFormat(c, this.doc, this.value("viewCopy")), this.renderer);
     // OSC-52 is fire-and-forget: over SSH/remote the terminal may accept it without reaching the host clipboard.
-    const note = this.renderer.capabilities?.remote ? "  remote: if empty, press a" : "";
+    const note = this.renderer.capabilities?.remote ? "  a to show comments" : "";
     if (this.on.viewArchive) {
       this.store.archive(c.id);
       this.persist();
