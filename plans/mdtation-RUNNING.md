@@ -130,6 +130,7 @@ Pure models live in `src/core` with node tests; `src/ui` only wires OpenTUI.
 | 8t | status-corner | done | `View > Status badge` `[bottom]/[top]`: top puts the mode/badge row in the menu bar (clear of the herdr copy popup) and moves file name + `(unsaved changes)` to the status row. `Tail` in chrome.ts is the shared right-end slot of both bars. Palette rows highlight on hover. |
 | 8u | marks-kept | done | Show inline marks + Color/Show text decoration: with marks on, styling wraps the marks (`**b**` in bold) instead of stripping them; `styleInline` is a single-pass regex so bold spans are never re-matched by italic. |
 | 8v | archive-sweep | done | `Archive > Remove after` setting `[1d/7d/30d/1y/never]` (default 30d). `archive()` stamps `archivedAt`, `restore()` clears it, `CommentStore.sweep(ttl)` runs at TUI start and persists when something went. |
+| 8w | palette-verbs | done | Command palette reads `Hide …` for `Show …` toggles that are on (`verbs()` in commands.ts); menu bar keeps its `[x]` checkboxes. |
 
 ## Later
 

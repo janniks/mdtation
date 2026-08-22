@@ -60,6 +60,7 @@ import {
   toChord,
   type Command,
   type CommandId,
+  verbs,
 } from "../core/commands.ts";
 
 /** Rows of chrome below the body (status bar). */
@@ -586,6 +587,9 @@ export class TuiShell {
             this.renderer,
             (x) => this.run(x as CommandId),
             () => this.close(),
+            {
+              items: () => verbs(COMMANDS, this.on),
+            },
           ),
         );
         return;

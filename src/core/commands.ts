@@ -134,6 +134,16 @@ export const HANDLERS: { readonly [K in CommandId]: CmdHandler } = {
   help: () => ({}),
 };
 
+/** Palette wording: a `Show …` toggle that is already on reads `Hide …`. */
+export function verbs(
+  commands: readonly Command[],
+  on: Readonly<Record<string, boolean>>,
+): readonly Command[] {
+  return commands.map((c) =>
+    on[c.id] && c.title.startsWith("Show ") ? { ...c, title: "Hide" + c.title.slice(4) } : c,
+  );
+}
+
 /** Raw key event shape (what OpenTUI's KeyEvent exposes minimally). */
 export interface Key {
   name?: string;

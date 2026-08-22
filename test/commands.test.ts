@@ -1,7 +1,7 @@
 import { strict as assert } from "node:assert";
 import { test, describe } from "node:test";
 import type { Command } from "../src/core/commands.ts";
-import { COMMANDS, matchKey, reduceCommand, toChord } from "../src/core/commands.ts";
+import { COMMANDS, matchKey, reduceCommand, toChord, verbs } from "../src/core/commands.ts";
 import { createViewport, jumpToLine, moveCursor } from "../src/core/viewport.ts";
 
 const V = () => createViewport(0, 0, 80, 10);
@@ -122,4 +122,11 @@ describe("commands", () => {
       }
     });
   });
+});
+
+test("verbs flips Show to Hide for toggles that are on", () => {
+  const out = verbs(COMMANDS, { viewLinks: true, viewColor: true });
+  assert.equal(out.find((c) => c.id === "viewLinks")?.title, "Hide links");
+  assert.equal(out.find((c) => c.id === "viewMarks")?.title, "Show inline marks");
+  assert.equal(out.find((c) => c.id === "viewColor")?.title, "Color");
 });
