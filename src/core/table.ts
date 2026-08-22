@@ -116,7 +116,7 @@ export function cell(lines: readonly string[], line: number, x: number): Cell | 
     }
     at += colWidth(ch);
   }
-  return { row: line, col: Math.max(0, Math.min(col, cells(laid).length - 1)), sep: r[0] + 1 };
+  return { row: line, col: Math.max(0, Math.min(col, cells(row).length - 1)), sep: r[0] + 1 };
 }
 
 /** Cycle `col`'s alignment on separator line `sep` of `text`; null when not a separator or out of range. */
