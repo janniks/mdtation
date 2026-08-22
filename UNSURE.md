@@ -170,6 +170,7 @@ Unchecked entries are swept on occasional cleanup passes.
 - [ ] Drag-select maps the selection's first screen row to a document line like click does (`offset + row`), ignoring wrapped/hidden rows above it.
   - alternative: a row→line table built during render
   - why: same approximation the click handler already makes; fix both together later
-- [ ] Blockquote text is painted gray as "less contrast"; inline bold/italic resets inside it fall back to the normal color.
+- [x] Blockquote text is painted gray as "less contrast"; inline bold/italic resets inside it fall back to the normal color.
   - alternative: re-apply gray after every reset
   - why: simple; rarely visible
+  - verdict: it was visible; gray is re-armed after each reset now (2026-08-22)

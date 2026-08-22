@@ -183,3 +183,10 @@ test("blockquote styles: bar (default), > as written, hide", () => {
   assert.deepEqual(render(doc, vp, { quote: ">" }), ["> > a", "  >> b"]);
   assert.deepEqual(render(doc, vp, { quote: "hide" }), [">   a", "      b"]);
 });
+
+test("blockquote stays gray after inline styles inside it", () => {
+  const out = render(parseDocument("> has **b** in\n"), createViewport(0, 5, 80, 5), {
+    color: true,
+  });
+  assert.equal(out[0], "  \x1b[90m│ \x1b[0m\x1b[90mhas \x1b[1m\x1b[33mb\x1b[0m\x1b[90m in\x1b[0m");
+});

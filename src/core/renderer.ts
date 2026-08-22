@@ -241,7 +241,9 @@ function bodyFor(
     const depth = q[2]!.split(">").length - 1;
     const lead =
       opts.quote === "hide" ? "  ".repeat(depth) : paint(color, SGR.gray, "│ ".repeat(depth));
-    return q[1] + lead + paint(color, SGR.gray, styleInline(q[3]!, opts));
+    // Inline styles end in a reset, so re-arm gray after each one to keep the whole quote muted.
+    const text = styleInline(q[3]!, opts).replaceAll(SGR.reset, SGR.reset + SGR.gray);
+    return q[1] + lead + paint(color, SGR.gray, text);
   }
   if (prose(doc, line, opts) && !prose(doc, line - 1, opts)) {
     let text = raw;
