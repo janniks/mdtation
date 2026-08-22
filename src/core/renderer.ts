@@ -170,6 +170,10 @@ function wrapStyled(text: string, width: number): string[] {
   let cur = "";
   let cols = 0;
   let open = "";
+  // Last space in `cur`: where a word break can happen (index into cur, cols before it, styles open there).
+  let gap = -1;
+  let gapCols = 0;
+  let gapOpen = "";
   // oxlint-disable-next-line no-control-regex -- SGR escapes are the point here
   for (const tok of text.match(/\u001b\[[0-9;]*m|./gsu) ?? []) {
     if (tok.startsWith("\x1b")) {
@@ -179,9 +183,23 @@ function wrapStyled(text: string, width: number): string[] {
     }
     const w = colWidth(tok);
     if (cols + w > width && cols > 0) {
-      rows.push(cur + (open ? SGR.reset : ""));
-      cur = open;
-      cols = 0;
+      if (gap >= 0) {
+        // Break at the last space: the word in progress moves whole to the next row.
+        const rest = cur.slice(gap + 1);
+        rows.push(cur.slice(0, gap) + (gapOpen ? SGR.reset : ""));
+        cur = gapOpen + rest;
+        cols -= gapCols + 1;
+      } else {
+        rows.push(cur + (open ? SGR.reset : ""));
+        cur = open;
+        cols = 0;
+      }
+      gap = -1;
+    }
+    if (tok === " ") {
+      gap = cur.length;
+      gapCols = cols;
+      gapOpen = open;
     }
     cur += tok;
     cols += w;

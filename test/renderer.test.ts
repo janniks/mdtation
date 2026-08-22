@@ -176,7 +176,7 @@ describe("prose", () => {
     const out = render(parseDocument("aaaa bbbb\ncccc dddd"), createViewport(0, 0, 12, 5), {
       flow: true,
     });
-    assert.deepEqual(out, ["> aaaa bbbb ", "  cccc dddd"]);
+    assert.deepEqual(out, ["> aaaa bbbb", "  cccc dddd"]);
   });
 });
 
