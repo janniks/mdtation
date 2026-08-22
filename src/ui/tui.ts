@@ -53,7 +53,14 @@ import {
   moveCursor,
   type Viewport,
 } from "../core/viewport.ts";
-import { COMMANDS, matchKey, reduceCommand, toChord, type CommandId } from "../core/commands.ts";
+import {
+  COMMANDS,
+  matchKey,
+  reduceCommand,
+  toChord,
+  type Command,
+  type CommandId,
+} from "../core/commands.ts";
 
 /** Rows of chrome below the body (status bar). */
 const FOOTER = 1;
@@ -391,6 +398,24 @@ export class TuiShell {
   }
 
   /** Current value of a cycler. */
+  /** The menu cyclers as settings rows: `View › Code fences  [hide]` etc. */
+  private cyclers(): Command[] {
+    return COMMANDS.filter((c) => c.id in CYCLES).map((c) => ({
+      id: c.id,
+      title: `${c.category} › ${c.title}`,
+      category: "Settings",
+      keys: [this.value(c.id as Cycle)],
+    }));
+  }
+
+  /** Move cycler `id` by `dir` (wrapping), persist, redraw. */
+  private step(id: Cycle, dir: number): void {
+    const n = CYCLES[id].length;
+    this.pick[id] = (((this.pick[id] + dir) % n) + n) % n;
+    this.remember();
+    this.draw();
+  }
+
   private value<K extends Cycle>(id: K): (typeof CYCLES)[K][number] {
     return CYCLES[id][this.pick[id]]!;
   }
@@ -580,13 +605,21 @@ export class TuiShell {
         this.open(
           new Palette(
             this.renderer,
-            (x) => {
-              this.prefs = cycle(this.prefs, x.slice(4));
+            (x, dir) => {
+              if (x in CYCLES) {
+                this.step(x as Cycle, dir);
+                return;
+              }
+              this.prefs = cycle(this.prefs, x.slice(4), dir);
               this.remember();
               this.resize();
             },
             () => this.close(),
-            { title: "Settings", items: () => settings(this.prefs), stay: true },
+            {
+              title: "Settings",
+              items: () => [...settings(this.prefs), ...this.cyclers()],
+              stay: true,
+            },
           ),
         );
         return;
@@ -595,9 +628,7 @@ export class TuiShell {
       case "viewCheck":
       case "viewCopy":
       case "viewQuote":
-        this.pick[id] = (this.pick[id] + 1) % CYCLES[id].length;
-        this.remember();
-        this.draw();
+        this.step(id, 1);
         return;
       case "save":
         this.save();
