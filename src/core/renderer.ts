@@ -24,6 +24,8 @@ export interface RenderOptions {
   readonly color?: boolean;
   /** Color bold / italic / links (needs `color`). Default true. */
   readonly emphasis?: boolean;
+  /** Render bold/italic/underline/strike as terminal text decoration. Default false. */
+  readonly deco?: boolean;
   /** Highlight fenced code (needs `color`). Default true. */
   readonly syntax?: boolean;
   /** One-column cursor glyph. Default `>`. */
@@ -111,25 +113,28 @@ function prose(doc: Document, line: number, opts: RenderOptions): boolean {
 /** Minimal inline markdown: `**bold**`, `*italic*`, `` `code` ``, `~~strike~~`, links.
  * Marks are dropped whenever the inner text gets styled or markup is hidden. */
 function styleInline(text: string, opts: RenderOptions): string {
-  const emphasis = opts.color === true && opts.emphasis !== false;
+  const tint = opts.color === true && opts.emphasis !== false;
+  const deco = opts.deco === true;
+  const on = tint || deco;
   const links = opts.links !== false;
+  const sgr = (d: string, c: string) => (deco ? d : "") + (tint ? c : "");
   // Links first: later rules emit `\x1b[` escapes that would match the link's `[`.
   let out =
-    emphasis || !links
+    on || !links
       ? text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, t: string, u: string) => {
-          const label = paint(emphasis, SGR.underline + SGR.blue, t);
-          return links ? `${label} ${paint(emphasis, SGR.dim, `(${u})`)}` : label;
+          const label = paint(on, sgr(SGR.underline, SGR.blue), t);
+          return links ? `${label} ${paint(tint, SGR.dim, `(${u})`)}` : label;
         })
       : text;
-  if (emphasis || opts.marks === false) {
+  if (on || opts.marks === false) {
     out = out
       .replace(/\*\*(.+?)\*\*|__(.+?)__/g, (_, a: string, b: string) =>
-        paint(emphasis, SGR.bold + SGR.yellow, a ?? b),
+        paint(on, sgr(SGR.bold, SGR.yellow), a ?? b),
       )
-      .replace(/`([^`]+)`/g, (_, p: string) => paint(emphasis, SGR.gray, p))
-      .replace(/~~(.+?)~~/g, (_, p: string) => paint(emphasis, SGR.strike, p))
+      .replace(/`([^`]+)`/g, (_, p: string) => paint(tint, SGR.gray, p))
+      .replace(/~~(.+?)~~/g, (_, p: string) => paint(deco, SGR.strike, p))
       .replace(/\*([^*]+?)\*|\b_([^_]+?)_\b/g, (_, a: string, b: string) =>
-        paint(emphasis, SGR.italic + SGR.magenta, a ?? b),
+        paint(on, sgr(SGR.italic, SGR.magenta), a ?? b),
       );
   }
   return out;

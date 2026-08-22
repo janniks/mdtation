@@ -117,6 +117,7 @@ export class TuiShell {
       viewSyntax: cfg.syntax,
       viewHashes: true,
       viewMarks: true,
+      viewDeco: true,
       viewLinks: true,
       viewPipes: true,
       viewFront: false,
@@ -446,6 +447,7 @@ export class TuiShell {
         syntax: this.on.viewSyntax,
         hashes: this.on.viewHashes,
         marks: this.on.viewMarks,
+        deco: this.on.viewDeco,
         links: this.on.viewLinks,
         pipes: this.on.viewPipes,
         ...this.style(),
@@ -611,6 +613,7 @@ export class TuiShell {
       case "viewSyntax":
       case "viewHashes":
       case "viewMarks":
+      case "viewDeco":
       case "viewLinks":
       case "viewPipes":
       case "viewFront":
