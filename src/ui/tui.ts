@@ -402,7 +402,7 @@ export class TuiShell {
   private cyclers(): Command[] {
     return COMMANDS.filter((c) => c.id in CYCLES).map((c) => ({
       id: c.id,
-      title: `${c.category} › ${c.title}`,
+      title: `${c.category} > ${c.title}`,
       category: "Settings",
       keys: [this.value(c.id as Cycle)],
     }));

@@ -15,7 +15,7 @@ test("cycle wraps through the value list and ignores unknown ids", () => {
 test("rows expose the current value as the hint", () => {
   assert.deepEqual(rows(DEFAULTS)[2], {
     id: "set:front",
-    title: "Beta › Frontmatter editing",
+    title: "Beta > Frontmatter editing",
     category: "Settings",
     keys: ["on"],
   });

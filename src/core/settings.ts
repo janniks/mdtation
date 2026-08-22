@@ -4,11 +4,11 @@ import type { Command } from "./commands.ts";
 export const SETTINGS = [
   {
     id: "margin",
-    title: "Scroll › Margin lines",
+    title: "Scroll > Margin lines",
     values: ["0", "1", "2", "3", "4", "5", "6", "8", "10"],
   },
-  { id: "crumb", title: "Section › Crumb depth", values: ["all", "1", "2", "3", "4", "5", "6"] },
-  { id: "front", title: "Beta › Frontmatter editing", values: ["on", "off"] },
+  { id: "crumb", title: "Section > Crumb depth", values: ["all", "1", "2", "3", "4", "5", "6"] },
+  { id: "front", title: "Beta > Frontmatter editing", values: ["on", "off"] },
 ] as const;
 
 export type Id = (typeof SETTINGS)[number]["id"];
