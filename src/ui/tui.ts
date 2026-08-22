@@ -124,6 +124,7 @@ export class TuiShell {
       viewFlow: false,
       viewIndent: false,
       viewArchive: false,
+      viewSelect: true,
       viewMouse: true,
     };
     const saved = loadPrefs();
@@ -159,7 +160,8 @@ export class TuiShell {
       renderer.root.add(n);
     }
     renderer.useMouse = true;
-    // Drag-select in the body opens a comment on the selection (stored verbatim, see `Comment.quote`).
+    // Drag-select in the body opens a comment on the selection (stored verbatim, see `Comment.quote`);
+    // with `Comments › Select to comment` off it copies the text instead (OSC-52, like hunk).
     renderer.on("selection", (s: Selection) => {
       // Rows after the first start at column 0, so drop their 2-col gutter.
       const text = s.isDragging
@@ -170,9 +172,15 @@ export class TuiShell {
             .map((l, i) => (i ? l.slice(GUTTER_WIDTH) : l))
             .join("\n")
             .trim();
-      if (text) {
+      if (!text) {
+        return;
+      }
+      renderer.clearSelection();
+      if (!this.on.viewSelect) {
+        copy(text, renderer);
+        this.draw("COPIED SELECTION");
+      } else {
         const row = Math.min(s.anchor.y, s.focus.y) - this.text.y;
-        renderer.clearSelection();
         this.view = {
           ...this.view,
           cursor: Math.max(0, Math.min(this.view.offset + row, this.doc.lines.length - 1)),
@@ -608,6 +616,7 @@ export class TuiShell {
       case "viewFlow":
       case "viewIndent":
       case "viewArchive":
+      case "viewSelect":
         this.on[id] = !this.on[id];
         this.remember();
         this.view = clampViewport(this.fit(), total);
