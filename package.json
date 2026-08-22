@@ -2,17 +2,24 @@
   "name": "mdtation",
   "version": "0.0.0",
   "description": "Desktop-inspired terminal markdown viewer for the agentic era — inline comments that flow to your clipboard and CLI.",
-  "type": "module",
   "license": "MIT",
   "author": "janniks",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/janniks/mdtation.git"
+  },
   "bin": {
     "mdtation": "./dist/bin.js"
   },
-  "engines": {
-    "node": ">=22"
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
-    "build": "tsdown src/bin.ts",
+    "build": "tsdown",
     "dev": "tsdown --watch",
     "start": "bun src/bin.ts",
     "typecheck": "tsc --noEmit",
@@ -20,9 +27,21 @@
     "fmt": "oxfmt src test",
     "fmt:check": "oxfmt --check src test",
     "test": "node --import tsx --test test/*.test.ts",
-    "schema": "node --import tsx scripts/generate-schema.ts"
+    "schema": "node --import tsx scripts/generate-schema.ts",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "npm run build && changeset publish"
+  },
+  "dependencies": {
+    "@opentui/core": "^0.5.3",
+    "@opentui/react": "^0.5.3",
+    "marked": "^18.0.9",
+    "react-dom": "^19.2.4",
+    "string-width": "^8.2.2",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@changesets/cli": "^3.0.1",
     "@types/node": "^22.20.1",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
@@ -34,12 +53,7 @@
     "tsx": "^4.23.12",
     "typescript": "^5.9.3"
   },
-  "dependencies": {
-    "@opentui/core": "^0.5.3",
-    "@opentui/react": "^0.5.3",
-    "marked": "^18.0.9",
-    "react-dom": "^19.2.4",
-    "string-width": "^8.2.2",
-    "zod": "^4.4.3"
+  "engines": {
+    "node": ">=22"
   }
 }
