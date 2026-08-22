@@ -112,32 +112,58 @@ function prose(doc: Document, line: number, opts: RenderOptions): boolean {
 
 /** Minimal inline markdown: `**bold**`, `*italic*`, `` `code` ``, `~~strike~~`, links.
  * Marks are dropped whenever the inner text gets styled or markup is hidden. */
+const INLINE =
+  /\[([^\]]+)\]\(([^)]+)\)|\*\*(.+?)\*\*|__(.+?)__|`([^`]+)`|~~(.+?)~~|\*([^*]+?)\*|\b_([^_]+?)_\b/g;
+
 function styleInline(text: string, opts: RenderOptions): string {
   const tint = opts.color === true && opts.emphasis !== false;
   const deco = opts.deco === true;
   const on = tint || deco;
   const links = opts.links !== false;
-  const sgr = (d: string, c: string) => (deco ? d : "") + (tint ? c : "");
-  // Links first: later rules emit `\x1b[` escapes that would match the link's `[`.
-  let out =
-    on || !links
-      ? text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, t: string, u: string) => {
-          const label = paint(on, sgr(SGR.underline, SGR.blue), t);
-          return links ? `${label} ${paint(tint, SGR.dim, `(${u})`)}` : label;
-        })
-      : text;
-  if (on || opts.marks === false) {
-    out = out
-      .replace(/\*\*(.+?)\*\*|__(.+?)__/g, (_, a: string, b: string) =>
-        paint(on, sgr(SGR.bold, SGR.yellow), a ?? b),
-      )
-      .replace(/`([^`]+)`/g, (_, p: string) => paint(tint, SGR.gray, p))
-      .replace(/~~(.+?)~~/g, (_, p: string) => paint(deco, SGR.strike, p))
-      .replace(/\*([^*]+?)\*|\b_([^_]+?)_\b/g, (_, a: string, b: string) =>
-        paint(on, sgr(SGR.italic, SGR.magenta), a ?? b),
-      );
+  // With marks shown, the `**`/`_`/backticks stay inside the styled span; off strips them.
+  const keep = opts.marks !== false;
+  if (!on && keep && links) {
+    return text;
   }
-  return out;
+  const sgr = (d: string, c: string) => (deco ? d : "") + (tint ? c : "");
+  // One pass, so a styled span is never re-matched by a later rule.
+  return text.replace(
+    INLINE,
+    (
+      m,
+      t: string,
+      u: string,
+      b1: string,
+      b2: string,
+      c: string,
+      s: string,
+      i1: string,
+      i2: string,
+    ) => {
+      if (t !== undefined) {
+        if (!on && links) {
+          return m;
+        }
+        const label = paint(on, sgr(SGR.underline, SGR.blue), keep ? `[${t}]` : t);
+        if (!links) {
+          return label;
+        }
+        return (keep ? label : label + " ") + paint(tint, SGR.dim, `(${u})`);
+      }
+      const inner = b1 ?? b2 ?? c ?? s ?? i1 ?? i2;
+      const body = keep ? m : inner;
+      if (b1 !== undefined || b2 !== undefined) {
+        return paint(on, sgr(SGR.bold, SGR.yellow), body);
+      }
+      if (c !== undefined) {
+        return paint(tint, SGR.gray, body);
+      }
+      if (s !== undefined) {
+        return paint(deco, SGR.strike, body);
+      }
+      return paint(on, sgr(SGR.italic, SGR.magenta), body);
+    },
+  );
 }
 
 /** Color the bullet/number of a markdown list item; `undefined` for non-list lines. */

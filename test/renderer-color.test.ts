@@ -19,7 +19,11 @@ test("renderer stays plain by default (golden regression)", () => {
 
 test("color=true styles headings, inline, fenced code, and syntax", () => {
   const doc = parseDocument("# H1\n\n**bold** text\n\n```ts\nconst n = 1; // c\n```\n");
-  const frame = render(doc, createViewport(0, 0, 80, 24), { color: true, deco: true });
+  const frame = render(doc, createViewport(0, 0, 80, 24), {
+    color: true,
+    deco: true,
+    marks: false,
+  });
   // line 0: green cursor gutter + bold bright-white heading
   assert.ok(
     frame[0]?.startsWith(`${ESC}[32m>${ESC}[0m ${ESC}[1m${ESC}[97m# H1${ESC}[0m`),
@@ -37,7 +41,11 @@ test("color=true styles headings, inline, fenced code, and syntax", () => {
 
 test("italic gets a color and links are underlined with a dim url", () => {
   const doc = parseDocument("*it* and [site](https://x.y)\n");
-  const [line] = render(doc, createViewport(0, 0, 80, 1), { color: true, deco: true });
+  const [line] = render(doc, createViewport(0, 0, 80, 1), {
+    color: true,
+    deco: true,
+    marks: false,
+  });
   assert.ok(line?.includes(`${ESC}[3m${ESC}[35mit${ESC}[0m`), line);
   assert.ok(
     line?.includes(`${ESC}[4m${ESC}[34msite${ESC}[0m ${ESC}[2m(https://x.y)${ESC}[0m`),
@@ -48,7 +56,7 @@ test("italic gets a color and links are underlined with a dim url", () => {
 test("emphasis/syntax flags switch inline colors and highlighting off", () => {
   const doc = parseDocument("- **b**\n```ts\nconst n = 1;\n```\n");
   const vp = createViewport(0, 0, 80, 4);
-  const on = render(doc, vp, { color: true, deco: true });
+  const on = render(doc, vp, { color: true, deco: true, marks: false });
   assert.ok(on[0]?.includes(`${ESC}[1m${ESC}[33mb${ESC}[0m`), on[0]);
   assert.notEqual(on[2], "  const n = 1;");
   const off = render(doc, vp, { color: true, emphasis: false, syntax: false });

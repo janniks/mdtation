@@ -65,7 +65,7 @@ test("gutter shows the comment count past one, and a custom caret", () => {
   const vp = createViewport(0, 0, 80, 3);
   assert.equal(render(doc, vp, { markers: [1, 1, 2] })[1], "2 b");
   assert.equal(render(doc, vp, { caret: "▶" })[0], "▶ a");
-  const color = render(doc, vp, { color: true, deco: true, markers: [1] })[1];
+  const color = render(doc, vp, { color: true, deco: true, marks: false, markers: [1] })[1];
   assert.equal(color, "\x1b[43m\x1b[30m \x1b[0m b");
   const both = render(doc, createViewport(0, 1, 80, 3), {
     color: true,
@@ -103,14 +103,19 @@ describe("hide markup", () => {
   });
 
   test("styling still applies to the stripped text", () => {
-    const out = show("**b** [t](u)", { ...hide, color: true, deco: true });
+    const out = show("**b** [t](u)", { ...hide, color: true, deco: true, marks: false });
     assert.equal(out[0], "  \x1b[1m\x1b[33mb\x1b[0m \x1b[4m\x1b[34mt\x1b[0m");
   });
 
   test("wrapping measures the stripped text and re-opens styles per chunk", () => {
     const doc = parseDocument("**abcdef**");
     assert.deepEqual(render(doc, createViewport(0, 0, 6, 9), { ...hide }), ["> abcd", "  ef"]);
-    const styled = render(doc, createViewport(0, 0, 6, 9), { ...hide, color: true, deco: true });
+    const styled = render(doc, createViewport(0, 0, 6, 9), {
+      ...hide,
+      color: true,
+      deco: true,
+      marks: false,
+    });
     assert.deepEqual(styled, [
       "\x1b[32m>\x1b[0m \x1b[1m\x1b[33mabcd\x1b[0m",
       "  \x1b[1m\x1b[33mef\x1b[0m",
@@ -146,7 +151,7 @@ test("task boxes follow the checkbox style", () => {
     ["- ○ a", "- ● b"],
   );
   assert.equal(
-    render(doc, vp, { check: 1, color: true, deco: true })[1]!.slice(2),
+    render(doc, vp, { check: 1, color: true, deco: true, marks: false })[1]!.slice(2),
     "\x1b[36m-\x1b[0m \x1b[32m✓\x1b[0m b",
   );
 });
@@ -192,16 +197,24 @@ test("blockquote stays gray after inline styles inside it", () => {
   const out = render(parseDocument("> has **b** in\n"), createViewport(0, 5, 80, 5), {
     color: true,
     deco: true,
+    marks: false,
   });
   assert.equal(out[0], "  \x1b[90m│ \x1b[0m\x1b[90mhas \x1b[1m\x1b[33mb\x1b[0m\x1b[90m in\x1b[0m");
 });
 
 test("links toggle is independent of inline marks", () => {
   assert.equal(show("**b** [t](http://x)", { marks: false })[0], "  b [t](http://x)");
-  assert.equal(show("**b** [t](http://x)", { links: false })[0], "  **b** t");
+  assert.equal(show("**b** [t](http://x)", { links: false })[0], "  **b** [t]");
 });
 
 test("text decoration renders bold/italic/strike/underline without color", () => {
-  const out = show("**b** *i* ~~s~~ [t](u)", { deco: true })[0];
+  const out = show("**b** *i* ~~s~~ [t](u)", { deco: true, marks: false })[0];
   assert.equal(out, "  \x1b[1mb\x1b[0m \x1b[3mi\x1b[0m \x1b[9ms\x1b[0m \x1b[4mt\x1b[0m (u)");
+});
+
+test("marks shown: styling wraps the marks instead of stripping them", () => {
+  assert.equal(
+    show("**b** *i* `c` [t](u)", { deco: true })[0],
+    "  \x1b[1m**b**\x1b[0m \x1b[3m*i*\x1b[0m `c` \x1b[4m[t]\x1b[0m(u)",
+  );
 });
