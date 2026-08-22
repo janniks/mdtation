@@ -70,13 +70,12 @@ describe("renderer tables", () => {
     assert.equal(frame[2]!, `  | 团队 | ${emoji} |`);
   });
 
-  test("table row wider than the pane is emitted as a single unwrapped row", () => {
+  test("table row wider than the pane is cut to one row ending in …", () => {
     const md = `| a | b | c |\n| - | - | - |\n| ${"x".repeat(60)} | 1 | 2 |\n`;
     const doc = parseDocument(md);
     const frame = render(doc, createViewport(0, 99, 20, 3));
     assert.equal(frame.length, 3);
-    assert.ok(frame[2]!.startsWith("  | "), frame[2]);
-    assert.ok(frame[2]!.includes("x".repeat(60)));
+    assert.equal(frame[2], `  | ${"x".repeat(15)}…`);
   });
 
   test("renders complex ZWJ family sequences without a lone-surrogate crash", () => {

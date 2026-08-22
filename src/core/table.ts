@@ -91,16 +91,23 @@ function run(lines: readonly string[], line: number): [number, number] | null {
   return end - start >= 2 && isSep(lines[start + 1]!) ? [start, end] : null;
 }
 
+/** Aligned rendering of `line` inside its table run, or null outside a table.
+ * The whole run is laid out, so a row keeps its columns even when the header has scrolled off. */
+export function laid(lines: readonly string[], line: number, pipes = true): string | null {
+  const r = run(lines, line);
+  return r ? layout(lines.slice(r[0], r[1]), pipes)[line - r[0]]! : null;
+}
+
 /** Cell under display column `x` of the aligned rendering of `line`, or null outside a table. */
 export function cell(lines: readonly string[], line: number, x: number): Cell | null {
   const r = run(lines, line);
   if (!r) {
     return null;
   }
-  const laid = layout(lines.slice(r[0], r[1]))[line - r[0]]!;
+  const row = layout(lines.slice(r[0], r[1]))[line - r[0]]!;
   let col = -1;
   let at = 0;
-  for (const ch of laid) {
+  for (const ch of row) {
     if (at > x) {
       break;
     }

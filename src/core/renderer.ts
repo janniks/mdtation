@@ -14,7 +14,7 @@ import { end as fence } from "./front.ts";
 import type { Viewport } from "./viewport.ts";
 import { paint, SGR } from "./sgr.ts";
 import { highlight } from "./syntax.ts";
-import { isRow, isSep, layout } from "./table.ts";
+import { isRow, isSep, laid } from "./table.ts";
 import { colWidth, displayWidth } from "./unicode.ts";
 
 export interface RenderOptions {
@@ -330,40 +330,6 @@ function styleTable(row: string, opts: RenderOptions): string {
   return row.slice(2, -2).replace(/ \| /g, ` ${paint(color, SGR.dim, "\u2502")} `);
 }
 
-/** Detect runs of table rows (whose 2nd line is a separator) and align them.
- * Lines inside fenced code blocks are never treated as tables. Mutates `rows`
- * in place and records which rows are tables in `flags`. */
-function markTables(
-  rows: string[],
-  flags: boolean[],
-  start: number,
-  doc: Document,
-  pipes: boolean,
-): void {
-  const n = rows.length;
-  let i = 0;
-  while (i < n) {
-    const sl = start + i;
-    if (codeBlockAt(doc, sl) || !isRow(rows[i]!)) {
-      i++;
-      continue;
-    }
-    let j = i;
-    while (j < n && !codeBlockAt(doc, start + j) && isRow(rows[j]!)) {
-      j++;
-    }
-    const laid = layout(rows.slice(i, j), pipes);
-    if (laid.length >= 2 && isSep(laid[1]!)) {
-      for (let k = 0; k < laid.length; k++) {
-        rows[i + k] = laid[k]!;
-        flags[i + k] = true;
-      }
-    }
-    i = j;
-  }
-}
-
-/** Lines that get no row: the frontmatter opener and the blank run right after its closer. */
 export function hidden(doc: Document, line: number, opts: RenderOptions = {}): boolean {
   if (opts.flow && prose(doc, line, opts) && prose(doc, line - 1, opts)) {
     return true;
@@ -400,35 +366,53 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
   // Hidden lines take no row, so look past `height` lines to fill the screen.
   const end = Math.min(doc.lines.length, start + 2 * height);
   const cols = Math.max(1, vp.width - GUTTER_WIDTH);
-  const src: string[] = [];
-  for (let i = start; i < end; i++) {
-    src.push(doc.lines[i] ?? "");
-  }
-  const flags: boolean[] = Array.from({ length: src.length }, () => false);
-  markTables(src, flags, start, doc, opts.pipes !== false);
   const lines: string[] = [];
   for (let i = start; i < end && lines.length < height; i++) {
-    const idx = i - start;
-    const body = src[idx]!;
     if (hidden(doc, i, opts)) {
       continue;
     }
-    if (flags[idx]) {
-      const g = gutterFor(i, vp, cursorOn, counts, opts);
-      lines.push(g + styleTable(body, opts));
+    const row = tableRow(doc, i, opts);
+    if (row !== null) {
+      // Tables never wrap: a too-wide row is cut so its columns stay aligned.
+      lines.push(gutterFor(i, vp, cursorOn, counts, opts) + styleTable(cut(row, cols), opts));
       continue;
     }
-    wrapStyled(bodyFor(i, body, doc, opts, cols), cols).forEach((chunk, ri) => {
+    wrapStyled(bodyFor(i, doc.lines[i] ?? "", doc, opts, cols), cols).forEach((chunk, ri) => {
       lines.push((ri === 0 ? gutterFor(i, vp, cursorOn, counts, opts) : "  ") + chunk);
     });
   }
   return lines;
 }
 
-/** Screen rows `line` takes: 0 when hidden, more than 1 when it wraps. */
+/** Aligned table row for `line` (code blocks excluded), else null. */
+function tableRow(doc: Document, line: number, opts: RenderOptions): string | null {
+  return codeBlockAt(doc, line) ? null : laid(doc.lines, line, opts.pipes !== false);
+}
+
+/** Keep the first `cols` display columns of `text`, ending in `…` when something was dropped. */
+function cut(text: string, cols: number): string {
+  if (displayWidth(text) <= cols) {
+    return text;
+  }
+  let out = "";
+  let w = 0;
+  for (const ch of text) {
+    if (w + colWidth(ch) > cols - 1) {
+      break;
+    }
+    out += ch;
+    w += colWidth(ch);
+  }
+  return out + "\u2026";
+}
+
+/** Screen rows `line` takes: 0 when hidden, 1 for table rows, more when it wraps. */
 export function span(doc: Document, line: number, vp: Viewport, opts: RenderOptions = {}): number {
   if (hidden(doc, line, opts)) {
     return 0;
+  }
+  if (tableRow(doc, line, opts) !== null) {
+    return 1;
   }
   const cols = Math.max(1, vp.width - GUTTER_WIDTH);
   return wrapStyled(bodyFor(line, doc.lines[line] ?? "", doc, opts, cols), cols).length;

@@ -142,13 +142,14 @@ test("first: lines before it are unreachable and never shown", () => {
   assert.equal(tail.offset, 15);
 });
 
+const gone = (l: number) => (l < 4 ? 0 : 1); // lines 0..3 hidden
+
 describe("settle (row-aware margin)", () => {
   const vp = { offset: 0, cursor: 0, width: 80, height: 10, margin: 2 };
   test("hidden lines do not count toward the margin", () => {
     // lines 0..3 hidden (0 rows): cursor on 6 needs 2 visible rows above -> offset 4
-    const rows = (l: number) => (l < 4 ? 0 : 1);
-    assert.equal(settle({ ...vp, offset: 4, cursor: 6 }, 40, rows).offset, 4);
-    assert.equal(settle({ ...vp, offset: 5, cursor: 6 }, 40, rows).offset, 4);
+    assert.equal(settle({ ...vp, offset: 4, cursor: 6 }, 40, gone).offset, 4);
+    assert.equal(settle({ ...vp, offset: 5, cursor: 6 }, 40, gone).offset, 4);
   });
   test("wrapped lines push the window down so the cursor plus margin fits", () => {
     // offset 0..cursor 7: rows 0-4 (5) + line5 (4) + 6,7 (2) = 11 > 10 even before the margin

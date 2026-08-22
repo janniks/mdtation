@@ -218,3 +218,16 @@ test("marks shown: styling wraps the marks instead of stripping them", () => {
     "  \x1b[1m**b**\x1b[0m \x1b[3m*i*\x1b[0m `c` \x1b[4m[t]\x1b[0m(u)",
   );
 });
+
+describe("tables in the window", () => {
+  const src = "| a | b |\n|---|---|\n| one | two |\n| three | four |\n";
+  test("rows stay aligned when the header has scrolled off", () => {
+    const out = render(parseDocument(src), createViewport(3, 3, 80, 5));
+    assert.equal(out[0], "> | three | four |");
+  });
+  test("too-wide rows are cut with an ellipsis instead of wrapping", () => {
+    const out = render(parseDocument(src), createViewport(0, 9, 12, 5));
+    assert.equal(out[2], "  | one   |…");
+    assert.equal(out.length, 5); // 4 rows + trailing blank, nothing wrapped
+  });
+});
