@@ -142,7 +142,7 @@ test("task boxes follow the checkbox style", () => {
     ["- ○ a", "- ● b"],
   );
   assert.equal(
-    render(doc, vp, { check: 4, color: true })[1]!.slice(2),
+    render(doc, vp, { check: 1, color: true })[1]!.slice(2),
     "\x1b[36m-\x1b[0m \x1b[32m✓\x1b[0m b",
   );
 });

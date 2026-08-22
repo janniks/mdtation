@@ -52,10 +52,9 @@ export const GUTTER_WIDTH = 2;
 /** Task-box styles, `[open, done]`, cycled by `View › Next checkbox style`. */
 export const CHECKS = [
   ["[ ]", "[x]"],
-  ["☐", "☑"],
-  ["○", "●"],
-  ["◯", "◉"],
   ["✗", "✓"],
+  ["○", "●"],
+  ["☐", "☑"],
 ] as const;
 
 /** Thin rule drawn for thematic breaks and (in hide-markup mode) fence rows. */
