@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { ImageResponse } from "next/og";
 import { Card } from "./og/card";
 
@@ -22,7 +23,8 @@ export default async function Image() {
     font("Inter", 700),
     font("JetBrains+Mono", 400),
   ]);
-  return new ImageResponse(<Card sans="Inter" mono="JetBrains Mono" />, {
+  const logo = `data:image/png;base64,${(await readFile("app/icon.png")).toString("base64")}`;
+  return new ImageResponse(<Card sans="Inter" mono="JetBrains Mono" logo={logo} />, {
     ...size,
     fonts: [
       { name: "Inter", data: sans, weight: 400 },

@@ -1,11 +1,13 @@
 /** Monochrome brand marks (simple-icons paths, fill=currentColor). Ported from openindex tool-icons, trimmed to what we show. */
 function brand(title: string, d: string) {
-  return function Icon({ className }: { className?: string }) {
+  return function Icon({ className, size }: { className?: string; size?: number }) {
     return (
       <svg
         role="img"
         aria-label={title}
         viewBox="0 0 24 24"
+        width={size}
+        height={size}
         fill="currentColor"
         className={className}
       >
