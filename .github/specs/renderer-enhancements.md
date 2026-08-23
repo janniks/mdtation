@@ -1,6 +1,6 @@
 # Renderer Enhancements
 
-Phase after the core seams (`specs/mdtation.md`). Richer terminal rendering for the
+Phase after the core seams (`.github/.github/specs/mdtation.md`). Richer terminal rendering for the
 fullscreen TUI. Goal: a desktop-style, mouse-friendly, small-screen-tolerent markdown
 viewer with inline comments.
 

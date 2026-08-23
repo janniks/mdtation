@@ -1,6 +1,6 @@
 # Dialogue plan
 
-Spec: `specs/dialogue.md`.
+Spec: `.github/specs/dialogue.md`.
 Tracer bullets: each phase leaves the golden path working and tests green.
 
 ## Phases

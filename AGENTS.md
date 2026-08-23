@@ -102,6 +102,8 @@ Your memory is OptMem, scoped to this repo only:
 
 - **Name:** `mdtation`.
 - **Purpose:** Desktop-inspired terminal markdown viewer for the agentic era. Render a markdown file (or piped stdin) full-screen, mouse-friendly, with inline comments that copy structured references to the clipboard and ship straight to a CLI agent — a `hunk` diff viewer meets `agentation` annotation flow, built as a `herdr`-inspired TUI.
-- **Stack:** TypeScript ESM. CLI via `citty`; TUI framework TBD (OpenTUI/React or Ink are the leading candidates — see `notes/research-pi-tui.md` and `notes/research-hunk.md`). Lint+format with `oxlint`/`oxfmt`; build with `tsdown`; one sentence per line in source docs so refs stay meaningful (per `agent-lock` convention).
+- **Stack:** TypeScript ESM. CLI via `citty`; TUI on `@opentui/core` under Bun (see `research/`). Lint+format with `oxlint`/`oxfmt`; build with `tsdown`; one sentence per line in source docs so refs stay meaningful (per `agent-lock` convention).
 - **Isolation:** Reference projects live in `_learn/` (git-ignored) and are read-only learning material, never committed.
 - **Dogfooding:** This repo's `AGENTS.md` is assembled by `agent-lock` from pinned refs (this file) plus inline sections; `CLAUDE.md` is symlinked to it. Run `npx agent-lock install` after editing `agents.json`.
+- **Public repo layout (this repo only):** meta lives under `.github/` so the root stays product-facing: `.github/PAPERCUTS.md`, `.github/UNSURE.md`, `.github/RELEASE.md`, `.github/specs/`, `.github/plans/`. Where the shared guides above say `PAPERCUTS.md`, `UNSURE.md`, `specs/<feature>.md` or `plans/<feature>.md`, read and write them under `.github/`.
+- **Fixture:** `test/tour.md` is the sample document (dogfood it: `bun src/bin.ts test/tour.md`).
