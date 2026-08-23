@@ -185,3 +185,14 @@ Unchecked entries are swept on occasional cleanup passes.
 - [ ] Comments archived before this change carry no `archivedAt`; their `createdAt` counts instead.
   - alternative: treat them as archived now.
   - why: no migration code while users are few (P02b).
+
+## 2026-08-22 — specs/dialogue-DRAFT.md
+- [ ] `marks[]` (manual checkpoints) live in the same json as the comments.
+  - alternative: a separate `marks.json`, or a mark per author file.
+  - why: one file per document keeps `watch` to one `fs.watch` and `status` to one read.
+- [ ] Archive stays per comment (`archivedAt`) next to marks instead of being derived from the human's latest mark.
+  - alternative: archived ⇔ created before the last human mark.
+  - why: `archive <id>` from the CLI and retention sweeps need a per-comment fact; deriving it would make single-comment archive impossible.
+- [ ] `agent: true` flag, no `source: cli|tui`.
+  - alternative: store both.
+  - why: the TUI only needs "is this an agent"; a source field is free but unused.
