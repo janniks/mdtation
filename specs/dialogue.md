@@ -1,6 +1,3 @@
----
-status: draft
----
 
 # Dialogue: agents that listen, answer, and thread
 
