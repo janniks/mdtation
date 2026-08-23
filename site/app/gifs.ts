@@ -1,15 +1,15 @@
-/** Feature data: [clip name or names, title, description]. Backticks render as <code>. */
+/** Feature data: [clip name, title, description]. Backticks render as <code>. */
 export const GIFS = [
   {
     title: "Navigate",
     items: [
       [
-        ["scroll", "click"],
+        "navigate",
         "Caret, wheel, click",
         "`j` and `k` move a caret, the wheel scrolls like a desktop app and the caret keeps up, and a click puts it on any row. You always know which line you are on.",
       ],
       [
-        ["menu", "palette"],
+        "menus",
         "Menu bar and command palette",
         "File, View, Navigate, Edit, Comments, Help in a real menu bar. `/` filters the same commands by title. Toggles that are already on read as Hide.",
       ],

@@ -124,31 +124,83 @@ function Float({ icon: Icon, at, children }: { icon: typeof Hunk; at: string; ch
   );
 }
 
-/** Section label above the title. One place to swap once the prototype round picks its replacement. */
-function Kicker({ children }: { children: string }) {
-  return <p className="mb-3 font-mono text-xs text-primary">{children}</p>;
+/** Centered label between two hairlines, the hero's eyebrow. */
+function Eyebrow({ children }: { children: string }) {
+  return (
+    <p className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
+      <span className="h-px w-8 shrink-0 bg-border" aria-hidden />
+      <span className="text-center text-balance">{children}</span>
+      <span className="h-px w-8 shrink-0 bg-border" aria-hidden />
+    </p>
+  );
+}
+
+/** Label in a corner-tick box with a hairline running to the right edge (prototype 6B). */
+function Tag({ children }: { children: string }) {
+  return (
+    <div className="mb-4 flex items-center gap-3">
+      <div className="relative px-3 py-1">
+        <span className="absolute top-0 left-0 size-2 border-t border-l border-primary" aria-hidden />
+        <span className="absolute top-0 right-0 size-2 border-t border-r border-primary" aria-hidden />
+        <span className="absolute bottom-0 left-0 size-2 border-b border-l border-primary" aria-hidden />
+        <span className="absolute right-0 bottom-0 size-2 border-r border-b border-primary" aria-hidden />
+        <span className="font-mono text-xs text-muted-foreground">{children}</span>
+      </div>
+      <span className="h-px flex-1 bg-border" aria-hidden />
+    </div>
+  );
+}
+
+/** Terminal-style red prompt line (prototype 5E), for the section that names the pain. */
+function Prompt5({ children }: { children: string }) {
+  return (
+    <div className="mb-3 inline-flex items-center gap-2 rounded-md border bg-[#1b1d1b] px-3 py-1.5 font-mono text-xs">
+      <span className="text-red-400">!</span>
+      <span className="text-[#e8e6df]">{children}</span>
+    </div>
+  );
+}
+
+/** Small bar, label, hairline to the edge (prototype 6C). A sub-label inside a section's prose. */
+function Rule({ children }: { children: string }) {
+  return (
+    <div className="mb-6 flex items-center gap-2 text-xs text-muted-foreground">
+      <span className="h-3.5 w-1 shrink-0 rounded-full bg-primary" aria-hidden />
+      <span className="whitespace-nowrap">{children}</span>
+      <span className="h-px flex-1 bg-border" aria-hidden />
+    </div>
+  );
 }
 
 function Section({
   id,
   kicker,
+  kind = "tag",
   title,
   intro,
   children,
 }: {
   id: string;
   kicker: string;
+  /** Header treatment: corner-tick tag on a rail (default), centered eyebrow, or the red prompt. */
+  kind?: "tag" | "line" | "prompt";
   title?: string;
   intro?: string;
   children: React.ReactNode;
 }) {
+  const rail = kind === "tag";
   return (
     <section id={id} className="scroll-mt-20 border-t py-16 sm:py-24">
-      <Kicker>{kicker}</Kicker>
-      {title && <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h2>}
+      <div className={rail ? "relative border-l pl-5 sm:pl-6" : ""}>
+        {rail && <span className="absolute top-0 -left-[3px] size-1.5 bg-primary" aria-hidden />}
+        {kind === "tag" && <Tag>{kicker}</Tag>}
+        {kind === "line" && <Eyebrow>{kicker}</Eyebrow>}
+        {kind === "prompt" && <Prompt5>{kicker}</Prompt5>}
+        {title && <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h2>}
       {intro && (
         <p className="mt-3 mb-10 max-w-[640px] leading-relaxed text-muted-foreground">{code(intro)}</p>
       )}
+      </div>
       {children}
     </section>
   );
@@ -162,17 +214,13 @@ export default function Page() {
 
       <main className="mx-auto max-w-[1040px] px-5 sm:px-8">
         <section className="pt-14 pb-16 text-center sm:pt-24 sm:pb-24">
-          <p className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
-            <span className="h-px w-8 bg-border" aria-hidden />
-            terminal markdown viewer for agent workflows
-            <span className="h-px w-8 bg-border" aria-hidden />
-          </p>
+<Eyebrow>terminal markdown viewer for agent workflows</Eyebrow>
           <h1 className="mx-auto mt-5 max-w-[760px] text-4xl font-semibold leading-[1.05] tracking-tight sm:text-6xl">
             Feedback your agent can actually use
           </h1>
-          <p className="mx-auto mt-6 max-w-[620px] text-lg leading-relaxed text-muted-foreground">
+          <p className="mx-auto mt-6 max-w-[560px] text-lg leading-7 text-muted-foreground">
             Your agent writes the spec. You open it full screen, comment on the exact line, press
-            one key. The agent gets a reference it understands. Nothing scrolls away.
+            one key. The agent gets a reference it understands.
           </p>
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -188,7 +236,7 @@ export default function Page() {
                 GitHub
               </a>
             </Button>
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" className="hidden sm:inline-flex">
               <a href={NPM} target="_blank" rel="noreferrer">
                 <Package />
                 npm
@@ -201,7 +249,7 @@ export default function Page() {
 
           <Clip
             name="comment"
-            frame="rounded-2xl"
+            frame="rounded-xl sm:rounded-2xl"
             className="mt-12 text-left shadow-[0_24px_60px_-30px_rgba(0,0,0,0.35)] sm:mt-16"
           />
           <p className="mt-4 text-sm text-balance text-muted-foreground">
@@ -213,17 +261,18 @@ export default function Page() {
         <Section
           id="friends"
           kicker="inspiration and friends"
+          kind="line"
         >
           <blockquote className="text-center text-3xl font-semibold leading-tight tracking-tight text-balance sm:text-4xl">
             <span className="text-primary">“</span>If{" "}
             <Float icon={Herdr} at="-rotate-12 -bottom-[0.5em] left-[18%] size-[0.8em]">herdr</Float>,{" "}
             <Float icon={Hunk} at="rotate-6 -top-[0.3em] -right-[0.45em] size-[0.6em]">hunk</Float>, and{" "}
-            <Float icon={AgentationWord} at="-rotate-3 -bottom-[0.8em] left-[10%] h-[0.85em] w-auto px-[0.15em] py-[0.1em]">
+            <Float icon={AgentationWord} at="-rotate-3 -bottom-[calc(0.8em-4px)] left-[10%] h-[0.85em] w-auto px-[0.15em] pt-[0.1em] pb-[calc(0.1em-2px)]">
               agentation
             </Float>{" "}
             had a baby.<span className="text-primary">”</span>
           </blockquote>
-          <p className="mx-auto mt-6 mb-12 max-w-[560px] text-center leading-relaxed text-muted-foreground">
+          <p className="mx-auto mt-10 mb-12 max-w-[560px] text-center leading-relaxed text-muted-foreground">
             mdtation combines ideas and flows from a few great tools.
           </p>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
@@ -254,10 +303,12 @@ export default function Page() {
 
         <Section
           id="problem"
-          kicker="the problem"
+          kicker="feedback, today"
+          kind="prompt"
           title="Agents ask for feedback in the worst possible places"
           intro="Every coding agent needs your review. Each one collects it through a channel built for answers, not critique."
         >
+          <Rule>three places it goes wrong</Rule>
           <div className="grid gap-4 md:grid-cols-3 [&>*]:min-w-0">
             {pains.map(([Icon, title, body]) => (
               <Card key={title}>
@@ -365,6 +416,7 @@ export default function Page() {
         <Section
           id="proto"
           kicker="prototypes"
+          kind="line"
           title="Pick one of each"
           intro="Alternatives for the pieces that still feel bland. Temporary, removed once chosen."
         >
