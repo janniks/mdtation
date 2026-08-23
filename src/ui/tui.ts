@@ -385,7 +385,10 @@ export class TuiShell {
   /** Write all comments (with provenance) to a temp file and open it in `$EDITOR`. */
   private editor(): void {
     const path = join(tmpdir(), "mdtation-comments.md");
-    writeFileSync(path, report(this.store, this.doc, this.file, { mode: this.value("viewCopy") }));
+    writeFileSync(
+      path,
+      report(this.store.live(), this.doc, this.file, { mode: this.value("viewCopy") }),
+    );
     this.renderer.suspend();
     spawnSync(process.env.EDITOR ?? "vi", [path], { stdio: "inherit" });
     this.renderer.resume();
@@ -616,7 +619,7 @@ export class TuiShell {
         this.open(
           new All(
             this.renderer,
-            report(this.store, this.doc, this.file, { mode: this.value("viewCopy") }),
+            report(this.store.live(), this.doc, this.file, { mode: this.value("viewCopy") }),
             () => this.close(),
           ),
         );

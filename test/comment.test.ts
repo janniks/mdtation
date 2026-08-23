@@ -37,7 +37,7 @@ describe("CommentStore", () => {
     assert.equal(s.all().length, 1);
     assert.equal(s.live().length, 0);
     assert.equal(s.byAnchor({ kind: "heading", slug: ["title"] }).length, 0);
-    assert.equal(CommentStore.fromJSON(s.toJSON()).get("c1")?.archived, true);
+    assert.ok(CommentStore.fromJSON(s.toJSON()).get("c1")?.archivedAt);
     assert.equal(s.restore("c1"), true);
     assert.equal(s.live().length, 1);
   });

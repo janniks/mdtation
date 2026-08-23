@@ -4,7 +4,7 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { CommentStore, type Comment } from "../src/core/comment.ts";
-import { archive, clear, home, load, restore, save } from "../src/core/store.ts";
+import { archive, clear, home, load, path, restore, save } from "../src/core/store.ts";
 
 function note(id: string, n: number): Comment {
   return { id, anchor: { kind: "line", n }, text: `t${n}`, createdAt: 0 };
@@ -30,21 +30,24 @@ describe("store", () => {
     assert.equal((await load("/none.md")).all().length, 0);
   });
 
-  test("two files share one json and round-trip", async () => {
+  test("one json per file under comments/, round-trips with marks", async () => {
     await save("/a.md", store(note("1", 1), note("2", 2)));
-    await save("/b.md", store(note("3", 3)));
-    assert.deepEqual(Object.keys(JSON.parse(await readFile(join(dir, "comments.json"), "utf-8"))), [
-      "/a.md",
-      "/b.md",
+    const b = store(note("3", 3));
+    b.mark(5, "agent", "r1");
+    await save("/b.md", b);
+    assert.equal(path("/a.md"), join(dir, "comments", "-a.md.json"));
+    assert.deepEqual(Object.keys(JSON.parse(await readFile(path("/b.md"), "utf-8"))), [
+      "comments",
+      "marks",
     ]);
+    assert.deepEqual((await load("/b.md")).marks, [{ at: 5, by: "agent", name: "r1" }]);
     assert.equal((await load("/a.md")).all().length, 2);
     assert.equal((await load("/b.md")).byAnchor({ kind: "line", n: 3 })[0]?.text, "t3");
   });
 
-  test("saving an empty store removes the key", async () => {
+  test("saving an empty store leaves other files alone", async () => {
     await save("/b.md", store());
     assert.equal((await load("/b.md")).all().length, 0);
-    assert.ok(!("/b.md" in JSON.parse(await readFile(join(dir, "comments.json"), "utf-8"))));
     assert.equal((await load("/a.md")).all().length, 2);
   });
 
@@ -56,7 +59,7 @@ describe("store", () => {
       got.live().map((c) => c.id),
       ["2"],
     );
-    assert.equal(got.get("1")?.archived, true);
+    assert.ok(got.get("1")?.archivedAt);
     assert.equal(await restore("/a.md", ["1"]), 1);
     assert.equal((await load("/a.md")).live().length, 2);
   });

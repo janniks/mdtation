@@ -29,14 +29,32 @@ export interface Comment {
   /** Text the comment was made on (drag-select), copied verbatim into the reference. */
   readonly quote?: string;
   readonly createdAt: number;
-  /** Archived comments stay on disk but leave markers, nav, copy and the default report. */
-  readonly archived?: boolean;
-  /** When it was archived; drives `sweep`. */
+  /** Who wrote it; absent = the local human. */
+  readonly author?: string;
+  /** Written by an agent through the CLI; the TUI styles and navigates on it. */
+  readonly agent?: true;
+  /** Parent comment id; absent = top of a thread. */
+  readonly re?: string;
+  /** Set when archived: the comment stays on disk but leaves markers, nav, copy and the default report. */
   readonly archivedAt?: number;
+}
+
+/** A checkpoint: everything created before `at` counts as read for `by` (absent = the local human). */
+export interface Mark {
+  readonly at: number;
+  readonly by?: string;
+  readonly name?: string;
+}
+
+/** On-disk shape of one document's comments. */
+export interface File {
+  readonly comments: readonly Comment[];
+  readonly marks: readonly Mark[];
 }
 
 export class CommentStore {
   private readonly comments = new Map<string, Comment>();
+  marks: readonly Mark[] = [];
 
   add(c: Comment): void {
     this.comments.set(c.id, c);
@@ -53,18 +71,18 @@ export class CommentStore {
   }
   /** Only comments that are not archived. */
   live(): readonly Comment[] {
-    return this.all().filter((c) => !c.archived);
+    return this.all().filter((c) => !c.archivedAt);
   }
   archive(id: string, now = Date.now()): boolean {
     const c = this.comments.get(id);
     if (!c) return false;
-    this.comments.set(id, { ...c, archived: true, archivedAt: now });
+    this.comments.set(id, { ...c, archivedAt: now });
     return true;
   }
   restore(id: string): boolean {
     const c = this.comments.get(id);
     if (!c) return false;
-    const { archived: _a, archivedAt: _t, ...rest } = c;
+    const { archivedAt: _t, ...rest } = c;
     this.comments.set(id, rest);
     return true;
   }
@@ -72,7 +90,7 @@ export class CommentStore {
   sweep(ttl: number, now = Date.now()): number {
     let n = 0;
     for (const c of this.all()) {
-      if (c.archived && now - (c.archivedAt ?? c.createdAt) > ttl) {
+      if (c.archivedAt && now - c.archivedAt > ttl) {
         this.comments.delete(c.id);
         n++;
       }
@@ -85,12 +103,23 @@ export class CommentStore {
   resolve(anchor: Anchor, doc: Document): Location | null {
     return resolveAnchor(anchor, doc);
   }
-  toJSON(): readonly Comment[] {
-    return this.all();
+  /** Add a checkpoint. */
+  mark(now = Date.now(), by?: string, name?: string): void {
+    const m: Mark = { at: now, ...(by ? { by } : {}), ...(name ? { name } : {}) };
+    this.marks = [...this.marks, m];
   }
-  static fromJSON(data: readonly Comment[]): CommentStore {
+  /** Latest mark by `by` (or the local human when absent), or by `name`. */
+  since(by?: string, name?: string): Mark | undefined {
+    return this.marks.findLast((m) => (name ? m.name === name : m.by === by));
+  }
+  toJSON(): File {
+    return { comments: this.all(), marks: this.marks };
+  }
+  static fromJSON(data: File | readonly Comment[]): CommentStore {
     const store = new CommentStore();
-    for (const c of data) store.add(c);
+    const file = Array.isArray(data) ? { comments: data, marks: [] } : (data as File);
+    for (const c of file.comments ?? []) store.add(c);
+    store.marks = [...(file.marks ?? [])];
     return store;
   }
 }

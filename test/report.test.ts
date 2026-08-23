@@ -8,13 +8,13 @@ import { report } from "../src/core/report.ts";
 const doc = parseDocument("# Title\n\ntext\n");
 const store = CommentStore.fromJSON([
   { id: "a", anchor: { kind: "heading", slug: ["title"] }, text: "fix", createdAt: 0 },
-  { id: "b", anchor: { kind: "line", n: 2 }, text: "old", createdAt: 1000, archived: true },
+  { id: "b", anchor: { kind: "line", n: 2 }, text: "old", createdAt: 1000, archivedAt: 1000 },
   { id: "c", anchor: { kind: "line", n: 99 }, text: "gone", createdAt: 0 },
 ]);
 
 describe("report", () => {
   test("title, copyFormat block per comment; live only by default", () => {
-    const out = report(store, doc, "/x/doc.md");
+    const out = report(store.live(), doc, "/x/doc.md");
     assert.equal(
       out,
       ["# Comments — doc.md", "Line 1\n> fix", "Line ?\n> gone"].join("\n\n") + "\n",
@@ -22,11 +22,11 @@ describe("report", () => {
   });
 
   test("archived: true includes and marks archived comments", () => {
-    const out = report(store, doc, "/x/doc.md", { archived: true });
+    const out = report(store.all(), doc, "/x/doc.md", { archived: true });
     assert.ok(out.includes("Line 3\n> old\nid b  archived"));
   });
 
   test("empty store -> title only", () => {
-    assert.equal(report(new CommentStore(), doc, "/x/doc.md"), "# Comments — doc.md\n");
+    assert.equal(report([], doc, "/x/doc.md"), "# Comments — doc.md\n");
   });
 });

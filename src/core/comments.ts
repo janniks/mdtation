@@ -17,8 +17,13 @@ export function create(
   now = Date.now(),
   quote?: string,
 ): Comment {
-  const c: Comment = { id: now.toString(36), anchor: anchorFor(doc, line), text, createdAt: now };
+  const c: Comment = { id: ident(now), anchor: anchorFor(doc, line), text, createdAt: now };
   return quote ? { ...c, quote } : c;
+}
+
+/** `time36` plus two random chars, so two `add`s in one millisecond never collide. */
+export function ident(now = Date.now()): string {
+  return now.toString(36) + Math.random().toString(36).slice(2, 4).padEnd(2, "0");
 }
 
 /** One entry per live comment: its resolved line (duplicates = several comments on a line). */

@@ -1,56 +1,52 @@
 /**
- * One `comments.json` in the user data dir, keyed by absolute file path:
- * `{ [file]: Comment[] }`. Read-modify-write keeps other files' comments intact.
+ * One json per document under the data dir: `comments/<abs path, "/" -> "-">.json`
+ * holding `{ comments, marks }`. The file is the channel between the TUI and the CLI.
  */
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { CommentStore, type Comment } from "./comment.ts";
+import { CommentStore } from "./comment.ts";
 
-/** `$MDTATION_HOME`, else `$XDG_DATA_HOME/mdtation`, else `~/.local/share/mdtation`. */
+/** Data root: `$MDTATION_HOME`, else `$XDG_DATA_HOME/mdtation` when set, else `~/.mdtation`. */
 export function home(): string {
-  return (
-    process.env.MDTATION_HOME ??
-    join(process.env.XDG_DATA_HOME ?? join(homedir(), ".local", "share"), "mdtation")
-  );
+  return root(process.env.XDG_DATA_HOME);
 }
 
-type Data = Record<string, Comment[]>;
-
-async function read(): Promise<Data> {
-  try {
-    const data: unknown = JSON.parse(await readFile(join(home(), "comments.json"), "utf-8"));
-    return data && typeof data === "object" && !Array.isArray(data) ? (data as Data) : {};
-  } catch {
-    return {};
-  }
+/** Config root: like `home()` but honours `$XDG_CONFIG_HOME`. */
+export function config(): string {
+  return root(process.env.XDG_CONFIG_HOME);
 }
 
-async function write(data: Data): Promise<void> {
-  await mkdir(home(), { recursive: true });
-  await writeFile(join(home(), "comments.json"), JSON.stringify(data, null, 2), "utf-8");
+function root(xdg: string | undefined): string {
+  return process.env.MDTATION_HOME ?? (xdg ? join(xdg, "mdtation") : join(homedir(), ".mdtation"));
+}
+
+/** Where `file`'s comments live. */
+export function path(file: string): string {
+  return join(home(), "comments", `${file.replaceAll("/", "-")}.json`);
 }
 
 /** Comments saved for `file` (absolute path); missing or malformed data yields an empty store. */
 export async function load(file: string): Promise<CommentStore> {
-  const list = (await read())[file];
-  return CommentStore.fromJSON(Array.isArray(list) ? list : []);
+  try {
+    return CommentStore.fromJSON(JSON.parse(await readFile(path(file), "utf-8")));
+  } catch {
+    return new CommentStore();
+  }
 }
 
-/** Persist `store` under `file`; an empty store drops the key. */
+/** Persist `store` atomically (tmp + rename). */
 export async function save(file: string, store: CommentStore): Promise<void> {
-  const data = await read();
-  if (store.all().length) data[file] = [...store.all()];
-  else delete data[file];
-  await write(data);
+  await mkdir(join(home(), "comments"), { recursive: true });
+  const tmp = `${path(file)}.${process.pid}.tmp`;
+  await writeFile(tmp, JSON.stringify(store.toJSON(), null, 2), "utf-8");
+  await rename(tmp, path(file));
 }
 
-/** Forget the comments saved for `file`; returns how many were removed. */
+/** Forget the comments saved for `file` (marks too); returns how many were removed. */
 export async function clear(file: string): Promise<number> {
-  const data = await read();
-  const n = data[file]?.length ?? 0;
-  delete data[file];
-  await write(data);
+  const n = (await load(file)).all().length;
+  await save(file, new CommentStore());
   return n;
 }
 

@@ -13,10 +13,11 @@ describe("comments glue", () => {
     assert.deepEqual(anchorFor(doc, 4), { kind: "line", n: 4 });
   });
 
-  test("create: id is base36 of now, anchor from the line", () => {
+  test("create: id is base36 of now plus two random chars, anchor from the line", () => {
     const c = create(doc, 0, "fix", 1000);
+    assert.match(c.id, /^rs[0-9a-z]{2}$/);
     assert.deepEqual(c, {
-      id: "rs",
+      id: c.id,
       anchor: { kind: "heading", slug: ["title"] },
       text: "fix",
       createdAt: 1000,

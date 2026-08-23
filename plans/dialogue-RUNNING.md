@@ -16,3 +16,4 @@ Tracer bullets: each phase leaves the golden path working and tests green.
 
 | phase | commit | note |
 |---|---|---|
+| 1 | store+verbs | `~/.mdtation` root (XDG when set), `comments/<path>.json` `{comments,marks}`, `archivedAt` only, ids `time36+2`; verbs list/mark/read/print/status/archive/restore/clear; old flags gone; user data moved by hand. |
