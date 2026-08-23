@@ -5,7 +5,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -163,9 +162,11 @@ export default function Page() {
 
       <main className="mx-auto max-w-[1040px] px-5 sm:px-8">
         <section className="pt-14 pb-16 text-center sm:pt-24 sm:pb-24">
-          <Badge variant="outline" className="font-mono text-xs text-muted-foreground">
+          <p className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
+            <span className="h-px w-8 bg-border" aria-hidden />
             terminal markdown viewer for agent workflows
-          </Badge>
+            <span className="h-px w-8 bg-border" aria-hidden />
+          </p>
           <h1 className="mx-auto mt-5 max-w-[760px] text-4xl font-semibold leading-[1.05] tracking-tight sm:text-6xl">
             Feedback your agent can actually use
           </h1>
