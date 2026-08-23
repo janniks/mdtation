@@ -38,13 +38,25 @@ export default function Page() {
           </p>
           <Agents className="mt-8 origin-left scale-110" label="works with" />
         </div>
-        <div className="flex h-full min-w-0 flex-1 items-end justify-end pr-16 pt-12">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/media/popup.png"
-            alt=""
-            className="w-[760px] max-w-none translate-y-[25%] rounded-t-xl shadow-[0_24px_60px_-30px_rgba(0,0,0,0.45)]"
-          />
+        <div className="relative h-full min-w-0 flex-1">
+          <div className="absolute top-8 right-10 w-[620px] overflow-hidden rounded-xl bg-[#26262a] shadow-[0_40px_80px_-24px_rgba(0,0,0,0.5)]">
+            <div className="flex items-center gap-1.5 px-3 py-2.5">
+              <i className="size-2.5 rounded-full bg-[#5a5a58]" />
+              <i className="size-2.5 rounded-full bg-[#5a5a58]" />
+              <i className="size-2.5 rounded-full bg-[#5a5a58]" />
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/media/backplan.png" alt="" className="block w-full" />
+          </div>
+          <div className="absolute bottom-0 left-0 z-10 w-[700px] translate-y-[25%] overflow-hidden rounded-t-xl bg-[#26262a] shadow-[0_24px_60px_-30px_rgba(0,0,0,0.45)]">
+            <div className="flex items-center gap-1.5 px-3 py-2.5">
+              <i className="size-2.5 rounded-full bg-[#ff5f57]" />
+              <i className="size-2.5 rounded-full bg-[#febc2e]" />
+              <i className="size-2.5 rounded-full bg-[#28c840]" />
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/media/popup.png" alt="" className="block w-full" />
+          </div>
         </div>
       </div>
     </div>
