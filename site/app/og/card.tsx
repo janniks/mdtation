@@ -21,26 +21,44 @@ export function Card({ sans, mono, logo }: { sans: string; mono: string; logo: s
       <div style={{ display: "flex", alignItems: "center", gap: 18, fontSize: 30 }}>
         <img src={logo} width={52} height={52} alt="" />
         <div style={{ fontWeight: 700, letterSpacing: "-0.02em" }}>mdtation</div>
-        <div style={{ marginLeft: "auto", fontFamily: mono, fontSize: 22, color: "#7a766c" }}>
+      </div>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          marginTop: 40,
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 760,
+            fontSize: 80,
+            fontWeight: 700,
+            letterSpacing: "-0.04em",
+            lineHeight: 1.02,
+          }}
+        >
+          A better agentic feedback flow.
+        </div>
+        <div
+          style={{
+            marginTop: 12,
+            maxWidth: 300,
+            textAlign: "right",
+            fontFamily: mono,
+            fontSize: 22,
+            color: "#7a766c",
+          }}
+        >
           terminal markdown viewer for agent workflows
         </div>
       </div>
       <div
-        style={{
-          marginTop: 40,
-          fontSize: 80,
-          fontWeight: 700,
-          letterSpacing: "-0.04em",
-          lineHeight: 1.02,
-        }}
-      >
-        A better agentic feedback flow.
-      </div>
-      <div
         style={{ marginTop: 24, fontSize: 30, lineHeight: 1.35, color: "#6b675e", maxWidth: 1000 }}
       >
-        Your agent writes a spec. You comment on the exact section, inline. The agent reads it
-        instead of long conversation chunks.
+        Your agent writes a spec. You comment on exact lines. The agent reads them instead of a long
+        conversation.
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 20, marginTop: 44 }}>
         <div
@@ -68,7 +86,7 @@ export function Card({ sans, mono, logo }: { sans: string; mono: string; logo: s
           }}
         >
           works with
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ display: "flex" }}>
             {AGENTS.map((Icon, i) => (
               <div
                 key={i}
@@ -82,6 +100,8 @@ export function Card({ sans, mono, logo }: { sans: string; mono: string; logo: s
                   border: "2px solid #e3e0d8",
                   background: "#fff",
                   color: "#4a4740",
+                  marginLeft: i ? -10 : 0,
+                  transform: `rotate(${[-6, 3, -2, 6, -3][i]}deg)`,
                 }}
               >
                 <Icon size={24} />

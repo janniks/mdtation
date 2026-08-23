@@ -1,9 +1,21 @@
 # 🧘 mdtation
 
+<div align="center">
+
 **A better agentic feedback flow.**
 
-A full-screen terminal markdown viewer with comments that stick to lines, persist between sessions, and copy as a reference any agent understands.
-Read, breathe, comment, loop.
+[![npm](https://img.shields.io/npm/v/mdtation)](https://www.npmjs.com/package/mdtation)
+[![ci](https://github.com/janniks/mdtation/actions/workflows/ci.yml/badge.svg)](https://github.com/janniks/mdtation/actions/workflows/ci.yml)
+[![socket](https://socket.dev/api/badge/npm/package/mdtation)](https://socket.dev/npm/package/mdtation)
+[![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
+*read, breathe, comment, loop*
+
+![mdtation](.github/media/banner.png)
+
+</div>
+
+A terminal markdown viewer with comments that stick to lines, persist between sessions, and copy as a reference any agent understands.
 
 ## The problem
 
@@ -17,7 +29,7 @@ Agents ask for feedback in the worst possible ways.
 
 - The agent writes the plan as a markdown file, not a message.
 - You open it in mdtation, read it full screen, and press `c` on the line (or drag-select the sentence) you disagree with.
-- `C` copies a reference with the line number, section path, quote, and your note. Paste it, or let the agent run `list`.
+- Copy the comment to the clipboard: line number, section path, quote, and your note. Paste it, or let the agent run `list`.
 - The agent revises the file. You open it again, your comments are still anchored, and you go round once more.
 
 Review the plan, not the chat. Specs, plans, drafts, reviews: the prose your agent writes deserves a real review flow, not a chat reply.
@@ -26,10 +38,16 @@ Review the plan, not the chat. Specs, plans, drafts, reviews: the prose your age
 
 ```sh
 npm i -g mdtation
-mdtation README.md
+mdtation plans/auth.md
 ```
 
 The full-screen TUI runs under Bun. Under Node, mdtation renders to stdout instead.
+
+## See it
+
+| Comment on a line | Comment on a selection | Menus and palette |
+|---|---|---|
+| ![comment](.github/media/comment.gif) | ![select](.github/media/select.gif) | ![menus](.github/media/menu.gif) |
 
 ## Keys
 
@@ -62,24 +80,7 @@ mdtation skill                    # print the agent skill
 
 Comments live in one json per file under `$MDTATION_HOME`, `$XDG_DATA_HOME/mdtation`, or `~/.mdtation`, keyed by absolute path.
 
-## The copied reference
-
-```
-Line 41  Auth / Session refresh
-    Refresh tokens are rotated on every request and the old token is
-    revoked immediately.
-> Immediate revoke breaks parallel requests from the same tab. Keep a 30 s grace window, then revoke.
-```
-
 Tell your agent: "Read the comments I left on plans/auth.md with `mdtation plans/auth.md list`, address each, then rewrite the file."
-
-## Works with
-
-Claude Code, Codex CLI, Gemini CLI, OpenCode, Cursor CLI, Amp, Copilot CLI, and anything else that reads text. Or you paste manually. No plugin, no MCP.
-
-## Why not a chat thread
-
-A chat thread is a good place to ask and a bad place to review. The thing you are reacting to scrolls away while you answer, the answer is not tied to the line it is about, and tomorrow it is gone. A comment on a file stays where you put it, survives the agent's rewrite, and reads the same to a person and a model.
 
 ## License
 
