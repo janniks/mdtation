@@ -12,7 +12,7 @@ const agents = [
 export function Agents({ className = "" }: { className?: string }) {
   return (
     <div className={`flex flex-wrap items-center gap-x-3 gap-y-2 ${className}`}>
-      <span className="font-mono text-xs text-muted-foreground">
+      <span className="font-mono text-xs text-balance text-muted-foreground">
         works with anything that can CLI, or you paste manually
       </span>
       <div className="flex items-center">

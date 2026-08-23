@@ -41,7 +41,7 @@ export function Clip({
           <img
             src={`/media/${name}.png`}
             alt={caption?.replaceAll("`", "") ?? ""}
-            className={`block w-full ${box}`}
+            className={`block w-full rounded-[inherit] ${box}`}
           />
         ) : (
           <video
@@ -54,7 +54,7 @@ export function Clip({
             disablePictureInPicture
             poster={`/media/${name}.png`}
             aria-label={caption?.replaceAll("`", "")}
-            className={`block w-full ${box}`}
+            className={`block w-full rounded-[inherit] ${box}`}
           >
             <source src={`/media/${name}.mp4`} type="video/mp4" />
           </video>

@@ -69,7 +69,7 @@ const steps = [
   [
     "You read, comment, and copy",
     "Press `c` on a line, or drag-select a sentence, and write what is wrong. `C` copies it as a reference: line, section, quote, note.",
-    "c, then C",
+    "",
     "select",
   ],
   [
@@ -433,10 +433,15 @@ export default function Page() {
                   <div className="min-w-0">
                     <h3 className="font-semibold">{title}</h3>
                     <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                      {code(body)}{" "}
-                      <code className="rounded border bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground">
-                        {key}
-                      </code>
+                      {code(body)}
+                      {key && (
+                        <>
+                          {" "}
+                          <code className="rounded border bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground">
+                            {key}
+                          </code>
+                        </>
+                      )}
                     </p>
                   </div>
                 </div>
@@ -497,12 +502,13 @@ export default function Page() {
             ))}
           </Accordion>
         </Section>
+        <div className="py-14 sm:py-20">
+          <Mantra />
+        </div>
       </main>
 
       <footer className="border-t">
         <div className="mx-auto max-w-[1040px] px-5 py-12 sm:px-8">
-          <Mantra />
-          <Separator className="my-10" />
           {/* Open-source card, ported from openindex oss-card. */}
           <Card className="sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             <CardHeader className="flex-1">
