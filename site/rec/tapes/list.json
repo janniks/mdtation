@@ -1,4 +1,4 @@
 {"file": "examples/tour.md", "cols": 80, "rows": 16,
- "cmd": "bun src/bin.ts examples/tour.md --list; sleep 3",
+ "cmd": "bun src/bin.ts examples/tour.md list; sleep 3",
  "seed": [{"line": 8, "text": "Tighten this intro"}, {"line": 20, "text": "Check this list item"}],
  "steps": []}

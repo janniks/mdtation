@@ -14,7 +14,7 @@ A full-screen terminal markdown viewer with comments that stick to lines, persis
 
 - The agent writes the plan as a markdown file, not a message.
 - You open it in mdtation, read it full screen, and press `c` on the line (or drag-select the sentence) you disagree with.
-- `C` copies a block with the line number, section path, quote, and your note. Paste it, or let the agent run `--list`.
+- `C` copies a block with the line number, section path, quote, and your note. Paste it, or let the agent run `list`.
 - The agent revises the file. You open it again, your comments are still anchored, and you go round once more.
 
 Review the plan, not the diff. hunk does this for code diffs, mdtation does it for the prose around them.
@@ -48,15 +48,16 @@ View options (color, marks, fences, tables, checkboxes, flow, scroll margin) liv
 ## CLI
 
 ```sh
-mdtation plan.md --list          # print live comments as markdown
-mdtation plan.md --archived      # include archived ones, each with an id
-mdtation plan.md --restore a1,b2 # un-archive by id
-mdtation plan.md --clear         # forget every comment for this file
-mdtation plan.md --no-tui        # render to stdout and exit
-mdtation plan.md --where         # print the data dir
+mdtation plan.md list             # print live comments as markdown
+mdtation plan.md list --archived  # include archived ones, each with an id
+mdtation plan.md restore a1,b2    # un-archive by id
+mdtation plan.md clear            # forget every comment for this file
+mdtation plan.md print            # render to stdout and exit
+mdtation plan.md status           # print the data dir
+mdtation skill                    # print the agent skill
 ```
 
-Comments live in `comments.json` under `$MDTATION_HOME`, `$XDG_DATA_HOME/mdtation`, or `~/.local/share/mdtation`, keyed by absolute path.
+Comments live in one json per file under `$MDTATION_HOME`, `$XDG_DATA_HOME/mdtation`, or `~/.mdtation`, keyed by absolute path.
 
 ## The copied block
 
@@ -67,7 +68,7 @@ Line 41  Auth / Session refresh
 > Immediate revoke breaks parallel requests from the same tab. Keep a 30 s grace window, then revoke.
 ```
 
-Tell your agent: "Read the comments I left on plans/auth.md with `mdtation plans/auth.md --list`, address each, then rewrite the file."
+Tell your agent: "Read the comments I left on plans/auth.md with `mdtation plans/auth.md list`, address each, then rewrite the file."
 
 ## Works with
 

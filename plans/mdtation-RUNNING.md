@@ -138,3 +138,4 @@ Pure models live in `src/core` with node tests; `src/ui` only wires OpenTUI.
 
 - Crumb separator: `/` chosen 2026-08-21; maybe offer `>` as an alternative (cycler under View › Style) if wanted.
 | 8z | site-media | done | Pastel TUI palette (`ansi.ts`, chrome THEME). 43 feature clips re-rendered as mp4 with `record.py` (seed format fixed for the per-file store, 15 s quit timeout). Site feedback pass: mono 🧘, friends 4-up with real hunk mark, tilted floating logos in the quote, agents section trimmed, prototypes inline. |
+| 8aa | site-pass-2 | done | Second feedback pass on the site: header copies an agent prompt, tilted agent tiles, friends quote with placed logos and compact cards, three-step loop with a fake Claude Code transcript clip (`site/rec/demo/agent.py`), 2:1 clips, merged gallery copy, problem-section prototypes A to E, dev breakpoint badge. Site, README and tapes moved from `--list` flags to the shipped verb CLI. |

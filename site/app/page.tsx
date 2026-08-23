@@ -29,7 +29,7 @@ const line = `Line 58  Auth / Logout
     Logout clears the cookie and does nothing server-side.
 > Also revoke the refresh token, otherwise the cookie is the only thing keeping the session out.`;
 
-const prompt = `Read the comments I left on plans/auth.md by running \`mdtation plans/auth.md --list\`.
+const prompt = `Read the comments I left on plans/auth.md by running \`mdtation plans/auth.md list\`.
 Address each one in order, then rewrite the file in place.
 Keep the headings so my remaining comments stay anchored.`;
 
@@ -60,14 +60,14 @@ const steps = [
   ],
   [
     "You read, comment, and copy",
-    "Full screen, mouse friendly, calm. Press `c` on a line or drag-select a sentence and write what is wrong with it. The note is pinned where it belongs. `C` copies it as a reference: line number, section path, the quoted passage, your note. Or let the agent pull all of them with `--list`.",
+    "Full screen, mouse friendly, calm. Press `c` on a line or drag-select a sentence and write what is wrong with it. The note is pinned where it belongs. `C` copies it as a reference: line number, section path, the quoted passage, your note. Or let the agent pull all of them with `list`.",
     "c, then C",
     "select",
   ],
   [
     "The agent revises, you loop",
     "The agent reads the report, edits the file, and you open it again. Your comments are still anchored. Archive the ones that landed, jump through the rest with `]`, and go again.",
-    "mdtation plans/auth.md --list",
+    "mdtation plans/auth.md list",
     "agent",
   ],
 ] as const;
@@ -82,15 +82,15 @@ const friends = [
 const faq = [
   [
     "Does it need Bun?",
-    "The fullscreen TUI runs under Bun. Under Node, mdtation prints a warning and renders the document to stdout instead, and `--list`, `--archived`, `--restore`, `--clear` and `--where` all work. Install with npm either way.",
+    "The fullscreen TUI runs under Bun. Under Node, mdtation prints a warning and renders the document to stdout instead, and `list`, `list --archived`, `restore`, `clear` and `status` all work. Install with npm either way.",
   ],
   [
     "Where are comments stored?",
-    "In `comments.json` under `$MDTATION_HOME`, else `$XDG_DATA_HOME/mdtation`, else `~/.mdtation`. Comments are keyed by the file's absolute path, so moving or renaming a file starts it fresh. `mdtation file.md --where` prints the directory.",
+    "In `comments.json` under `$MDTATION_HOME`, else `$XDG_DATA_HOME/mdtation`, else `~/.mdtation`. Comments are keyed by the file's absolute path, so moving or renaming a file starts it fresh. `mdtation file.md status` prints the directory.",
   ],
   [
     "Does it work with agents other than Claude Code?",
-    "Yes. The copied block and the `--list` report are plain markdown. Codex CLI, Gemini CLI, OpenCode, Cursor CLI, or a chat window in a browser all read it the same way. There is no plugin, daemon or MCP server involved.",
+    "Yes. The copied block and the `list` report are plain markdown. Codex CLI, Gemini CLI, OpenCode, Cursor CLI, or a chat window in a browser all read it the same way. There is no plugin, daemon or MCP server involved.",
   ],
   [
     "What happens to my comments when the agent rewrites the file?",
@@ -102,11 +102,11 @@ const faq = [
   ],
   [
     "How is this different from hunk?",
-    "hunk reviews code diffs with a live session the agent talks to. mdtation reviews prose, specs, plans and notes, and hands results back as a copied block or a `--list` report. They sit next to each other. Review the plan in mdtation, the diff in hunk.",
+    "hunk reviews code diffs with a live session the agent talks to. mdtation reviews prose, specs, plans and notes, and hands results back as a copied block or a `list` report. They sit next to each other. Review the plan in mdtation, the diff in hunk.",
   ],
   [
     "Can I script it?",
-    "`--list` prints live comments as markdown, `--archived` adds archived ones with ids, `--restore a1,b2` un-archives by id, `--clear` forgets a file's comments, `--no-tui` renders to stdout. Pipe `--list` into `pbcopy` or straight into an agent's prompt.",
+    "`list` prints live comments as markdown, `list --archived` adds archived ones with ids, `restore a1,b2` un-archives by id, `clear` forgets a file's comments, `print` renders to stdout. Pipe `list` into `pbcopy` or straight into an agent's prompt.",
   ],
   [
     "Does it modify my markdown?",
@@ -319,7 +319,7 @@ export default function Page() {
           id="agents"
           kicker="built for agents"
           title="Paste it into any agent"
-          intro="Plain markdown with a line number, a heading path, the passage and your note. For a whole review, `mdtation file.md --list` prints every comment as one report."
+          intro="Plain markdown with a line number, a heading path, the passage and your note. For a whole review, `mdtation file.md list` prints every comment as one report."
         >
           <div className="grid items-start gap-10 md:grid-cols-[1fr_1.1fr] [&>*]:min-w-0">
             <Agents className="pt-2" />

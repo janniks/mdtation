@@ -71,7 +71,7 @@ export const GIFS = [
       [
         "all",
         "Show all comments",
-        "`a` lists every live comment with its line, the same report `--list` prints. Comments, Show in editor opens it in `$EDITOR` for bulk edits.",
+        "`a` lists every live comment with its line, the same report `list` prints. Comments, Show in editor opens it in `$EDITOR` for bulk edits.",
       ],
       [
         "copy",
@@ -86,7 +86,7 @@ export const GIFS = [
       [
         "archive",
         "Archive on copy",
-        "A copied comment leaves the gutter but stays on disk. `--archived` lists them with ids, `--restore` brings one back. Retention is yours to set.",
+        "A copied comment leaves the gutter but stays on disk. `list --archived` lists them with ids, `restore` brings one back. Retention is yours to set.",
       ],
       [
         "unsaved",
@@ -221,17 +221,17 @@ export const GIFS = [
       [
         "list",
         "Print comments",
-        "`mdtation file.md --list` prints every live comment as markdown and exits. This is the line to put in an agent's prompt.",
+        "`mdtation file.md list` prints every live comment as markdown and exits. This is the line to put in an agent's prompt.",
       ],
       [
         "print",
         "Render to stdout",
-        "`mdtation file.md --no-tui` writes the rendered document to stdout and exits. Use it in pipes, or under Node where the TUI is not available.",
+        "`mdtation file.md print` writes the rendered document to stdout and exits. Use it in pipes, or under Node where the TUI is not available.",
       ],
       [
         "overview",
         "Everything at once",
-        "A full pass: open, scroll, comment, copy, archive, and the `--list` report. Thirty seconds of the whole loop.",
+        "A full pass: open, scroll, comment, copy, archive, and the `list` report. Thirty seconds of the whole loop.",
       ],
     ],
   },
