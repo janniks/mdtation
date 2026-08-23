@@ -5,13 +5,15 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Agentation } from "agentation";
 
 export const metadata: Metadata = {
-  title: "mdtation, a terminal markdown viewer for the agentic era",
+  metadataBase: new URL("https://mdtation.dev"),
+  title: "mdtation, a better agentic feedback flow",
   description:
-    "Read markdown full-screen in your terminal, leave inline comments, and copy a structured reference block straight into your CLI agent.",
+    "Terminal markdown viewer for agent workflows. Read the plan full screen, comment on the exact line, paste a reference your agent understands.",
   openGraph: {
     title: "mdtation",
-    description: "Read. Comment. Paste into your agent.",
+    description: "A better agentic feedback flow. Read, comment, paste into your agent.",
   },
+  twitter: { card: "summary_large_image" },
 };
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });

@@ -212,3 +212,8 @@ Unchecked entries are swept on occasional cleanup passes.
 - [ ] The header's "Copy prompt" tells the agent to run `mdtation skill`, which only exists in `specs/cli-DRAFT.md` so far.
   - alternative: point at `--list` and the README until the verb ships.
   - why: the user asked for "which command to use to discover skill"; shipping the verb is the planned next step and the copy should not be rewritten twice.
+
+## 2026-08-23 — site OG image
+- [ ] `metadataBase` set to `https://mdtation.dev` so the OG image URL is absolute.
+  - alternative: leave `metadataBase` unset and accept a relative `og:image`, which most crawlers reject.
+  - why: the domain is not decided anywhere in the repo; change the one line in `site/app/layout.tsx` once it is.
