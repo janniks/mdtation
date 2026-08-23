@@ -81,8 +81,8 @@ quit = time.time() - start
 if not t.get("cmd"):
     os.write(fd, b"q")
 drain(1)
-# A tape that leaves a modal open would swallow the `q` and hang forever, so give up after a while.
-for _ in range(50):
+# A tape that leaves a modal open would swallow the `q` and hang forever, so give up after 15 s.
+for _ in range(150):
     try:
         if os.waitpid(pid, os.WNOHANG)[0]:
             break
