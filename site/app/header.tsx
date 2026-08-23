@@ -1,12 +1,12 @@
-import { Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Copy } from "./copy";
 import { GitHub } from "./icons";
-import { Theme } from "./theme";
 
 export const GITHUB = "https://github.com/janniks/mdtation";
 export const NPM = "https://www.npmjs.com/package/mdtation";
 export const INSTALL = "npm i -g mdtation";
+/** What the header copies: tells an agent how to install mdtation and learn the comment flow. */
+export const PROMPT = "Install mdtation with `npm i -g mdtation`, then run `mdtation skill` and follow it to read and address the comments I leave on your markdown.";
 
 const links = [
   ["#problem", "the problem"],
@@ -29,11 +29,11 @@ export function Header() {
             className="inline-flex size-7 items-center justify-center rounded-md border bg-card text-base leading-none shadow-xs"
             aria-hidden
           >
-            <span className="[filter:grayscale(1)_brightness(0)] dark:[filter:grayscale(1)_brightness(0)_invert(1)]">🧘</span>
+            <span className="[filter:grayscale(1)_contrast(0)_brightness(1.15)_sepia(0.35)]">🧘</span>
           </span>
           mdtation
         </a>
-        <nav className="hidden items-center gap-6 text-sm text-muted-foreground sm:flex">
+        <nav className="hidden items-center gap-4 font-mono text-xs font-semibold text-muted-foreground sm:flex">
           {links.map(([href, label]) => (
             <a key={href} href={href} className="transition-colors hover:text-foreground">
               {label}
@@ -41,14 +41,7 @@ export function Header() {
           ))}
         </nav>
         <div className="flex items-center justify-end gap-1.5">
-          <Theme />
-          <Copy text={INSTALL} label="Install" />
-          <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
-            <a href={NPM} target="_blank" rel="noreferrer">
-              <Package />
-              npm
-            </a>
-          </Button>
+          <Copy text={PROMPT} label="Copy prompt" />
           <Button asChild variant="outline" size="sm">
             <a href={GITHUB} target="_blank" rel="noreferrer">
               <GitHub />

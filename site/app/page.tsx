@@ -7,18 +7,16 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Agents } from "./agents";
 import { Copy } from "./copy";
 import { Clip, code } from "./clip";
 import { Gallery } from "./gallery";
-import { GITHUB, Header, NPM } from "./header";
+import { GITHUB, Header, INSTALL, NPM } from "./header";
 import { Agentation, GitHub, Herdr, Hunk, OpenTUI } from "./icons";
 import { Prompt } from "./prompt";
 import { Protos } from "./proto/groups";
-
-const INSTALL = "npm i -g mdtation && mdtation plan.md";
 
 /** Exactly what `copyFormat(comment, doc, "detailed")` puts on the clipboard. */
 const block = `Line 41  Auth / Session refresh
@@ -59,28 +57,18 @@ const steps = [
     "Ask for the plan as markdown, not as a message. `plans/auth.md` is a thing you can open again tomorrow. A chat bubble is not.",
     "mdtation plans/auth.md",
     "print",
-    "Markdown on disk, opened full screen",
   ],
   [
-    "You read and comment",
-    "Full screen, mouse friendly, calm. Press `c` on a line or drag-select a sentence and write what is wrong with it. The note is pinned where it belongs and persists.",
-    "c",
+    "You read, comment, and copy",
+    "Full screen, mouse friendly, calm. Press `c` on a line or drag-select a sentence and write what is wrong with it. The note is pinned where it belongs. `C` copies it as a reference: line number, section path, the quoted passage, your note. Or let the agent pull all of them with `--list`.",
+    "c, then C",
     "select",
-    "Select the sentence, press `c`, type",
-  ],
-  [
-    "One key copies a block",
-    "Press `C`. The comment becomes a reference block: line number, section path, the quoted passage, your note. Paste it, or let the agent pull all of them with `--list`.",
-    "C",
-    "copy",
-    "`C` sends line, path, quote, note",
   ],
   [
     "The agent revises, you loop",
-    "Open the new version. Your comments are still anchored. Archive the ones that landed, jump through the rest with `]`, and go again.",
-    "]",
-    "jump",
-    "`]` walks what is still open",
+    "The agent reads the report, edits the file, and you open it again. Your comments are still anchored. Archive the ones that landed, jump through the rest with `]`, and go again.",
+    "mdtation plans/auth.md --list",
+    "agent",
   ],
 ] as const;
 
@@ -127,12 +115,10 @@ const faq = [
 ] as const;
 
 /** A friend's name with its mark hovering above, tilted, like a sticker. */
-function Float({ icon: Icon, tilt, children }: { icon: typeof Hunk; tilt: string; children: string }) {
+function Float({ icon: Icon, at, children }: { icon: typeof Hunk; at: string; children: string }) {
   return (
     <span className="relative inline-block">
-      <Icon
-        className={`absolute -top-[0.3em] -right-[0.45em] size-[0.6em] rounded-sm border bg-card p-[0.08em] text-primary shadow-xs ${tilt}`}
-      />
+      <Icon className={`absolute rounded-sm border bg-card p-[0.08em] text-primary shadow-xs ${at}`} />
       {children}
     </span>
   );
@@ -152,15 +138,17 @@ function Section({
 }: {
   id: string;
   kicker: string;
-  title: string;
-  intro: string;
+  title?: string;
+  intro?: string;
   children: React.ReactNode;
 }) {
   return (
     <section id={id} className="scroll-mt-20 border-t py-16 sm:py-24">
       <Kicker>{kicker}</Kicker>
-      <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h2>
-      <p className="mt-3 mb-10 max-w-[640px] leading-relaxed text-muted-foreground">{intro}</p>
+      {title && <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h2>}
+      {intro && (
+        <p className="mt-3 mb-10 max-w-[640px] leading-relaxed text-muted-foreground">{code(intro)}</p>
+      )}
       {children}
     </section>
   );
@@ -211,10 +199,11 @@ export default function Page() {
 
           <Clip
             name="comment"
+            frame="rounded-2xl"
             className="mt-12 text-left shadow-[0_24px_60px_-30px_rgba(0,0,0,0.35)] sm:mt-16"
           />
-          <p className="mt-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-            <ArrowUp className="size-3.5 text-primary" />
+          <p className="mt-4 text-sm text-muted-foreground">
+            <ArrowUp className="mr-1 inline size-3.5 align-[-2px] text-primary" />
             You just left a comment. The agent can read it now.
           </p>
         </section>
@@ -222,36 +211,38 @@ export default function Page() {
         <Section
           id="friends"
           kicker="inspiration and friends"
-          title="Built on the shoulders of a few good tools"
-          intro="mdtation is a small idea borrowed from a few bigger ones, and it is better for saying so."
         >
-          <blockquote className="mb-12 text-center text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
-            <span className="text-primary">“</span>If <Float icon={Herdr} tilt="-rotate-12">herdr</Float>,{" "}
-            <Float icon={Hunk} tilt="rotate-6">hunk</Float>, and{" "}
-            <Float icon={Agentation} tilt="-rotate-6">agentation</Float> had a baby.
-            <span className="text-primary">”</span>
+          <blockquote className="text-center text-3xl font-semibold leading-tight tracking-tight text-balance sm:text-4xl">
+            <span className="text-primary">“</span>If{" "}
+            <Float icon={Herdr} at="-rotate-12 -bottom-[0.5em] left-[18%] size-[0.8em]">herdr</Float>,{" "}
+            <Float icon={Hunk} at="rotate-6 -top-[0.3em] -right-[0.45em] size-[0.6em]">hunk</Float>, and{" "}
+            <Float icon={Agentation} at="-rotate-6 -top-[0.35em] -right-[0.5em] h-[0.6em] w-auto">agentation</Float> had a
+            baby.<span className="text-primary">”</span>
           </blockquote>
+          <p className="mx-auto mt-6 mb-12 max-w-[560px] text-center leading-relaxed text-muted-foreground">
+            mdtation is a small idea borrowed from a few bigger ones.
+          </p>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
             {friends.map(([Icon, name, body, href]) => (
-              <Card key={name}>
+              <Card key={name} className="gap-3 py-4 [--card-spacing:1rem]">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 font-mono text-base">
-                    <Icon className="size-5 shrink-0" />
+                    <Icon className="h-5 w-auto shrink-0" />
                     {name}
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="ml-auto inline-flex items-center gap-1 font-sans text-xs font-normal text-muted-foreground hover:text-foreground"
+                    >
+                      <GitHub className="size-3.5" />
+                      GitHub
+                    </a>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="text-sm leading-relaxed text-muted-foreground">
                   {body}
                 </CardContent>
-                <CardFooter>
-                  <Button asChild variant="outline" size="sm">
-                    <a href={href} target="_blank" rel="noreferrer">
-                      <GitHub />
-                      GitHub
-                      <ArrowRight />
-                    </a>
-                  </Button>
-                </CardFooter>
               </Card>
             ))}
           </div>
@@ -287,7 +278,7 @@ export default function Page() {
           intro="hunk does this for code diffs. mdtation does it for the prose around them: specs, plans, drafts, reviews."
         >
           <ol className="space-y-14 md:space-y-20">
-            {steps.map(([title, body, key, clip, caption], i) => (
+            {steps.map(([title, body, key, clip], i) => (
               <li
                 key={title}
                 className="grid items-center gap-6 md:grid-cols-2 md:gap-12 [&>*]:min-w-0"
@@ -306,7 +297,7 @@ export default function Page() {
                     </code>
                   </div>
                 </div>
-                <Clip name={clip} caption={caption} />
+                <Clip name={clip} wide still={i === 0} />
               </li>
             ))}
           </ol>
@@ -328,19 +319,11 @@ export default function Page() {
           id="agents"
           kicker="built for agents"
           title="Paste it into any agent"
-          intro="Plain markdown with a line number, a heading path, the passage and your note. Every agent already reads that."
+          intro="Plain markdown with a line number, a heading path, the passage and your note. For a whole review, `mdtation file.md --list` prints every comment as one report."
         >
           <div className="grid items-start gap-10 md:grid-cols-[1fr_1.1fr] [&>*]:min-w-0">
-            <div className="space-y-4 leading-relaxed text-muted-foreground">
-              <p>
-                {code(
-                  "For a whole review, skip the clipboard. `mdtation file.md --list` prints every live comment as one report. Tell the agent to run it.",
-                )}
-              </p>
-              <Agents className="pt-2" />
-            </div>
+            <Agents className="pt-2" />
             <div>
-              <p className="mb-3 font-mono text-xs text-primary">paste this into your agent</p>
               <Prompt title="claude">
                 <pre className="whitespace-pre-wrap">{prompt}</pre>
               </Prompt>

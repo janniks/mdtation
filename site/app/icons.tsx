@@ -70,10 +70,14 @@ export function Hunk({ className }: { className?: string }) {
   );
 }
 
-export const Agentation = brand(
-  "agentation",
-  "M12 2a7 7 0 0 1 7 7c0 4.5-7 13-7 13S5 13.5 5 9a7 7 0 0 1 7-7Zm0 4.5A2.5 2.5 0 1 0 12 11.5a2.5 2.5 0 0 0 0-5Z",
-);
+/** The opening glyph of agentation's wordmark (package/logo.svg in its repo). Wider than tall. */
+export function Agentation({ className }: { className?: string }) {
+  return (
+    <svg role="img" aria-label="agentation" viewBox="-2 -6 110 114" fill="currentColor" className={className}>
+      <path d="M79.6666 100.561L104.863 15.5213C107.828 4.03448 99.1201 -3.00582 88.7449 1.25541L3.52015 39.6065C1.48217 40.5329 0 42.7562 0 45.1647C0 48.6848 2.77907 51.4639 6.29922 51.4639C7.22558 51.4639 8.15193 51.2786 9.07829 50.9081L93.7472 12.7422C97.2674 11.0748 93.7472 8.29572 92.6356 12.1864L67.624 97.2259C66.5123 100.931 69.4767 105.193 73.7379 105.193C76.517 105.193 79.1108 103.155 79.6666 100.561Z" />
+    </svg>
+  );
+}
 
 export const OpenTUI = brand("OpenTUI", "M3 3h18v18H3zm2.5 2.5v13h13v-13zM7 8h3v2H7zm0 4h8v2H7z");
 

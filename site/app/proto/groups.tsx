@@ -1,6 +1,6 @@
 "use client";
 
-import { Bug, Copy as CopyIcon, FileStack, MessageSquareQuote, Star } from "lucide-react";
+import { Bug, Copy as CopyIcon, FileStack, MessageSquareQuote, Star, TriangleAlert } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -348,6 +348,76 @@ export function Protos() {
               )}
             </Variant>
           ))}
+        </Group>
+
+        <Group title="5. Problem section">
+          <Variant label="A" note="Muted red kicker with a TriangleAlert icon, label swapped from 'the problem' to 'today'.">
+            <div className="w-full max-w-[520px] text-left">
+              <div className="mb-3 flex items-center gap-1.5 text-xs font-medium text-red-700 dark:text-red-400">
+                <TriangleAlert className="size-3.5" />
+                today
+              </div>
+              <h3 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                Agents ask for feedback in the worst possible places
+              </h3>
+              <p className="mt-3 leading-relaxed text-muted-foreground">
+                Every coding agent needs your review. Each one collects it through a channel built for answers, not critique.
+              </p>
+            </div>
+          </Variant>
+
+          <Variant label="B" note="Thin red left rule instead of a kicker word, the color alone signals warning.">
+            <div className="w-full max-w-[520px] border-l-2 border-red-300 pl-4 text-left dark:border-red-900">
+              <h3 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                Agents ask for feedback in the worst possible places
+              </h3>
+              <p className="mt-3 leading-relaxed text-muted-foreground">
+                Every coding agent needs your review. Each one collects it through a channel built for answers, not critique.
+              </p>
+            </div>
+          </Variant>
+
+          <Variant label="C" note="Soft red badge pill, label 'where feedback goes to die' instead of 'the problem'.">
+            <div className="w-full max-w-[520px] text-left">
+              <span className="mb-3 inline-flex items-center rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-xs text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400">
+                where feedback goes to die
+              </span>
+              <h3 className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">
+                Agents ask for feedback in the worst possible places
+              </h3>
+              <p className="mt-3 leading-relaxed text-muted-foreground">
+                Every coding agent needs your review. Each one collects it through a channel built for answers, not critique.
+              </p>
+            </div>
+          </Variant>
+
+          <Variant label="D" note="Old label struck through, replaced label beside it, makes the reframe visible instead of just picking a new word.">
+            <div className="w-full max-w-[520px] text-left">
+              <div className="mb-3 flex items-center gap-2 text-xs">
+                <span className="text-muted-foreground line-through">the problem</span>
+                <span className="font-medium text-red-700 dark:text-red-400">the pain</span>
+              </div>
+              <h3 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                Agents ask for feedback in the worst possible places
+              </h3>
+              <p className="mt-3 leading-relaxed text-muted-foreground">
+                Every coding agent needs your review. Each one collects it through a channel built for answers, not critique.
+              </p>
+            </div>
+          </Variant>
+
+          <Variant label="E" note="Terminal-style red prompt line, alt title trimmed to fit the prompt's tone: 'Feedback has nowhere to land'.">
+            <div className="w-full max-w-[520px] text-left">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-md border bg-[#272822] px-3 py-1.5 font-mono text-xs">
+                <span className="text-[#f92672]">!</span>
+                <span className="text-[#f8f8f2]">feedback, today</span>
+              </div>
+              <h3 className="text-2xl font-semibold tracking-tight sm:text-3xl">Feedback has nowhere to land</h3>
+              <p className="mt-3 leading-relaxed text-muted-foreground">
+                Every coding agent needs your review. Each one collects it through a channel built for answers, not critique.
+              </p>
+            </div>
+          </Variant>
         </Group>
     </div>
   );

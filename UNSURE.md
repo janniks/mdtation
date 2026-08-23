@@ -207,3 +207,8 @@ Unchecked entries are swept on occasional cleanup passes.
 - [ ] Inline agent/own toggles live in the Comments menu (Options) and align/time only in the settings popup; the spec said all four in both.
   - alternative: four cyclers in the View menu.
   - why: menu toggles and settings rows are different mechanisms; two toggles plus two settings is the least new surface.
+
+## 2026-08-23 — site header prompt
+- [ ] The header's "Copy prompt" tells the agent to run `mdtation skill`, which only exists in `specs/cli-DRAFT.md` so far.
+  - alternative: point at `--list` and the README until the verb ships.
+  - why: the user asked for "which command to use to discover skill"; shipping the verb is the planned next step and the copy should not be rewritten twice.
