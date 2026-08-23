@@ -3,7 +3,7 @@
  * in `$EDITOR` and what `--list` / `--archived` print. Pure; no I/O.
  */
 import { basename } from "node:path";
-import { copyFormat, type Comment, type Mode } from "./comment.ts";
+import { copyFormat, threads, type Comment, type Mode } from "./comment.ts";
 import type { Document } from "./document.ts";
 
 /** Title, then one `copyFormat` block per comment; `archived` listings add an id line so `--restore` has something to name. */
@@ -13,8 +13,8 @@ export function report(
   file: string,
   opts: { readonly archived?: boolean; readonly mode?: Mode } = {},
 ): string {
-  const body = list.map(
-    (c) => copyFormat(c, doc, opts.mode) + (opts.archived ? `\n${tag(c)}` : ""),
+  const body = threads(list).map(
+    ([c, replies]) => copyFormat(c, doc, opts.mode, replies) + (opts.archived ? `\n${tag(c)}` : ""),
   );
   return [`# Comments — ${basename(file)}`, ...body].join("\n\n") + "\n";
 }

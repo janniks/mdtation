@@ -158,6 +158,25 @@ function eq(a: readonly string[], b: readonly string[]): boolean {
 
 export type Mode = "simple" | "detailed";
 
+/** `> text` lines; other authors get a `name: ` prefix on the first line. */
+function quote(c: Comment): string {
+  const lines = c.text.split("\n");
+  lines[0] = (c.author ? `${c.author}: ` : "") + lines[0];
+  return lines.map((l) => `> ${l}`).join("\n");
+}
+
+function indent(s: string): string {
+  return s.replaceAll(/^/gm, "  ");
+}
+
+/** Top-level comments of `list` paired with their replies (time order); a reply whose parent is absent stands alone. */
+export function threads(list: readonly Comment[]): [Comment, Comment[]][] {
+  const ids = new Set(list.map((c) => c.id));
+  const sorted = [...list].toSorted((a, b) => a.createdAt - b.createdAt);
+  const tops = sorted.filter((c) => !c.re || !ids.has(c.re));
+  return tops.map((t) => [t, sorted.filter((c) => c.re === t.id)]);
+}
+
 /** Longest crumb segment / line preview kept in the detailed format (token budget). */
 const SEG = 24;
 const PREVIEW = 80;
@@ -168,12 +187,14 @@ function clip(s: string, n: number): string {
 
 /** The pasteable reference: `Line N`, the selected text (if any) indented in full, the note as a blockquote.
  * `detailed` adds the section crumb (segments clipped) and, without a selection, a clipped preview of the line. */
-export function copyFormat(comment: Comment, doc: Document, mode: Mode = "simple"): string {
+export function copyFormat(
+  comment: Comment,
+  doc: Document,
+  mode: Mode = "simple",
+  replies: readonly Comment[] = [],
+): string {
   const loc = resolveAnchor(comment.anchor, doc);
-  const note = comment.text
-    .split("\n")
-    .map((l) => `> ${l}`)
-    .join("\n");
+  const note = [quote(comment), ...replies.map((r) => indent(quote(r)))].join("\n");
   let head = `Line ${loc ? loc.startLine + 1 : "?"}`;
   let src = comment.quote ?? "";
   if (mode === "detailed" && loc) {

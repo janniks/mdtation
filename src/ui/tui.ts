@@ -572,7 +572,8 @@ export class TuiShell {
       this.draw("NO COMMENT HERE");
       return;
     }
-    copy(copyFormat(c, this.doc, this.value("viewCopy")), this.renderer);
+    const replies = this.store.live().filter((r) => r.re === c.id);
+    copy(copyFormat(c, this.doc, this.value("viewCopy"), replies), this.renderer);
     // OSC-52 is fire-and-forget: over SSH/remote the terminal may accept it without reaching the host clipboard.
     const note = this.renderer.capabilities?.remote ? "  a to show comments" : "";
     if (this.on.viewArchive) {

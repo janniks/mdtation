@@ -196,3 +196,6 @@ Unchecked entries are swept on occasional cleanup passes.
 - [ ] `agent: true` flag, no `source: cli|tui`.
   - alternative: store both.
   - why: the TUI only needs "is this an agent"; a source field is free but unused.
+- [ ] No `Identity > Name` setting; the human label is `$USER` (CLI `read`/`json`), comments by the TUI carry no author.
+  - alternative: a free-text setting in `settings.json`.
+  - why: settings rows are enums; a text field needs its own editor. Add when someone needs a different name.

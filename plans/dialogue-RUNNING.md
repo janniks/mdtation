@@ -17,3 +17,4 @@ Tracer bullets: each phase leaves the golden path working and tests green.
 | phase | commit | note |
 |---|---|---|
 | 1 | store+verbs | `~/.mdtation` root (XDG when set), `comments/<path>.json` `{comments,marks}`, `archivedAt` only, ids `time36+2`; verbs list/mark/read/print/status/archive/restore/clear; old flags gone; user data moved by hand. |
+| 2 | authors+threads | `author`/`agent`/`re` on Comment; `add "text" --line N | --re id [--author] [--human]`, `edit id "text"`; report and `C` copy nest replies as `  > name: text`; `threads()` in comment.ts. Identity setting deferred: `$USER` is the human label. |

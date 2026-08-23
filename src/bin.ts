@@ -8,8 +8,20 @@ import { archive, clear, home, load, path, restore, save } from "./core/store.ts
 import { report } from "./core/report.ts";
 import { json, read } from "./core/read.ts";
 import type { Comment, CommentStore } from "./core/comment.ts";
+import { create } from "./core/comments.ts";
 
-const VERBS = ["list", "mark", "read", "print", "status", "archive", "restore", "clear"] as const;
+const VERBS = [
+  "list",
+  "mark",
+  "read",
+  "print",
+  "status",
+  "add",
+  "edit",
+  "archive",
+  "restore",
+  "clear",
+] as const;
 
 /** The CLI's own author: `$MDTATION_AUTHOR`, else `agent`. */
 const me = () => process.env.MDTATION_AUTHOR ?? "agent";
@@ -40,6 +52,9 @@ runMain(
         type: "string",
         description: "Act as this author (default $MDTATION_AUTHOR or agent)",
       },
+      line: { type: "string", description: "add: 1-based line to comment on" },
+      re: { type: "string", description: "add: id of the comment to reply to" },
+      human: { type: "boolean", description: "add: a person, not an agent" },
     },
     async run({ args }) {
       const file = resolve(args.file);
@@ -88,6 +103,13 @@ runMain(
         process.exit(1);
       }
       const doc = parseDocument(text);
+      if (verb === "add" || verb === "edit") {
+        const store = await load(file);
+        const id = (verb === "add" ? add : edit)(store, doc, rest, args, who);
+        await save(file, store);
+        console.error(`mdtation: ${verb === "add" ? "added" : "edited"} ${id}`);
+        return;
+      }
       if (verb === "list" || verb === "read") {
         const store = await load(file);
         const list = pick(store, args.archived === true, args.since, who);
@@ -131,6 +153,44 @@ runMain(
     },
   }),
 );
+
+type Opts = { line?: string; re?: string; human?: boolean };
+
+/** `add "text" --line N | --re <id>`: a new comment by `who`; replies copy the parent's anchor. */
+function add(store: CommentStore, doc: Document, rest: string[], a: Opts, who: string): string {
+  const text = rest[0];
+  const parent = a.re ? store.get(a.re) : undefined;
+  if (!text || (!a.line && !parent)) {
+    die(a.re && !parent ? `no comment ${a.re}` : 'add needs "text" and --line N or --re <id>');
+  }
+  const line = parent ? (store.resolve(parent.anchor, doc)?.startLine ?? 0) : Number(a.line) - 1;
+  if (!parent && !(line >= 0 && line < doc.lines.length)) {
+    die(`--line ${a.line} is outside 1..${doc.lines.length}`);
+  }
+  const c: Comment = {
+    ...create(doc, line, text),
+    author: who,
+    ...(a.human ? {} : { agent: true as const }),
+    ...(parent ? { re: parent.id } : {}),
+  };
+  store.add(c);
+  return c.id;
+}
+
+/** `edit <id> "text"`. */
+function edit(store: CommentStore, _doc: Document, rest: string[]): string {
+  const c = rest[0] ? store.get(rest[0]) : undefined;
+  if (!c || !rest[1]) {
+    die(c ? 'edit needs the new "text"' : `no comment ${rest[0]}`);
+  }
+  store.add({ ...c, text: rest[1] });
+  return c.id;
+}
+
+function die(msg: string): never {
+  console.error(`mdtation: ${msg}`);
+  process.exit(2);
+}
 
 /** Live (or all) comments, optionally only those after `since`: `last` = my latest mark, a mark name, or an ISO time. */
 function pick(
