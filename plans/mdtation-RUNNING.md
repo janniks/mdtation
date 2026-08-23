@@ -137,4 +137,4 @@ Pure models live in `src/core` with node tests; `src/ui` only wires OpenTUI.
 ## Later
 
 - Crumb separator: `/` chosen 2026-08-21; maybe offer `>` as an alternative (cycler under View › Style) if wanted.
-| 8z | 2026-08-23 | pastel TUI palette, 43 feature clips re-rendered as mp4, site feedback pass (mono logo, friends grid, inline prototypes), recorder seed fix and quit timeout | 05bac30, 8fd0739 |
+| 8z | site-media | done | Pastel TUI palette (`ansi.ts`, chrome THEME). 43 feature clips re-rendered as mp4 with `record.py` (seed format fixed for the per-file store, 15 s quit timeout). Site feedback pass: mono 🧘, friends 4-up with real hunk mark, tilted floating logos in the quote, agents section trimmed, prototypes inline. |
