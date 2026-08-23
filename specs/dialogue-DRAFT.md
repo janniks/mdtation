@@ -85,6 +85,8 @@ mdtation spec.md add "text" --line 12 --author jannik --human
 mdtation spec.md edit <id> "text"
 mdtation spec.md archive <id…> | restore <id…> | clear
 mdtation spec.md watch [--json]          # block; print each new comment by others as it lands
+mdtation spec.md read                    # the whole file with comments inlined, for agents
+mdtation spec.md read --json             # same as one object (see `read`)
 mdtation spec.md print                   # static render to stdout
 mdtation spec.md status                  # data path, counts, marks, last copy
 mdtation skill                           # print a short SKILL.md
@@ -93,6 +95,25 @@ mdtation skill                           # print a short SKILL.md
 - `add` author defaults to `$MDTATION_AUTHOR`, else `agent`; sets `agent: true` unless `--human`.
 - `watch` is `list --since` driven by a file event; it skips the callers own author so an agent never hears itself.
 - `skill` documents the verbs in a few lines and stops there; the harness decides how to use them.
+
+### `read`: the full-context mode
+
+`list` gives line numbers; an agent that cannot hold the file then zips `list` against its own `Read`.
+`read` removes that step: the markdown verbatim, each thread inlined right under its line, nothing else.
+
+```md
+The parser keeps one sentence per line.
+<c id=mt1x by=you>Then wrap only in flow mode?</c>
+<c id=mt1y by=claude re=mt1x>Yes, done in 3caee2d.</c>
+```
+
+- One tag per comment, on its own line, directly after the anchored line; replies follow their parent in time order.
+- Tags are the only markup; attributes are `id`, `by`, `re`, `at` (iso) and nothing else.
+  `<c>` is unambiguous in markdown, one line per comment is cheap in tokens, and the agent can quote `id` straight back into `add --re`.
+- `--since` and `--archived` apply like `list`; with `--since` the file still prints in full, only the tags are filtered.
+- `--json`: `{ "file", "lines": ["…"], "comments": [{ "line": 12, "id", "by", "re", "at", "text" }] }`, lines 1-based like the TUI.
+  No per-line objects: the array of lines stays compact and a comment points at its line.
+- Multi-line comment text stays inside the tag; lines after the first are indented two spaces.
 
 ## TUI
 
@@ -156,6 +177,7 @@ mdtation skill                           # print a short SKILL.md
 - [ ] `watch` prints a TUI comment as markdown within a second and never echoes the watchers own author.
 - [ ] `r` on a thread, then `list --json`: the reply has `re` = parent id and the parents anchor.
 - [ ] `mark` then `list --since last` prints nothing; a new `c` comment prints.
+- [ ] `read` output minus `<c …>` lines is byte-identical to the source file.
 - [ ] `{`/`}` stop only on agent comments; `[`/`]` unchanged.
 - [ ] Both inline toggles off renders byte-identical to the current build on the tour file.
 - [ ] Scroll margin stays smooth with inline rows (trace test like `settle`).
@@ -163,7 +185,7 @@ mdtation skill                           # print a short SKILL.md
 
 ## Phases (for the plan)
 
-1. Store move, per-file json with `marks`, new ids; `status`, `print`, `list --json/--since/--archive`, `mark`.
+1. Store move, per-file json with `marks`, new ids; `status`, `print`, `list --json/--since/--archive`, `mark`, `read`.
 2. `author`/`agent`/`re`; `add`/`edit`/`archive`/`restore` verbs; threaded report and copy.
 3. TUI follows both files, badge.
 4. Inline rendering settings, `{ }`, `r`.
