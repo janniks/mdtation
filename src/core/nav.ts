@@ -4,7 +4,7 @@
  */
 import type { Document } from "./document.ts";
 import type { Viewport } from "./viewport.ts";
-import type { CommentStore } from "./comment.ts";
+import type { Comment, CommentStore } from "./comment.ts";
 import { jumpToLine } from "./viewport.ts";
 
 /**
@@ -12,10 +12,14 @@ import { jumpToLine } from "./viewport.ts";
  * Undefined lines are ignored. Duplicate lines (multiple comments on same line)
  * appear only once.
  */
-export function commentLines(store: CommentStore, doc: Document): readonly number[] {
+export function commentLines(
+  store: CommentStore,
+  doc: Document,
+  only: (c: Comment) => boolean = () => true,
+): readonly number[] {
   const lines = new Set<number>();
 
-  for (const c of store.live()) {
+  for (const c of store.live().filter(only)) {
     const loc = store.resolve(c.anchor, doc);
     if (loc?.startLine !== undefined) {
       lines.add(loc.startLine);
@@ -35,8 +39,9 @@ export function nextComment(
   total: number,
   store: CommentStore,
   doc: Document,
+  only?: (c: Comment) => boolean,
 ): Viewport {
-  const lines = commentLines(store, doc);
+  const lines = commentLines(store, doc, only);
   if (lines.length === 0) {
     return vp;
   }
@@ -68,8 +73,9 @@ export function prevComment(
   total: number,
   store: CommentStore,
   doc: Document,
+  only?: (c: Comment) => boolean,
 ): Viewport {
-  const lines = commentLines(store, doc);
+  const lines = commentLines(store, doc, only);
   if (lines.length === 0) {
     return vp;
   }

@@ -204,3 +204,6 @@ Unchecked entries are swept on occasional cleanup passes.
 - [ ] Replaced the VS Code-like SGR palette in `src/core/ansi.ts` and the chrome THEME with a pastel set (openindex-style) as the one and only TUI palette.
   - alternative: keep the old palette default and gate pastel behind an env flag for recordings only.
   - why: user asked for pastel terminals on the site; a second palette just for videos would misrepresent the product.
+- [ ] Inline agent/own toggles live in the Comments menu (Options) and align/time only in the settings popup; the spec said all four in both.
+  - alternative: four cyclers in the View menu.
+  - why: menu toggles and settings rows are different mechanisms; two toggles plus two settings is the least new surface.

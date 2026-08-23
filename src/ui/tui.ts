@@ -26,6 +26,7 @@ import { copy } from "./clipboard.ts";
 import { CommentStore, copyFormat } from "../core/comment.ts";
 import type { Comment } from "../core/comment.ts";
 import { anchorFor, create, markers } from "../core/comments.ts";
+import { notes, rows, type Align, type Time } from "../core/inline.ts";
 import { home, load, path as storePath, save } from "../core/store.ts";
 import { load as loadPrefs, save as savePrefs } from "../core/prefs.ts";
 import { report } from "../core/report.ts";
@@ -142,6 +143,8 @@ export class TuiShell {
       viewIndent: false,
       viewArchive: false,
       viewSelect: true,
+      viewInlineAgent: true,
+      viewInlineOwn: false,
       viewMouse: true,
     };
     const saved = loadPrefs();
@@ -548,7 +551,23 @@ export class TuiShell {
     this.crumb.node.visible = this.on.viewCrumb === true;
     this.bar.node.visible = this.on.viewBar === true;
     this.crumb.text = crumb(this.doc, this.view.cursor, Number(this.prefs.crumb) || Infinity);
+    const inline = new Map<number, string[]>();
+    const laid = {
+      align: this.prefs.align as Align,
+      time: this.prefs.time as Time,
+      now: Date.now(),
+      color: this.on.viewColor === true,
+    };
+    const cols = Math.max(1, this.view.width - GUTTER_WIDTH);
+    for (const [line, list] of notes(this.store, this.doc, {
+      agent: this.on.viewInlineAgent === true,
+      own: this.on.viewInlineOwn === true,
+      me: process.env.USER,
+    })) {
+      inline.set(line, rows(list, cols, laid));
+    }
     const opts = {
+      inline,
       color: this.on.viewColor,
       emphasis: this.on.viewEmphasis,
       syntax: this.on.viewSyntax,
@@ -597,6 +616,49 @@ export class TuiShell {
         close: () => this.close(),
       }),
     );
+  }
+
+  /** `r`: answer the thread on the cursor row (its first comment is the parent); several threads → pick one. */
+  private reply(): void {
+    const tops = this.here().filter((c) => !c.re || !this.store.get(c.re));
+    const open = (parent: Comment) =>
+      this.open(
+        new Modal(this.renderer, {
+          title: "Reply",
+          quote: `${parent.author ?? "you"}: ${parent.text.split("\n")[0]!}`,
+          submit: (text) => {
+            this.store.add({ ...create(this.doc, this.view.cursor, text), re: parent.id });
+            this.persist();
+            this.close();
+            this.draw("SAVED");
+          },
+          close: () => this.close(),
+        }),
+      );
+    if (tops.length === 0) {
+      this.draw("NO COMMENT HERE");
+    } else if (tops.length === 1) {
+      open(tops[0]!);
+    } else {
+      this.open(
+        new Palette(
+          this.renderer,
+          (id) => open(this.store.get(id)!),
+          () => this.close(),
+          {
+            title: "Reply to which",
+            hint: "type to filter…",
+            items: () =>
+              tops.map((x) => ({
+                id: x.id,
+                title: x.text.split("\n")[0]!,
+                category: "",
+                keys: [],
+              })),
+          },
+        ),
+      );
+    }
   }
 
   /** Live comments anchored on the cursor row. */
@@ -750,6 +812,8 @@ export class TuiShell {
       case "viewIndent":
       case "viewArchive":
       case "viewSelect":
+      case "viewInlineAgent":
+      case "viewInlineOwn":
         this.on[id] = !this.on[id];
         this.remember();
         this.view = clampViewport(this.fit(), total);
@@ -771,6 +835,17 @@ export class TuiShell {
       case "prevComment":
         this.view = prevComment(this.view, total, this.store, this.doc);
         this.draw();
+        return;
+      case "nextAgent":
+        this.view = nextComment(this.view, total, this.store, this.doc, (c) => c.agent === true);
+        this.draw();
+        return;
+      case "prevAgent":
+        this.view = prevComment(this.view, total, this.store, this.doc, (c) => c.agent === true);
+        this.draw();
+        return;
+      case "reply":
+        this.reply();
         return;
     }
     const action = reduceCommand(id, this.view, this.doc.lines.length);

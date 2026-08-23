@@ -10,6 +10,8 @@ export const SETTINGS = [
   { id: "crumb", title: "Section > Crumb depth", values: ["all", "1", "2", "3", "4", "5", "6"] },
   { id: "front", title: "Beta > Frontmatter editing", values: ["on", "off"] },
   { id: "purge", title: "Archive > Remove after", values: ["1d", "7d", "30d", "1y", "never"] },
+  { id: "align", title: "Inline > Align", values: ["right", "left"] },
+  { id: "time", title: "Inline > Time", values: ["relative", "absolute", "hide"] },
 ] as const;
 
 const DAY = 86_400_000;
@@ -25,7 +27,14 @@ export const TTL: Record<string, number> = {
 export type Id = (typeof SETTINGS)[number]["id"];
 export type Values = Record<Id, string>;
 
-export const DEFAULTS: Values = { margin: "3", crumb: "all", front: "on", purge: "30d" };
+export const DEFAULTS: Values = {
+  margin: "3",
+  crumb: "all",
+  front: "on",
+  purge: "30d",
+  align: "right",
+  time: "relative",
+};
 
 /** Move setting `id` by `dir` steps through its values (wrapping). Unknown ids are ignored. */
 export function cycle(v: Values, id: string, dir = 1): Values {

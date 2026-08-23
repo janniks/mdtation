@@ -20,6 +20,8 @@ import { colWidth, displayWidth } from "./unicode.ts";
 export interface RenderOptions {
   /** 0-based line indices that carry a comment. */
   readonly markers?: readonly number[];
+  /** Pre-laid inline comment rows per line (see `inline.rows`); drawn after the line's own rows. */
+  readonly inline?: ReadonlyMap<number, readonly string[]>;
   /** Emit ANSI styling (bold / italic / colors). Default false. */
   readonly color?: boolean;
   /** Color bold / italic / links (needs `color`). Default true. */
@@ -380,6 +382,9 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
     wrapStyled(bodyFor(i, doc.lines[i] ?? "", doc, opts, cols), cols).forEach((chunk, ri) => {
       lines.push((ri === 0 ? gutterFor(i, vp, cursorOn, counts, opts) : "  ") + chunk);
     });
+    for (const extra of opts.inline?.get(i) ?? []) {
+      lines.push(`  ${extra}`);
+    }
   }
   return lines;
 }
@@ -411,11 +416,12 @@ export function span(doc: Document, line: number, vp: Viewport, opts: RenderOpti
   if (hidden(doc, line, opts)) {
     return 0;
   }
+  const extra = opts.inline?.get(line)?.length ?? 0;
   if (tableRow(doc, line, opts) !== null) {
-    return 1;
+    return 1 + extra;
   }
   const cols = Math.max(1, vp.width - GUTTER_WIDTH);
-  return wrapStyled(bodyFor(line, doc.lines[line] ?? "", doc, opts, cols), cols).length;
+  return wrapStyled(bodyFor(line, doc.lines[line] ?? "", doc, opts, cols), cols).length + extra;
 }
 
 /** Status line: cursor position, comment count, an edit hint when the cursor row has comments, mode. */
