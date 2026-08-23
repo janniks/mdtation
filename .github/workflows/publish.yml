@@ -1,0 +1,97 @@
+name: publish
+
+# The only workflow that publishes to npm. npm's trusted-publisher config
+# points at this file name; renaming it means updating npmjs.com.
+#
+#   release — push to main whose head commit is "chore: version packages"
+#             (the version PR just merged), or a manual run with `pr` empty.
+#             Publishes `latest`, pushes the git tag, creates the GitHub Release.
+#             `changeset publish` skips versions already on npm, so re-running
+#             a manual release is safe.
+#   canary  — manual run with `pr` = a PR number. Publishes that PR's head as
+#             `<next version>-pr.<PR#>.<N>` under the `pr` dist-tag and pins an
+#             install line to the top of the PR. No git tag, no release.
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['**.md']
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: 'PR number for a canary; leave empty for a production release from main'
+        type: string
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # git tag + GitHub Release
+      id-token: write # npm OIDC trusted publishing
+    if: "github.repository_owner == 'janniks' && github.ref_name == 'main' && ((github.event_name == 'push' && startsWith(github.event.head_commit.message, 'chore: version packages')) || (github.event_name == 'workflow_dispatch' && inputs.pr == ''))"
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install -g npm@latest # OIDC publishing needs npm >= 11.5
+      - run: npm ci
+      - uses: changesets/action@63a615b9cd06ba9a3e6d13796c7fbcb080a60a0b # v1.8.0
+        with:
+          publish: npm run release # build, then `changeset publish`; the action pushes the tag and opens the Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_CONFIG_PROVENANCE: 'true'
+
+  canary:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write # sticky install line on the PR
+      id-token: write
+    if: "github.repository_owner == 'janniks' && github.event_name == 'workflow_dispatch' && inputs.pr != ''"
+    steps:
+      - run: printf '%s' "${{ inputs.pr }}" | grep -Eq '^[1-9][0-9]*$' || { echo '::error::pr must be a PR number'; exit 1; }
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: refs/pull/${{ inputs.pr }}/head
+          fetch-depth: 0
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install -g npm@latest
+      - run: npm ci
+      # `<next version>-pr.<PR#>.<N>`: bump from pending changesets (a dummy one if none),
+      # then count existing canaries for this PR on npm.
+      - id: version
+        env:
+          PR: ${{ inputs.pr }}
+        run: |
+          ls .changeset/*.md 2>/dev/null | grep -vqi readme || printf -- '---\n"mdtation": patch\n---\n\ncanary\n' > .changeset/__canary.md
+          npx changeset version
+          base=$(node -p "require('./package.json').version")
+          prefix="$base-pr.$PR."
+          n=$(npm view mdtation versions --json 2>/dev/null | node -e "let a=[];try{a=JSON.parse(require('fs').readFileSync(0,'utf8'))}catch{};a=Array.isArray(a)?a:[a];const p=process.argv[1];const c=a.filter(v=>v.startsWith(p)).map(v=>Number(v.slice(p.length)));console.log(c.length?Math.max(...c)+1:0)" "$prefix")
+          npm version --no-git-tag-version "$prefix$n"
+          echo "version=$prefix$n" >> "$GITHUB_OUTPUT"
+      - run: npm run build
+      - run: npx changeset publish --tag pr --no-git-tag
+        env:
+          NPM_CONFIG_PROVENANCE: 'true'
+      - uses: janniks/pull-request-fixed-header@f41837c1d1cee46efb1481db5b6045748202ff09 # v1.3.0
+        with:
+          header: |
+            > Canary published: `npx mdtation@${{ steps.version.outputs.version }}` (dist-tag `pr`)
+          pr-number: ${{ inputs.pr }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

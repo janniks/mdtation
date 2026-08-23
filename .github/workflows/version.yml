@@ -1,0 +1,38 @@
+name: version
+
+# Opens or refreshes the "chore: version packages" PR from pending changesets.
+# Never publishes: no `publish:` input, so this job has no path to npm.
+# Publishing lives in `publish.yml` and runs when that PR is merged.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  version-pr:
+    runs-on: ubuntu-latest
+    # Not on top of the version commit itself.
+    if: "github.repository_owner == 'janniks' && !startsWith(github.event.head_commit.message, 'chore: version packages')"
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: changesets/action@63a615b9cd06ba9a3e6d13796c7fbcb080a60a0b # v1.8.0
+        with:
+          version: npm run version
+          title: 'chore: version packages'
+          commit: 'chore: version packages'
+          commitMode: github-api # PR commit shows as Verified without signing keys in CI
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

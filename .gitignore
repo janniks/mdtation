@@ -15,3 +15,4 @@ WIP-*.md
 .agents/evidence.json
 agents_modules/
 # END agent-lock
+.playwright-mcp/
