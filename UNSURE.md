@@ -199,3 +199,8 @@ Unchecked entries are swept on occasional cleanup passes.
 - [ ] No `Identity > Name` setting; the human label is `$USER` (CLI `read`/`json`), comments by the TUI carry no author.
   - alternative: a free-text setting in `settings.json`.
   - why: settings rows are enums; a text field needs its own editor. Add when someone needs a different name.
+
+## 2026-08-20 — terminal palette
+- [ ] Replaced the VS Code-like SGR palette in `src/core/ansi.ts` and the chrome THEME with a pastel set (openindex-style) as the one and only TUI palette.
+  - alternative: keep the old palette default and gate pastel behind an env flag for recordings only.
+  - why: user asked for pastel terminals on the site; a second palette just for videos would misrepresent the product.

@@ -10,14 +10,14 @@ import { prefix, step, type Menu, type Spec, width } from "../core/menu.ts";
 import { displayWidth } from "../core/unicode.ts";
 
 export const THEME = {
-  bar: "#262626",
-  panel: "#1c1c1c",
-  active: "#3a3a5c",
-  border: "#5a5a5a",
-  text: "#d0d0d0",
-  muted: "#8a8a8a",
-  badge: "#5f87af",
-  warn: "#d7af5f",
+  bar: "#242624",
+  panel: "#1f211f",
+  active: "#34402f",
+  border: "#5c615c",
+  text: "#e8e6df",
+  muted: "#8a8f8a",
+  badge: "#6f9e68",
+  warn: "#e9d28a",
 } as const;
 
 function pad(s: string, w: number): string {

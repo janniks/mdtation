@@ -33,8 +33,8 @@ export class Modal implements Overlay {
       border: true,
       title: ` ${opts.title} `,
       titleAlignment: "center",
-      borderColor: "#7aa2f7",
-      backgroundColor: "#1a1b26",
+      borderColor: "#9ec5e8",
+      backgroundColor: "#1f211f",
       paddingLeft: 1,
       paddingRight: 1,
     });
@@ -47,8 +47,8 @@ export class Modal implements Overlay {
       height: 1,
       placeholder: "your comment",
       initialValue: opts.value ?? "",
-      backgroundColor: "#24283b",
-      focusedBackgroundColor: "#24283b",
+      backgroundColor: "#2a2d2a",
+      focusedBackgroundColor: "#2a2d2a",
     });
     this.input.on("input", () => this.grow());
     this.node.add(this.input);

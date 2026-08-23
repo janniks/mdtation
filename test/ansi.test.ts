@@ -12,19 +12,19 @@ test("empty input yields no spans", () => {
 
 test("bold + color + reset split into spans", () => {
   const s = spans("a \x1b[1m\x1b[32mb\x1b[0m c");
-  assert.deepEqual(s, [{ text: "a " }, { text: "b", bold: true, fg: "#0dbc79" }, { text: " c" }]);
+  assert.deepEqual(s, [{ text: "a " }, { text: "b", bold: true, fg: "#99d892" }, { text: " c" }]);
 });
 
 test("combined codes and bare reset", () => {
   assert.deepEqual(spans("\x1b[1;36mx\x1b[my"), [
-    { text: "x", bold: true, fg: "#11a8cd" },
+    { text: "x", bold: true, fg: "#9fdcd4" },
     { text: "y" },
   ]);
 });
 
 test("dim, italic, strike, gray", () => {
   const s = spans("\x1b[2m\x1b[3m\x1b[9m\x1b[90mz\x1b[0m");
-  assert.deepEqual(s, [{ text: "z", dim: true, italic: true, strike: true, fg: "#808080" }]);
+  assert.deepEqual(s, [{ text: "z", dim: true, italic: true, strike: true, fg: "#8a8f8a" }]);
 });
 
 test("span text concatenates to the stripped text", () => {
@@ -47,6 +47,6 @@ test("underline on and off", () => {
 
 test("background colors", () => {
   assert.deepEqual(spans("\x1b[43m\x1b[30m✦\x1b[0m"), [
-    { text: "✦", bg: "#e5e510", fg: "#000000" },
+    { text: "✦", bg: "#e9d28a", fg: "#3a3d3a" },
   ]);
 });

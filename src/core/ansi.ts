@@ -18,21 +18,22 @@ type Style = Omit<Span, "text">;
 
 /** 16-color SGR codes -> hex. */
 const FG: Record<number, string> = {
-  30: "#000000",
-  31: "#cd3131",
-  32: "#0dbc79",
-  33: "#e5e510",
-  34: "#2472c8",
-  35: "#bc3fbc",
-  36: "#11a8cd",
-  37: "#e5e5e5",
-  90: "#808080",
-  91: "#f14c4c",
-  92: "#23d18b",
-  93: "#f5f543",
-  94: "#3b8eea",
-  95: "#d670d6",
-  96: "#29b8db",
+  // Pastel on near-black, same family as the website's terminal frames.
+  30: "#3a3d3a",
+  31: "#e8a3a3",
+  32: "#99d892",
+  33: "#e9d28a",
+  34: "#9ec5e8",
+  35: "#d4a8e0",
+  36: "#9fdcd4",
+  37: "#e8e6df",
+  90: "#8a8f8a",
+  91: "#f0b8b8",
+  92: "#b6e6ad",
+  93: "#f2e0a6",
+  94: "#b7d6f2",
+  95: "#e2c2ea",
+  96: "#bdeae3",
   97: "#ffffff",
 };
 
