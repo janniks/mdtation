@@ -26,7 +26,7 @@ export function Gallery() {
       </div>
       {GIFS.map((g) => (
         <TabsContent key={g.title} value={g.title}>
-          <ul className="mt-4 grid gap-3 md:grid-cols-2 [&>*]:min-w-0">
+          <ul className="mt-4 grid gap-3 md:grid-cols-2 [&>*]:min-w-0 md:[&>*:last-child:nth-child(odd)]:col-span-2 md:[&>*:last-child:nth-child(odd)]:mx-auto md:[&>*:last-child:nth-child(odd)]:w-[calc(50%-0.375rem)]">
             {g.items.map(([name, title, body]) => (
               <li key={title}>
                 <Card className="h-full gap-2 py-3 [--card-spacing:0.75rem]">

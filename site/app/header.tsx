@@ -35,7 +35,7 @@ export function Header() {
           </span>
           mdtation
         </a>
-        <nav className="hidden items-center justify-center gap-6 font-mono text-xs font-semibold text-muted-foreground sm:flex">
+        <nav className="hidden items-center justify-center gap-6 font-mono text-xs text-foreground/70 sm:flex">
           {links.map(([href, label]) => (
             <a key={href} href={href} className="transition-colors hover:text-foreground">
               {label}

@@ -24,7 +24,6 @@ import { Gallery } from "./gallery";
 import { GITHUB, Header, INSTALL, NPM } from "./header";
 import { Agentation, AgentationWord, GitHub, Herdr, Hunk, OpenTUI } from "./icons";
 import { Mantra } from "./mantra";
-import { Pick } from "./pick";
 import { Prompt } from "./prompt";
 
 /** Exactly what `copyFormat(comment, doc, "detailed")` puts on the clipboard. */
@@ -41,14 +40,6 @@ const line = `Line 58  Auth / Logout
 const prompt = `Read the comments I left on plans/auth.md by running \`mdtation plans/auth.md list\`.
 Address each one in order, then rewrite the file in place.
 Keep the headings so my remaining comments stay anchored.`;
-
-const LEADS = [
-  "Your agent writes a spec. You comment on the exact section, inline. The agent reads it instead of long conversation chunks.",
-  "Your agent writes the plan. Meditate on it, comment on the exact line, then send it back.",
-  "Read, breathe, comment, loop. The agent writes the plan, you mark it up in place, it reads your notes instead of a chat scrollback.",
-  "More zen in your agentic flow. Open the plan full screen, comment where it matters, hand the agent a reference it understands.",
-  "Your agent writes a spec. You sit with it, mark the exact lines, send the marks back. No chat archaeology.",
-];
 
 const pains = [
   [
@@ -154,9 +145,9 @@ const faq = [
 /** A friend's name with its mark hovering above, tilted, like a sticker. */
 function Float({ icon: Icon, at, children }: { icon: typeof Hunk; at: string; children: string }) {
   return (
-    <span className="relative inline-block">
+    <span className="group relative inline-block">
       <Icon
-        className={`absolute rounded-sm border bg-card p-[0.08em] text-primary shadow-xs ${at}`}
+        className={`absolute rounded-sm border bg-card p-[0.08em] text-primary shadow-xs transition-transform duration-300 ease-out group-hover:-translate-y-1.5 ${at}`}
       />
       {children}
     </span>
@@ -165,7 +156,7 @@ function Float({ icon: Icon, at, children }: { icon: typeof Hunk; at: string; ch
 
 /** Centered label between two hairlines, the hero's eyebrow. */
 function Eyebrow({ children, wide }: { children: string; wide?: boolean }) {
-  const rule = wide ? "h-px flex-1 bg-border" : "h-px w-8 shrink-0 bg-border";
+  const rule = wide ? "h-px flex-1 bg-border" : "h-px w-12 shrink-0 bg-border";
   return (
     <p
       className={`flex items-center justify-center gap-3 text-xs text-muted-foreground ${wide ? "mx-auto w-[60%]" : ""}`}
@@ -180,7 +171,7 @@ function Eyebrow({ children, wide }: { children: string; wide?: boolean }) {
 /** Label in a corner-tick box between two hairlines, centered (prototype 6B). */
 function Tag({ children }: { children: string }) {
   return (
-    <div className="mb-4 flex items-center gap-3">
+    <div className="mx-auto mb-4 flex w-[60%] items-center gap-3">
       <span className="h-px flex-1 bg-border" aria-hidden />
       <div className="relative px-3 py-1">
         <span
@@ -245,6 +236,7 @@ function Section({
   title,
   intro,
   tail,
+  narrow,
   children,
 }: {
   id: string;
@@ -255,6 +247,8 @@ function Section({
   intro?: string;
   /** Extra content inside the header block, under the intro. */
   tail?: React.ReactNode;
+  /** Center the whole section in a 760px column. */
+  narrow?: boolean;
   children: React.ReactNode;
 }) {
   const mid = kind === "tag" || kind === "line";
@@ -286,12 +280,14 @@ function Section({
       id={id}
       className={`scroll-mt-20 pb-16 sm:pb-24 ${mid ? "pt-8 sm:pt-12" : "border-t pt-16 sm:pt-24"}`}
     >
-      <div
-        className={`${kind === "cross" ? "mb-6" : "mb-10"} ${mid ? "text-center" : ""} ${kind === "alert" ? "border-l-2 border-red-300 pl-4" : ""}`}
-      >
-        {kind === "cross" ? <Cross>{head}</Cross> : head}
+      <div className={narrow ? "mx-auto max-w-[760px]" : ""}>
+        <div
+          className={`${kind === "cross" ? "mb-6" : "mb-10"} ${mid ? "text-center" : ""} ${kind === "alert" ? "border-l-2 border-red-300 pl-4" : ""}`}
+        >
+          {kind === "cross" ? <Cross>{head}</Cross> : head}
+        </div>
+        {children}
       </div>
-      {children}
     </section>
   );
 }
@@ -308,21 +304,10 @@ export default function Page() {
           <h1 className="mx-auto mt-5 max-w-[760px] text-4xl font-semibold leading-[1.05] tracking-tight text-balance sm:text-6xl">
             A better agentic feedback flow.
           </h1>
-          <Pick
-            className="mt-6"
-            options={LEADS.map(
-              (t, i) =>
-                [
-                  "ABCDE"[i],
-                  <p
-                    key={t}
-                    className="mx-auto max-w-[560px] text-lg leading-7 text-balance text-muted-foreground"
-                  >
-                    {t}
-                  </p>,
-                ] as const,
-            )}
-          />
+          <p className="mx-auto mt-6 max-w-[560px] text-lg leading-7 text-balance text-muted-foreground">
+            Your agent writes a spec. You comment on the exact section, inline. The agent reads it
+            instead of long conversation chunks.
+          </p>
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <div className="flex max-w-full items-center gap-1 rounded-lg border bg-card py-1 pr-1 pl-4 font-mono text-sm">
@@ -350,7 +335,7 @@ export default function Page() {
           <Clip
             name="hero"
             frame="rounded-lg [corner-shape:squircle] sm:rounded-xl"
-            className="mt-12 text-left shadow-[0_24px_60px_-30px_rgba(0,0,0,0.35)] sm:mt-16"
+            className="mx-auto mt-12 max-w-3xl text-left shadow-[0_24px_60px_-30px_rgba(0,0,0,0.35)] sm:mt-16"
           />
           <p className="mt-4 text-sm text-balance text-muted-foreground">
             <ArrowUp className="mr-1 inline size-3.5 align-[-2px] text-primary" />
@@ -391,7 +376,7 @@ export default function Page() {
                       href={href}
                       target="_blank"
                       rel="noreferrer"
-                      className="ml-auto inline-flex items-center gap-1 font-sans text-xs font-normal text-muted-foreground hover:text-foreground"
+                      className="ml-auto inline-flex items-center gap-1 font-sans text-xs font-normal text-muted-foreground/70 hover:text-foreground"
                     >
                       <GitHub className="size-3.5" />
                       GitHub
@@ -410,7 +395,7 @@ export default function Page() {
           id="problem"
           kicker="feedback, the problem today"
           kind="alert"
-          title="Agents ask for feedback in the worst possible places"
+          title="Agents ask for feedback in the worst possible ways"
           intro="To get the best agentic results, we give our agents feedback: on their plans, their findings, their drafts. But the conversational flow and picker tools are slow and clunky. The `mdtation` flow is more natural, and still terminal friendly."
         >
           <div className="grid gap-4 md:grid-cols-3 [&>*]:min-w-0">
@@ -459,7 +444,7 @@ export default function Page() {
               </li>
             ))}
           </ol>
-          <div className="mt-16 grid items-start gap-4 md:grid-cols-[1fr_1.1fr] md:gap-10 [&>*]:min-w-0">
+          <div className="mx-auto mt-16 max-w-[720px] space-y-4 [&>*]:min-w-0">
             <p className="text-sm leading-relaxed">
               <span className="mr-2 font-semibold text-foreground">
                 What lands on the clipboard
@@ -479,11 +464,12 @@ export default function Page() {
           id="agents"
           kicker="built for agents"
           kind="cross"
+          narrow
           title="Meditate on the plan, then send comments back"
           intro="Plain markdown with a line number, a heading path, the passage and your note. For a whole review, `mdtation file.md list` prints every comment as one report."
           tail={<Agents className="mt-5" />}
         >
-          <div className="max-w-[760px]">
+          <div>
             <Prompt title="claude">
               <pre className="whitespace-pre-wrap">{prompt}</pre>
             </Prompt>
@@ -499,8 +485,8 @@ export default function Page() {
           <Gallery />
         </Section>
 
-        <Section id="faq" kicker="faq" kind="plain" title="Frequently asked questions">
-          <Accordion type="single" collapsible className="max-w-[760px]">
+        <Section id="faq" kicker="faq" kind="plain" narrow title="Frequently asked questions">
+          <Accordion type="single" collapsible>
             {faq.map(([q, a]) => (
               <AccordionItem key={q} value={q}>
                 <AccordionTrigger className="text-left">{q}</AccordionTrigger>
@@ -515,6 +501,8 @@ export default function Page() {
 
       <footer className="border-t">
         <div className="mx-auto max-w-[1040px] px-5 py-12 sm:px-8">
+          <Mantra />
+          <Separator className="my-10" />
           {/* Open-source card, ported from openindex oss-card. */}
           <Card className="sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             <CardHeader className="flex-1">
@@ -539,9 +527,7 @@ export default function Page() {
               </Button>
             </CardContent>
           </Card>
-          <Separator className="mt-8 mb-10" />
-          <Mantra />
-          <Separator className="mt-10 mb-8" />
+          <Separator className="my-8" />
           <div className="flex flex-wrap items-center justify-between gap-4 font-mono text-xs text-muted-foreground">
             <span className="whitespace-pre">mdtation MIT 2026 janniks</span>
             <nav className="flex gap-5">
