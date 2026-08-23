@@ -23,6 +23,7 @@ import { code } from "./code";
 import { Gallery } from "./gallery";
 import { GITHUB, Header, INSTALL, NPM } from "./header";
 import { Agentation, AgentationWord, GitHub, Herdr, Hunk, OpenTUI } from "./icons";
+import { Mantra } from "./mantra";
 import { Pick } from "./pick";
 import { Prompt } from "./prompt";
 
@@ -41,27 +42,12 @@ const prompt = `Read the comments I left on plans/auth.md by running \`mdtation 
 Address each one in order, then rewrite the file in place.
 Keep the headings so my remaining comments stay anchored.`;
 
-const EYEBROWS = [
-  "terminal markdown viewer for agent workflows",
-  "more zen in your agentic flow",
-  "a calm place to read what your agent wrote",
-  "read, breathe, comment, loop",
-  "meditate on the plan, then send it back",
-];
-
-const HEADLINES = [
-  "A better agentic feedback flow.",
-  "Feedback your agent can actually use",
-  "Review the plan, not the chat.",
-  "Your agent's drafts, read in peace.",
-  "Sit with the plan. Mark it up. Send it back.",
-  "Zen for your agent's markdown.",
-];
-
 const LEADS = [
   "Your agent writes a spec. You comment on the exact section, inline. The agent reads it instead of long conversation chunks.",
-  "Your agent writes a spec. You open it full screen and comment where it matters. The agent reads the comments, not a scrollback.",
-  "Let the agent draft. Sit with the file, mark what is off, send the marks back. No chat archaeology.",
+  "Your agent writes the plan. Meditate on it, comment on the exact line, then send it back.",
+  "Read, breathe, comment, loop. The agent writes the plan, you mark it up in place, it reads your notes instead of a chat scrollback.",
+  "More zen in your agentic flow. Open the plan full screen, comment where it matters, hand the agent a reference it understands.",
+  "Your agent writes a spec. You sit with it, mark the exact lines, send the marks back. No chat archaeology.",
 ];
 
 const pains = [
@@ -178,12 +164,15 @@ function Float({ icon: Icon, at, children }: { icon: typeof Hunk; at: string; ch
 }
 
 /** Centered label between two hairlines, the hero's eyebrow. */
-function Eyebrow({ children }: { children: string }) {
+function Eyebrow({ children, wide }: { children: string; wide?: boolean }) {
+  const rule = wide ? "h-px flex-1 bg-border" : "h-px w-8 shrink-0 bg-border";
   return (
-    <p className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
-      <span className="h-px w-8 shrink-0 bg-border" aria-hidden />
+    <p
+      className={`flex items-center justify-center gap-3 text-xs text-muted-foreground ${wide ? "mx-auto w-[60%]" : ""}`}
+    >
+      <span className={rule} aria-hidden />
       <span className="text-center text-balance">{children}</span>
-      <span className="h-px w-8 shrink-0 bg-border" aria-hidden />
+      <span className={rule} aria-hidden />
     </p>
   );
 }
@@ -274,7 +263,7 @@ function Section({
       {kind === "tag" && <Tag>{kicker}</Tag>}
       {kind === "line" && (
         <div className="mb-6">
-          <Eyebrow>{kicker}</Eyebrow>
+          <Eyebrow wide>{kicker}</Eyebrow>
         </div>
       )}
       {kind === "alert" && <Alert>{kicker}</Alert>}
@@ -315,30 +304,16 @@ export default function Page() {
 
       <main className="mx-auto max-w-[1040px] px-5 sm:px-8">
         <section className="pt-14 pb-16 text-center sm:pt-24 sm:pb-24">
-          <Pick
-            options={EYEBROWS.map((t, i) => ["ABCDE"[i], <Eyebrow key={t}>{t}</Eyebrow>] as const)}
-          />
-          <Pick
-            className="mt-5"
-            options={HEADLINES.map(
-              (t, i) =>
-                [
-                  "ABCDEF"[i],
-                  <h1
-                    key={t}
-                    className="mx-auto max-w-[760px] text-4xl font-semibold leading-[1.05] tracking-tight text-balance sm:text-6xl"
-                  >
-                    {t}
-                  </h1>,
-                ] as const,
-            )}
-          />
+          <Eyebrow>terminal markdown viewer for agent workflows</Eyebrow>
+          <h1 className="mx-auto mt-5 max-w-[760px] text-4xl font-semibold leading-[1.05] tracking-tight text-balance sm:text-6xl">
+            A better agentic feedback flow.
+          </h1>
           <Pick
             className="mt-6"
             options={LEADS.map(
               (t, i) =>
                 [
-                  "ABC"[i],
+                  "ABCDE"[i],
                   <p
                     key={t}
                     className="mx-auto max-w-[560px] text-lg leading-7 text-balance text-muted-foreground"
@@ -372,23 +347,10 @@ export default function Page() {
 
           <Agents className="mt-5 justify-center" />
 
-          <Pick
-            className="mt-12 sm:mt-16"
-            options={(
-              [
-                ["tour", "comment"],
-                ["real plan", "hero-plan"],
-                ["marketing copy", "hero-copy"],
-              ] as const
-            ).map(([label, name]) => [
-              label,
-              <Clip
-                key={name}
-                name={name}
-                frame="rounded-lg [corner-shape:squircle] sm:rounded-xl"
-                className="text-left shadow-[0_24px_60px_-30px_rgba(0,0,0,0.35)]"
-              />,
-            ])}
+          <Clip
+            name="hero"
+            frame="rounded-lg [corner-shape:squircle] sm:rounded-xl"
+            className="mt-12 text-left shadow-[0_24px_60px_-30px_rgba(0,0,0,0.35)] sm:mt-16"
           />
           <p className="mt-4 text-sm text-balance text-muted-foreground">
             <ArrowUp className="mr-1 inline size-3.5 align-[-2px] text-primary" />
@@ -474,7 +436,7 @@ export default function Page() {
           id="loop"
           kicker="the loop"
           title="Review the plan, not the chat."
-          intro="Specs, plans, drafts, reviews: the prose around the code deserves the same review flow as the diff."
+          intro="Specs, plans, drafts, reviews: the prose your agent writes deserves a real review flow, not a chat reply."
         >
           <ol className="space-y-14 md:space-y-20">
             {steps.map(([title, body, key, clip], i) => (
@@ -517,7 +479,7 @@ export default function Page() {
           id="agents"
           kicker="built for agents"
           kind="cross"
-          title="Paste it into any agent"
+          title="Meditate on the plan, then send comments back"
           intro="Plain markdown with a line number, a heading path, the passage and your note. For a whole review, `mdtation file.md list` prints every comment as one report."
           tail={<Agents className="mt-5" />}
         >
@@ -531,15 +493,10 @@ export default function Page() {
         <Section
           id="features"
           kicker="features"
-          title="Everything a viewer should have had"
-          intro="Menu bar, command palette, settings. View toggles are remembered."
+          title="Everything a TUI should have"
+          intro="Menu bar, command palette, settings, all mouse ready. View toggles are remembered."
         >
-          <Pick
-            options={(["default", "line", "mono"] as const).map((v) => [
-              v,
-              <Gallery key={v} variant={v} />,
-            ])}
-          />
+          <Gallery />
         </Section>
 
         <Section id="faq" kicker="faq" kind="plain" title="Frequently asked questions">
@@ -582,7 +539,9 @@ export default function Page() {
               </Button>
             </CardContent>
           </Card>
-          <Separator className="my-8" />
+          <Separator className="mt-8 mb-10" />
+          <Mantra />
+          <Separator className="mt-10 mb-8" />
           <div className="flex flex-wrap items-center justify-between gap-4 font-mono text-xs text-muted-foreground">
             <span className="whitespace-pre">mdtation MIT 2026 janniks</span>
             <nav className="flex gap-5">

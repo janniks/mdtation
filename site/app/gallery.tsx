@@ -7,25 +7,18 @@ import { GIFS as ALL } from "./gifs";
 /** Only Navigate and Comments for now. The other groups stay in gifs.ts until the demo needs them. */
 const GIFS = ALL.slice(0, 2);
 
-/** Tab strip styles under comparison: shadcn default, shadcn line, or the site's mono tag look. */
-const STYLES = {
-  default: ["", "px-3"],
-  line: ["", "px-3"],
-  mono: [
-    "gap-1 bg-transparent p-0",
-    "rounded-md border border-transparent px-3 font-mono text-xs text-muted-foreground data-active:border-border data-active:bg-card data-active:shadow-none",
-  ],
-} as const;
-
 /** Feature gallery: one tab per group, each feature a tight card with its clip on top. */
-export function Gallery({ variant = "default" }: { variant?: keyof typeof STYLES }) {
-  const [list, item] = STYLES[variant];
+export function Gallery() {
   return (
     <Tabs defaultValue={GIFS[0].title}>
       <div className="flex justify-center overflow-x-auto pb-1">
-        <TabsList variant={variant === "line" ? "line" : "default"} className={list}>
+        <TabsList className="gap-0.5 p-1">
           {GIFS.map((g) => (
-            <TabsTrigger key={g.title} value={g.title} className={item}>
+            <TabsTrigger
+              key={g.title}
+              value={g.title}
+              className="px-3 font-mono text-xs data-active:border-border"
+            >
               {g.title}
             </TabsTrigger>
           ))}
