@@ -16,3 +16,7 @@ WIP-*.md
 agents_modules/
 # END agent-lock
 .playwright-mcp/
+
+# Local only, never commit.
+research/
+.claude/skills/
