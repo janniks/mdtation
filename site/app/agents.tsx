@@ -9,11 +9,11 @@ const agents = [
 ] as const;
 
 /** Quiet "works with" row: tiny label, then small monochrome tiles. Ported from openindex agents-row, tilted like stickers, no copy button. */
-export function Agents({ className = "" }: { className?: string }) {
+export function Agents({ className = "", label }: { className?: string; label?: string }) {
   return (
     <div className={`flex flex-wrap items-center gap-x-3 gap-y-2 ${className}`}>
       <span className="font-mono text-xs text-balance text-muted-foreground">
-        works with anything that can CLI, or you paste manually
+        {label ?? "works with anything that can CLI, or you paste manually"}
       </span>
       <div className="flex items-center">
         {agents.map(([name, Icon, tilt]) => (

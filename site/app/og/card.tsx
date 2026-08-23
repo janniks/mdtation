@@ -21,38 +21,21 @@ export function Card({ sans, mono, logo }: { sans: string; mono: string; logo: s
       <div style={{ display: "flex", alignItems: "center", gap: 18, fontSize: 30 }}>
         <img src={logo} width={52} height={52} alt="" />
         <div style={{ fontWeight: 700, letterSpacing: "-0.02em" }}>mdtation</div>
+        <div style={{ marginLeft: "auto", fontFamily: mono, fontSize: 22, color: "#7a766c" }}>
+          terminal markdown viewer for agent workflows
+        </div>
       </div>
       <div
         style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
           marginTop: 40,
+          maxWidth: 760,
+          fontSize: 80,
+          fontWeight: 700,
+          letterSpacing: "-0.04em",
+          lineHeight: 1.02,
         }}
       >
-        <div
-          style={{
-            maxWidth: 760,
-            fontSize: 80,
-            fontWeight: 700,
-            letterSpacing: "-0.04em",
-            lineHeight: 1.02,
-          }}
-        >
-          A better agentic feedback flow.
-        </div>
-        <div
-          style={{
-            marginTop: 12,
-            maxWidth: 300,
-            textAlign: "right",
-            fontFamily: mono,
-            fontSize: 22,
-            color: "#7a766c",
-          }}
-        >
-          terminal markdown viewer for agent workflows
-        </div>
+        A better agentic feedback flow.
       </div>
       <div
         style={{ marginTop: 24, fontSize: 30, lineHeight: 1.35, color: "#6b675e", maxWidth: 1000 }}
