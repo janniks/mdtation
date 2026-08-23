@@ -9,7 +9,7 @@ export function Zen() {
   useEffect(() => set(ZEN[Math.floor(Math.random() * ZEN.length)]), []);
   return (
     <span
-      className={`inline-block transition-all duration-500 ease-out [filter:grayscale(1)_contrast(0)_brightness(1.02)_sepia(0.25)] ${e ? "scale-100 opacity-100" : "scale-75 opacity-0"}`}
+      className={`inline-block transition-all duration-500 ease-out [filter:grayscale(1)_contrast(0)_brightness(0.97)_sepia(0.25)] ${e ? "scale-100 opacity-100" : "scale-75 opacity-0"}`}
     >
       {e || "🧘"}
     </span>

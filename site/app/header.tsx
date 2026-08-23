@@ -21,7 +21,7 @@ const links = [
 export function Header() {
   return (
     <header className="sticky top-0 z-40 border-b bg-background/75 backdrop-blur-md">
-      <div className="mx-auto grid max-w-[1040px] grid-cols-[1fr_auto] items-center gap-4 px-5 py-3 sm:grid-cols-[1fr_auto_1fr] sm:px-8">
+      <div className="mx-auto grid max-w-[1040px] grid-cols-[1fr_auto] items-center gap-4 px-5 py-3 sm:grid-cols-[auto_1fr_auto] sm:px-8">
         <a
           href="#"
           className="inline-flex items-center gap-2.5 font-semibold tracking-tight"
@@ -35,7 +35,7 @@ export function Header() {
           </span>
           mdtation
         </a>
-        <nav className="hidden items-center gap-6 font-mono text-xs font-semibold text-muted-foreground sm:flex">
+        <nav className="hidden items-center justify-center gap-6 font-mono text-xs font-semibold text-muted-foreground sm:flex">
           {links.map(([href, label]) => (
             <a key={href} href={href} className="transition-colors hover:text-foreground">
               {label}

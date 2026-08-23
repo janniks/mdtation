@@ -69,12 +69,12 @@ const pains = [
   [
     ListChecks,
     "Option pickers",
-    'A, B or C, pick one. Your real answer is "B, but only if the second half of C", and there is no box for that.',
+    'A, B or C, pick one. Your real answer is "B, but only if the second half of C", there is no box for that, and no way to ask where B came from. Clunky on a phone, too.',
   ],
   [
     MessagesSquare,
     "Itemized lists in a chat thread",
-    'Twelve numbered bullets, answer by letter and number. By the time you type "3b, no, 5 is wrong" the list has scrolled off screen and you are answering from memory.',
+    'Finding F7, section 2.1, Critical 6, recommended (b). You answer by label, and by the time you type "F7 no, 2.1 yes, (b) is wrong" the list has scrolled away and you are replying from memory.',
   ],
   [
     ScrollText,
@@ -256,6 +256,7 @@ function Section({
   kind = "tag",
   title,
   intro,
+  tail,
   children,
 }: {
   id: string;
@@ -264,6 +265,8 @@ function Section({
   kind?: "tag" | "line" | "alert" | "cross" | "plain";
   title?: string;
   intro?: string;
+  /** Extra content inside the header block, under the intro. */
+  tail?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const mid = kind === "tag" || kind === "line";
@@ -287,10 +290,11 @@ function Section({
           {code(intro)}
         </p>
       )}
+      {tail}
     </>
   );
   return (
-    <section id={id} className="scroll-mt-20 border-t py-16 sm:py-24">
+    <section id={id} className={`scroll-mt-20 py-16 sm:py-24 ${mid ? "" : "border-t"}`}>
       <div
         className={`mb-10 ${mid ? "text-center" : ""} ${kind === "alert" ? "border-l-2 border-red-300 pl-4" : ""}`}
       >
@@ -440,7 +444,7 @@ export default function Page() {
 
         <Section
           id="problem"
-          kicker="feedback, today"
+          kicker="feedback, the problem today"
           kind="alert"
           title="Agents ask for feedback in the worst possible places"
           intro="To get the best agentic results, we give our agents feedback: on their plans, their findings, their drafts. But the conversational flow and picker tools are slow and clunky. The `mdtation` flow is more natural, and still terminal friendly."
@@ -493,7 +497,9 @@ export default function Page() {
           </ol>
           <div className="mt-16 grid items-start gap-4 md:grid-cols-[1fr_1.1fr] md:gap-10 [&>*]:min-w-0">
             <p className="text-sm leading-relaxed">
-              <span className="font-semibold text-foreground">What lands on the clipboard</span>{" "}
+              <span className="mr-2 font-semibold text-foreground">
+                What lands on the clipboard
+              </span>{" "}
               <span className="text-muted-foreground">
                 Line, section path, quote, note. Plain text, no schema to learn.
               </span>
@@ -511,14 +517,12 @@ export default function Page() {
           kind="cross"
           title="Paste it into any agent"
           intro="Plain markdown with a line number, a heading path, the passage and your note. For a whole review, `mdtation file.md list` prints every comment as one report."
+          tail={<Agents className="mt-5" />}
         >
-          <div className="grid items-start gap-10 md:grid-cols-[1fr_1.1fr] [&>*]:min-w-0">
-            <Agents className="pt-2" />
-            <div>
-              <Prompt title="claude">
-                <pre className="whitespace-pre-wrap">{prompt}</pre>
-              </Prompt>
-            </div>
+          <div className="max-w-[760px]">
+            <Prompt title="claude">
+              <pre className="whitespace-pre-wrap">{prompt}</pre>
+            </Prompt>
           </div>
         </Section>
 
@@ -531,13 +535,7 @@ export default function Page() {
           <Gallery />
         </Section>
 
-        <Section
-          id="faq"
-          kicker="faq"
-          kind="plain"
-          title="Questions"
-          intro="Short answers. The README has the long ones."
-        >
+        <Section id="faq" kicker="faq" kind="plain" title="Frequently asked questions">
           <Accordion type="single" collapsible className="max-w-[760px]">
             {faq.map(([q, a]) => (
               <AccordionItem key={q} value={q}>
