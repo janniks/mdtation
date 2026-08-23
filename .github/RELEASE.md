@@ -1,7 +1,6 @@
 # Release flow
 
-Changesets + three small workflows.
-One package, three small workflows.
+Changesets + three small workflows for one package.
 
 ## Day to day
 
@@ -51,15 +50,3 @@ The subject is what `publish.yml` keys on, so the exact text matters.
 - Actions are pinned to commit SHAs.
 - npm auth is OIDC trusted publishing with provenance; no `NPM_TOKEN` anywhere.
 - The canary input must be a positive integer; anything else fails before checkout.
-
-## One-time setup
-
-1. First publish by hand (a brand-new package cannot use OIDC yet): `npm run build && npm publish --access public` at `0.0.x`.
-2. npmjs.com → package → Settings → Trusted publishing → GitHub Actions: owner `janniks`, repo `mdtation`, workflow `publish.yml`, environment empty.
-3. Repo → Settings → Actions → General → Workflow permissions: allow GitHub Actions to create pull requests (the version PR needs it).
-
-## Deliberately left out
-
-- Branch snapshots (`@beta` from `main`, `@next` from a branch): one package, no release branches.
-- `pre-run.yml` (fork check + cancel-previous): replaced by the owner gate and `concurrency`.
-- commitlint, ts-shape, the root-changelog script: monorepo concerns.
