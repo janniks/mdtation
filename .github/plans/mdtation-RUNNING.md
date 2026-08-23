@@ -154,3 +154,4 @@ Pure models live in `src/core` with node tests; `src/ui` only wires OpenTUI.
 | 2026-08-23 | banner: 3:1 ratio, comment-popup frame, corner pluses, column gap, works-with aligned | site/app/banner, site/public/media/popup.png, .github/media/banner.png |
 | 2026-08-23 | banner: two stacked terminals in chrome (colorful front w popup on plan.md, grey back w plan2.md), deeper shadow | site/app/banner, plan2 fixture/tape, .github/media/banner.png |
 | 2026-08-23 | banner: multi-layer window borders, light title bars, squircle corners, plus-mark padding | site/app/banner, .github/media/banner.png |
+| 2026-08-24 | banner: light window bars, solid white 2px + grey hairline border, dark corner leak fixed | site/app/banner, .github/media/banner.png |
