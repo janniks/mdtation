@@ -25,7 +25,6 @@ import { GITHUB, Header, INSTALL, NPM } from "./header";
 import { Agentation, AgentationWord, GitHub, Herdr, Hunk, OpenTUI } from "./icons";
 import { Pick } from "./pick";
 import { Prompt } from "./prompt";
-import { Protos } from "./proto/groups";
 
 /** Exactly what `copyFormat(comment, doc, "detailed")` puts on the clipboard. */
 const block = `Line 41  Auth / Session refresh
@@ -294,9 +293,12 @@ function Section({
     </>
   );
   return (
-    <section id={id} className={`scroll-mt-20 py-16 sm:py-24 ${mid ? "" : "border-t"}`}>
+    <section
+      id={id}
+      className={`scroll-mt-20 pb-16 sm:pb-24 ${mid ? "pt-8 sm:pt-12" : "border-t pt-16 sm:pt-24"}`}
+    >
       <div
-        className={`mb-10 ${mid ? "text-center" : ""} ${kind === "alert" ? "border-l-2 border-red-300 pl-4" : ""}`}
+        className={`${kind === "cross" ? "mb-6" : "mb-10"} ${mid ? "text-center" : ""} ${kind === "alert" ? "border-l-2 border-red-300 pl-4" : ""}`}
       >
         {kind === "cross" ? <Cross>{head}</Cross> : head}
       </div>
@@ -383,7 +385,7 @@ export default function Page() {
               <Clip
                 key={name}
                 name={name}
-                frame="rounded-xl sm:rounded-2xl"
+                frame="rounded-lg [corner-shape:squircle] sm:rounded-xl"
                 className="text-left shadow-[0_24px_60px_-30px_rgba(0,0,0,0.35)]"
               />,
             ])}
@@ -397,11 +399,11 @@ export default function Page() {
         <Section id="friends" kicker="inspiration and friends" kind="line">
           <blockquote className="text-center text-3xl font-semibold leading-snug tracking-tight text-balance sm:text-4xl">
             <span className="text-primary">“</span>If{" "}
-            <Float icon={Herdr} at="-rotate-12 -bottom-[0.5em] left-[18%] size-[0.8em]">
+            <Float icon={Herdr} at="-rotate-12 -bottom-[calc(0.5em-4px)] left-[22%] size-[0.8em]">
               herdr
             </Float>
             ,{" "}
-            <Float icon={Hunk} at="rotate-6 -top-[0.3em] -right-[0.45em] size-[0.6em]">
+            <Float icon={Hunk} at="rotate-6 -top-[0.2em] -right-[0.35em] size-[0.6em]">
               hunk
             </Float>
             , and{" "}
@@ -532,7 +534,12 @@ export default function Page() {
           title="Everything a viewer should have had"
           intro="Menu bar, command palette, settings. View toggles are remembered."
         >
-          <Gallery />
+          <Pick
+            options={(["default", "line", "mono"] as const).map((v) => [
+              v,
+              <Gallery key={v} variant={v} />,
+            ])}
+          />
         </Section>
 
         <Section id="faq" kicker="faq" kind="plain" title="Frequently asked questions">
@@ -546,16 +553,6 @@ export default function Page() {
               </AccordionItem>
             ))}
           </Accordion>
-        </Section>
-
-        <Section
-          id="proto"
-          kicker="prototypes"
-          kind="line"
-          title="Pick one of each"
-          intro="Alternatives for the pieces that still feel bland. Temporary, removed once chosen."
-        >
-          <Protos />
         </Section>
       </main>
 
