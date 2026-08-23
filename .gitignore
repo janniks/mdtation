@@ -20,3 +20,7 @@ agents_modules/
 # Local only, never commit.
 research/
 .claude/skills/
+
+# Materialized by agent-lock from agents.json; never commit.
+AGENTS.md
+CLAUDE.md
