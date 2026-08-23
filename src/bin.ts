@@ -1,13 +1,15 @@
 import { defineCommand, runMain } from "citty";
 import { readFile } from "node:fs/promises";
-import { basename, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
+import { mkdirSync, watch } from "node:fs";
+import { SKILL } from "./core/skill.ts";
 import { parseDocument, type Document } from "./core/document.ts";
 import { render as renderFrame } from "./core/renderer.ts";
 import { createViewport, DEFAULT_WIDTH } from "./core/viewport.ts";
 import { archive, clear, home, load, path, restore, save } from "./core/store.ts";
 import { report } from "./core/report.ts";
 import { json, read } from "./core/read.ts";
-import type { Comment, CommentStore } from "./core/comment.ts";
+import { copyFormat, type Comment, type CommentStore } from "./core/comment.ts";
 import { create } from "./core/comments.ts";
 
 const VERBS = [
@@ -21,6 +23,7 @@ const VERBS = [
   "archive",
   "restore",
   "clear",
+  "watch",
 ] as const;
 
 /** The CLI's own author: `$MDTATION_AUTHOR`, else `agent`. */
@@ -57,6 +60,10 @@ runMain(
       human: { type: "boolean", description: "add: a person, not an agent" },
     },
     async run({ args }) {
+      if (args.file === "skill") {
+        process.stdout.write(SKILL);
+        return;
+      }
       const file = resolve(args.file);
       const verb = args.verb as (typeof VERBS)[number] | undefined;
       if (verb && !VERBS.includes(verb)) {
@@ -132,6 +139,10 @@ runMain(
             list.map((c) => c.id),
           );
         }
+        return;
+      }
+      if (verb === "watch") {
+        watching(file, doc, who, args.json === true);
         return;
       }
       if (verb === "print" || !process.stdout.isTTY) {
@@ -212,6 +223,34 @@ function pick(
     process.exit(2);
   }
   return list.filter((c) => c.createdAt > at);
+}
+
+/** Block and print every new live comment by someone else as it lands (markdown block or JSON line). */
+function watching(file: string, doc: Document, who: string, asJson: boolean): void {
+  const dir = join(home(), "comments");
+  mkdirSync(dir, { recursive: true });
+  const mine = basename(path(file));
+  let seen = new Set<string>();
+  let wait: ReturnType<typeof setTimeout> | undefined;
+  const tick = async (first = false) => {
+    const store = await load(file);
+    const fresh = store.live().filter((c) => !seen.has(c.id) && (c.author ?? "") !== who);
+    seen = new Set(store.all().map((c) => c.id));
+    if (first) {
+      return;
+    }
+    for (const c of fresh) {
+      process.stdout.write(asJson ? JSON.stringify(c) + "\n" : copyFormat(c, doc) + "\n\n");
+    }
+  };
+  void tick(true);
+  // Bun may only report the `.tmp` of an atomic write, so match on the prefix.
+  watch(dir, (_e, name) => {
+    if (String(name).startsWith(mine)) {
+      clearTimeout(wait);
+      wait = setTimeout(() => void tick(), 150);
+    }
+  });
 }
 
 async function stdoutRender(doc: Document): Promise<void> {

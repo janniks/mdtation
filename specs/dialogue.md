@@ -169,16 +169,16 @@ The parser keeps one sentence per line.
 
 ## Acceptance
 
-- [ ] Todays json loads and renders exactly as before once moved to the new path.
-- [ ] `add --line` from a second terminal shows inline in an open TUI within a second, with a badge.
-- [ ] `watch` prints a TUI comment as markdown within a second and never echoes the watchers own author.
-- [ ] `r` on a thread, then `list --json`: the reply has `re` = parent id and the parents anchor.
-- [ ] `mark` then `list --since last` prints nothing; a new `c` comment prints.
-- [ ] `read` output minus `<c …>` lines is byte-identical to the source file.
-- [ ] `{`/`}` stop only on agent comments; `[`/`]` unchanged.
-- [ ] Both inline toggles off renders byte-identical to the current build on the tour file.
-- [ ] Scroll margin stays smooth with inline rows (trace test like `settle`).
-- [ ] Editing the markdown in `$EDITOR` while the TUI is open keeps the cursor on its heading.
+- [x] Todays json loads and renders exactly as before once moved to the new path.
+- [x] `add --line` from a second terminal shows inline in an open TUI within a second, with a badge.
+- [x] `watch` prints a TUI comment as markdown within a second and never echoes the watchers own author.
+- [x] `r` on a thread, then `list --json`: the reply has `re` = parent id and the parents anchor.
+- [x] `mark` then `list --since last` prints nothing; a new `c` comment prints.
+- [x] `read` output minus `<c …>` lines is byte-identical to the source file.
+- [x] `{`/`}` stop only on agent comments; `[`/`]` unchanged.
+- [x] Both inline toggles off renders byte-identical to the current build on the tour file.
+- [x] Scroll margin stays smooth with inline rows (trace test like `settle`).
+- [x] Editing the markdown in `$EDITOR` while the TUI is open keeps the cursor on its heading.
 
 ## Phases (for the plan)
 
