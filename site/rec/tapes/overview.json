@@ -1,0 +1,3 @@
+{"file": "examples/tour.md", "cols": 80, "rows": 24,
+ "seed": [{"line": 8, "text": "Tighten this intro"}, {"line": 20, "text": "Check this list item"}],
+ "steps": [[2.5, "a"], [1.0, "<esc>"]]}

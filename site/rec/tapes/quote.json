@@ -1,0 +1,7 @@
+{"file": "examples/tour.md", "cols": 80, "rows": 24, "typing": 0,
+ "steps": [[0.3, "jjjjjjjjjjjjjjjjjjj"], [1.5, ""],
+           [0.3, "/"], [0.3, "settings"], [1.2, "<enter>"],
+           [0.6, "<down><down><down><down><down><down><down>"],
+           [1.0, "<right>"], [1.2, ""],
+           [1.0, "<right>"], [1.2, ""],
+           [0.5, "<esc>"], [1.5, ""]]}

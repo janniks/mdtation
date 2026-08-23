@@ -1,0 +1,280 @@
+/** Feature data: [clip name, caption, title, description]. Backticks render as <code>. */
+export const GIFS = [
+  {
+    title: "Navigate",
+    items: [
+      [
+        "scroll",
+        "`j` and `k` move the caret, the page follows",
+        "Caret-driven scrolling",
+        "`j` and `k` move a caret line by line, and the page only moves once the caret hits the scroll margin. It reads like a pager, but you always know which line you are on, which is what comments need.",
+      ],
+      [
+        "wheel",
+        "Mouse wheel scrolls, the caret keeps up",
+        "Mouse wheel",
+        "Scroll with the wheel like any desktop app. The caret follows so `c` always lands near what you are looking at. Turn mouse capture off with `M` when you want the terminal's own selection back.",
+      ],
+      [
+        "click",
+        "Click any row to place the caret",
+        "Click to place the caret",
+        "Click any row and the caret goes there. Handy when you spot a problem mid-page and want to comment on it without counting lines.",
+      ],
+      [
+        "page",
+        "`^d` and `^u` page, `g` and `G` jump",
+        "Page and jump keys",
+        "`^d` and `^u` move a page at a time, `g` and `G` jump to the top and bottom. Page Up and Page Down work too.",
+      ],
+      [
+        "menu",
+        "A real menu bar, click or arrow across",
+        "A real menu bar",
+        "File, View, Navigate, Edit, Comments, Help. Click a menu or arrow across it. Every View toggle lives here, so nothing needs a memorised chord.",
+      ],
+      [
+        "palette",
+        "`/` filters every command by title",
+        "Command palette",
+        "`/` opens a palette that filters every command by title as you type. Toggles that are already on read as Hide instead of Show, so you can see the current state.",
+      ],
+      [
+        "help",
+        "`?` lists every key",
+        "Help dialog",
+        "`?` lists every key and what it does. Close it and go on. The same catalog powers the menu bar and the palette, so the three never disagree.",
+      ],
+      [
+        "narrow",
+        "Still readable at phone width",
+        "Narrow terminals",
+        "Prose reflows and the menu bar collapses at phone width, so a tmux split or an SSH session on a small screen is still readable.",
+      ],
+    ],
+  },
+  {
+    title: "Comments",
+    items: [
+      [
+        "comment",
+        "`c` opens a comment on the caret line",
+        "Comment on a line",
+        "Press `c` on the caret line and type. The note is stored with the line number, or with the heading path when the line is a heading. It is there the next time you open the file.",
+      ],
+      [
+        "select",
+        "Drag-select a sentence, it lands in the quote",
+        "Comment on a selection",
+        "Drag-select a sentence with the mouse and press `c`. The selected text becomes the quote in the copied block, so the agent sees exactly which words you mean. Toggle under Comments, Select to comment.",
+      ],
+      [
+        "edit",
+        "`e` edits the comment under the caret",
+        "Edit a comment",
+        "`e` reopens the comment under the caret for changes. Save with `^s` or discard. Multi-line notes are fine and each line becomes its own `>` in the copy.",
+      ],
+      [
+        "jump",
+        "`[` and `]` hop between comments",
+        "Jump between comments",
+        "`[` and `]` move the caret to the previous and next comment. Useful on a second pass, or to walk through what is still open after the agent's rewrite.",
+      ],
+      [
+        "all",
+        "`a` lists every comment with its line",
+        "Show all comments",
+        "`a` opens an overlay with every live comment and its line, the same report `--list` prints. Comments, Show in editor opens that report in `$EDITOR` for bulk editing.",
+      ],
+      [
+        "copy",
+        "`C` copies the block, the badge fades",
+        "Copy the block",
+        "`C` copies the comment under the caret to the clipboard via OSC 52, so it works over SSH. The badge fades once it is sent. The last copy is mirrored to `last-copy.md` in the data dir.",
+      ],
+      [
+        "format",
+        "Detailed format adds section path and quote",
+        "Detailed copy format",
+        "Comments, Copy format switches between simple and detailed. Simple is line, quote, note. Detailed adds the section path and, without a selection, a preview of the line itself.",
+      ],
+      [
+        "archive",
+        "Archive on copy clears markers, keeps the note",
+        "Archive on copy",
+        "With Comments, Archive on copy enabled, a copied comment leaves the gutter but stays on disk. `--archived` lists them with ids, `--restore` brings one back. Archived notes are removed after a retention period you set.",
+      ],
+      [
+        "unsaved",
+        "`^c` guards unsaved edits, `^s` saves",
+        "Unsaved guard",
+        "`^c` or `q` on a document with unsaved edits is refused once. Press again within two seconds to leave anyway, or `^s` to write checkbox and frontmatter changes to the file.",
+      ],
+    ],
+  },
+  {
+    title: "Text",
+    items: [
+      [
+        "color",
+        "Color off, layout stays",
+        "Color toggle",
+        "View, Color turns syntax and emphasis color off while leaving layout, caret and comment markers intact. For terminals with odd palettes, or for a quieter read.",
+      ],
+      [
+        "decoration",
+        "Bold, italic, strike, underline as real attributes",
+        "Real text attributes",
+        "Bold, italic, strikethrough and underline render as terminal attributes instead of visible marks. View, Show text decoration toggles it.",
+      ],
+      [
+        "emphasis",
+        "Colored emphasis or plain",
+        "Colored emphasis",
+        "Emphasised text can carry a color as well as an attribute. View, Color text decoration picks which. Useful when your terminal font has no italic.",
+      ],
+      [
+        "marks",
+        "Hide `**` and `_`, keep the styling",
+        "Hide inline marks",
+        "View, Show inline marks hides the `**`, `_` and backticks but keeps the styling they produce. Turn it on when you need to see the raw source.",
+      ],
+      [
+        "links",
+        "Show or hide link targets",
+        "Link targets",
+        "View, Show links shows or hides the URL after each link. Off for reading, on when you need to check where a reference points.",
+      ],
+      [
+        "hashes",
+        "Heading marks on or off",
+        "Heading marks",
+        "View, Show heading marks keeps or drops the `#` signs. Level is still visible through size and color either way.",
+      ],
+      [
+        "syntax",
+        "Syntax highlighting inside fences",
+        "Syntax highlighting",
+        "Fenced code is highlighted by language tag. View, Syntax highlight toggles it when you want plain text or a faster render.",
+      ],
+      [
+        "fences",
+        "Fences as ticks, a rule, or hidden",
+        "Fence styles",
+        "View, Code fences cycles the fence lines between backticks, a thin rule, and hidden. Hidden fences make code read as part of the document.",
+      ],
+    ],
+  },
+  {
+    title: "Blocks",
+    items: [
+      [
+        "pipes",
+        "Table pipes or thin separators",
+        "Table separators",
+        "View, Show table pipes draws tables with their pipes or with thin separators. Wide and CJK cells stay aligned in both.",
+      ],
+      [
+        "align",
+        "Click a separator cell to cycle alignment",
+        "Click to align",
+        "Click a cell in a table's separator row to cycle its column alignment between left, center and right. The markdown is updated and saved with `^s`.",
+      ],
+      [
+        "quote",
+        "Blockquote as a bar, a `>`, or bare",
+        "Blockquote styles",
+        "View, Blockquote renders quotes with a bar, with the `>` sign, or bare. Pick what matches your editor.",
+      ],
+      [
+        "check",
+        "Four checkbox styles",
+        "Checkbox styles",
+        "View, Checkbox cycles four glyph sets for task lists. Click a box or use Edit to flip it. Saved to the file with `^s`.",
+      ],
+      [
+        "caret",
+        "Pick the caret glyph",
+        "Caret glyph",
+        "View, Line caret picks the glyph that marks the current line, or hides it. The caret is where `c` comments and `C` copies.",
+      ],
+      [
+        "frontmatter",
+        "Frontmatter hidden or shown",
+        "Frontmatter",
+        "View, Show frontmatter hides or shows the YAML block at the top. When shown, fields can be edited in place and saved with `^s`.",
+      ],
+      [
+        "flow",
+        "Flow one sentence per line into paragraphs",
+        "Flow paragraphs",
+        "View, Flow paragraphs joins one-sentence-per-line source into wrapped paragraphs for reading. Comments still land on the source line, so references stay exact.",
+      ],
+      [
+        "indent",
+        "Indent paragraphs",
+        "Indent paragraphs",
+        "View, Indent paragraphs adds a first-line indent, which helps long prose read as prose instead of a list of lines.",
+      ],
+      [
+        "badge",
+        "Status badge at the bottom or the top",
+        "Status badge",
+        "View, Status badge puts the file name, position and copy status at the bottom or the top of the screen, or hides it.",
+      ],
+    ],
+  },
+  {
+    title: "Settings and CLI",
+    items: [
+      [
+        "settings",
+        "Settings popup, arrows change a value",
+        "Settings popup",
+        "File, Settings opens a popup with scroll margin, crumb depth, frontmatter default and archive retention. Arrow keys change a value. Everything is remembered in `settings.json`.",
+      ],
+      [
+        "margin",
+        "Scroll margin, like vim's scrolloff",
+        "Scroll margin",
+        "The number of rows kept between the caret and the screen edge, like vim's scrolloff. Set it in Settings. Higher keeps more context around the line you are reading.",
+      ],
+      [
+        "crumb",
+        "Section crumb follows the caret, depth is yours",
+        "Section crumb",
+        "A breadcrumb of the headings above the caret sits in the bar and goes into the copied block. Crumb depth in Settings limits how many levels show.",
+      ],
+      [
+        "hidebar",
+        "`m` hides the menu bar",
+        "Hide the menu bar",
+        "`m` hides the menu bar for a clean full-screen read. Everything stays reachable through `/` and `?`.",
+      ],
+      [
+        "wide",
+        "Wide tables stay aligned, cut with an ellipsis",
+        "Wide tables",
+        "Tables wider than the terminal are laid out across the whole document and cut with an ellipsis instead of wrapping, so columns stay aligned.",
+      ],
+      [
+        "list",
+        "`--list` prints comments as markdown",
+        "Print comments",
+        "`mdtation file.md --list` prints every live comment as markdown and exits. This is the line to put in an agent's prompt.",
+      ],
+      [
+        "print",
+        "`--no-tui` renders to stdout",
+        "Render to stdout",
+        "`mdtation file.md --no-tui` writes the rendered document to stdout and exits. Use it in pipes, or under Node where the fullscreen TUI is not available.",
+      ],
+      [
+        "overview",
+        "Everything at once",
+        "Everything at once",
+        "A full pass: open, scroll, comment, copy, archive, and the `--list` report. Thirty seconds of the whole loop.",
+      ],
+    ],
+  },
+] as const;

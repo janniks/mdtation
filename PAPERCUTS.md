@@ -85,3 +85,6 @@ Append-only detours / surprises that cost more than one attempt.
   - tapes that `^s` save write to `examples/tour.md`; `git checkout examples/tour.md` after a batch.
 - 2026-08-23 — `npm run build` in `site/` while `npm run dev` is running clobbers `.next`, and the dev server then 404s its own CSS/JS; restart dev after a build (`rm -rf .next`).
 - 2026-08-23 — Bun `fs.watch` on a directory reported only the `rename` for the `.tmp` of an atomic write, never the final name. Match on the target's name as a prefix.
+- 2026-08-23 recorder seeds silently ignored after the per-file store landed
+  - `record.py` still wrote `comments.json`; the store reads `comments/<abs path, "/" -> "-">.json` with `{comments, marks}`. Every seeded tape rendered with "0 comments" and no error.
+  - a tape that leaves a modal open swallows `q` and `waitpid` hangs the whole batch; `record.py` now kills the app after 5 s.

@@ -1,0 +1,5 @@
+{"file": "examples/tour.md", "cols": 80, "rows": 24, "boot": 2,
+ "steps": [[0.3, "jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj"], [1.5, ""],
+           [0.3, "/"], [0.5, "Code fences"], [1.8, "<enter>"],
+           [0.3, "/"], [0.5, "Code fences"], [1.8, "<enter>"],
+           [0.3, "/"], [0.5, "Code fences"], [1.8, "<enter>"]]}

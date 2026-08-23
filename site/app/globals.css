@@ -1,0 +1,114 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Light first: warm paper, near-black ink, one green accent, amber for comment marks. */
+:root {
+  --background: oklch(0.985 0.005 85);
+  --foreground: oklch(0.2 0.01 60);
+  --card: oklch(1 0 0);
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --primary: oklch(0.5 0.11 155);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.95 0.006 85);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(0.95 0.006 85);
+  --muted-foreground: oklch(0.5 0.01 60);
+  --accent: oklch(0.94 0.008 85);
+  --accent-foreground: var(--foreground);
+  --destructive: oklch(0.58 0.22 27);
+  --border: oklch(0.9 0.008 80);
+  --input: var(--border);
+  --ring: oklch(0.6 0.1 155);
+  --mark: oklch(0.62 0.14 65);
+  --radius: 0.625rem;
+}
+
+.dark {
+  --background: oklch(0.15 0.005 80);
+  --foreground: oklch(0.94 0.005 85);
+  --card: oklch(0.19 0.005 80);
+  --popover: var(--card);
+  --primary: oklch(0.82 0.13 150);
+  --primary-foreground: oklch(0.15 0.01 150);
+  --secondary: oklch(0.24 0.005 80);
+  --muted: oklch(0.24 0.005 80);
+  --muted-foreground: oklch(0.66 0.008 80);
+  --accent: oklch(0.25 0.006 80);
+  --destructive: oklch(0.7 0.19 22);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: oklch(0.6 0.1 155);
+  --mark: oklch(0.82 0.13 80);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-mark: var(--mark);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply bg-background text-foreground font-sans;
+    color-scheme: light;
+    scroll-behavior: smooth;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection {
+    @apply bg-primary text-primary-foreground;
+  }
+}
+
+/* hairline grid background behind the hero */
+.grid-bg {
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at 50% 0%, black 20%, transparent 70%);
+}
+
+/* Nothing may widen the page: wide blocks scroll inside their own container. */
+html,
+body {
+  overflow-x: clip;
+  max-width: 100%;
+}

@@ -1,0 +1,2 @@
+{"file": "examples/tour.md", "cols": 80, "rows": 24, "seed": [{"line": 8, "text": "Tighten this intro"}],
+ "steps": [[0.5, "<wheeldown 40,10>"], [0.4, "<wheeldown 40,10>"], [0.8, "<click 30,15>"], [1.0, "]"], [1.5, ""]]}
