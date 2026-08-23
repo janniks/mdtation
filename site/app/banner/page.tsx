@@ -39,7 +39,7 @@ export default function Page() {
           <Agents className="mt-8 origin-left scale-110" label="works with" />
         </div>
         <div className="relative h-full min-w-0 flex-1">
-          <div className="absolute top-8 right-10 w-[620px] overflow-hidden rounded-xl [corner-shape:squircle] bg-[#f4f2ee] shadow-[0_0_0_2px_#ffffff,0_0_0_3px_#e6e3db,0_40px_80px_-24px_rgba(0,0,0,0.5)]">
+          <div className="absolute top-8 right-10 w-[620px] overflow-hidden rounded-xl [corner-shape:squircle] bg-[#f4f2ee] shadow-[0_0_0_1px_#f4f2ee,0_0_0_2px_#e6e3db,0_40px_80px_-24px_rgba(0,0,0,0.5)]">
             <div className="flex items-center gap-1.5 border-b border-black/10 bg-[#f4f2ee] px-3 py-2.5">
               <i className="size-2.5 rounded-full bg-[#c9c6bf]" />
               <i className="size-2.5 rounded-full bg-[#c9c6bf]" />
@@ -48,7 +48,7 @@ export default function Page() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/media/backplan.png" alt="" className="block w-full" />
           </div>
-          <div className="absolute bottom-0 left-0 z-10 w-[700px] translate-y-[25%] overflow-hidden rounded-t-xl [corner-shape:squircle] bg-[#f4f2ee] shadow-[0_0_0_2px_#ffffff,0_0_0_3px_#e6e3db,0_24px_60px_-30px_rgba(0,0,0,0.45)]">
+          <div className="absolute bottom-0 left-0 z-10 w-[700px] translate-y-[25%] overflow-hidden rounded-t-xl [corner-shape:squircle] bg-[#f4f2ee] shadow-[0_0_0_1px_#f4f2ee,0_0_0_2px_#e6e3db,0_24px_60px_-30px_rgba(0,0,0,0.45)]">
             <div className="flex items-center gap-1.5 border-b border-black/10 bg-[#f4f2ee] px-3 py-2.5">
               <i className="size-2.5 rounded-full bg-[#ff5f57]" />
               <i className="size-2.5 rounded-full bg-[#febc2e]" />
