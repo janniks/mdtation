@@ -11,8 +11,8 @@
 import { createCliRenderer, TextRenderable } from "@opentui/core";
 import type { CliRenderer, KeyEvent, MouseEvent, Selection } from "@opentui/core";
 import { spawnSync } from "node:child_process";
-import { writeFileSync } from "node:fs";
-import { writeFile } from "node:fs/promises";
+import { mkdirSync, watch, writeFileSync, type FSWatcher } from "node:fs";
+import { readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import { styled } from "./styled.ts";
@@ -25,8 +25,8 @@ import { All } from "./all.ts";
 import { copy } from "./clipboard.ts";
 import { CommentStore, copyFormat } from "../core/comment.ts";
 import type { Comment } from "../core/comment.ts";
-import { create, markers } from "../core/comments.ts";
-import { load, save } from "../core/store.ts";
+import { anchorFor, create, markers } from "../core/comments.ts";
+import { home, load, path as storePath, save } from "../core/store.ts";
 import { load as loadPrefs, save as savePrefs } from "../core/prefs.ts";
 import { report } from "../core/report.ts";
 import { end, field, set } from "../core/front.ts";
@@ -89,8 +89,11 @@ export class TuiShell {
   private guard = 0;
   /** Chord of the key being dispatched (for the status hint). */
   private chord = "";
-  readonly store: CommentStore;
+  store: CommentStore;
   private readonly file: string;
+  /** Disk watchers (comments json, markdown); see `follow`. */
+  private watchers: FSWatcher[] = [];
+  private wait?: ReturnType<typeof setTimeout>;
   overlay: Overlay | null = null;
   private readonly spec = specs(menus(COMMANDS));
   /** View-menu toggles keyed by command id, seeded from `mdtation.json`; flips are session-only. */
@@ -155,6 +158,7 @@ export class TuiShell {
       this.pick[k] = (saved.picks[k] ?? 0) % CYCLES[k].length;
     }
     this.view = clampViewport(this.fit(), doc.lines.length);
+    this.follow();
     this.bar = new MenuBar(renderer, this.spec, {
       hover: (i) => this.cur >= 0 && this.cur !== i && this.menuOpen(i),
       toggle: (i) => this.outside() || (this.cur === i ? this.close() : this.menuOpen(i)),
@@ -399,6 +403,73 @@ export class TuiShell {
     if (this.file) {
       void save(this.file, this.store);
     }
+  }
+
+  /** The file is the channel: follow the comments json and the markdown on disk, no mode.
+   * Events are debounced; our own writes come back as no-ops because the content matches. */
+  private follow(): void {
+    if (!this.file) {
+      return;
+    }
+    const dir = join(home(), "comments");
+    mkdirSync(dir, { recursive: true });
+    const mine = basename(storePath(this.file));
+    const queue = (fn: () => Promise<void>) => {
+      clearTimeout(this.wait);
+      this.wait = setTimeout(() => void fn(), 150);
+    };
+    try {
+      this.watchers = [
+        // Bun may only report the `.tmp` of an atomic write, so match on the prefix.
+        watch(dir, (_e, name) => String(name).startsWith(mine) && queue(() => this.reloadStore())),
+        watch(this.file, () => queue(() => this.reloadDoc())),
+      ];
+    } catch {
+      // Watching is best effort (some mounts refuse); the TUI still works without it.
+    }
+  }
+
+  /** Re-read comments; badge what arrived from elsewhere, keep an open comment box untouched. */
+  private async reloadStore(): Promise<void> {
+    const fresh = await load(this.file);
+    if (JSON.stringify(fresh.toJSON()) === JSON.stringify(this.store.toJSON())) {
+      return;
+    }
+    const seen = new Set(this.store.all().map((c) => c.id));
+    const incoming = fresh.live().filter((c) => !seen.has(c.id));
+    this.store = fresh;
+    const replies = incoming.filter((c) => c.re).length;
+    const n = incoming.length;
+    this.draw(
+      n === 0
+        ? undefined
+        : `${n} NEW ${replies === n ? (n === 1 ? "REPLY" : "REPLIES") : n === 1 ? "COMMENT" : "COMMENTS"}`,
+    );
+  }
+
+  /** Re-read the markdown unless there are unsaved edits; the cursor keeps its heading, else its line. */
+  private async reloadDoc(): Promise<void> {
+    if (this.dirty) {
+      return;
+    }
+    let text: string;
+    try {
+      text = await readFile(this.file, "utf-8");
+    } catch {
+      return;
+    }
+    if (text === this.doc.text) {
+      return;
+    }
+    const anchor = anchorFor(this.doc, this.view.cursor);
+    this.doc = parseDocument(text);
+    const line = this.store.resolve(anchor, this.doc)?.startLine ?? this.view.cursor;
+    this.view = jumpToLine(
+      clampViewport(this.fit(), this.doc.lines.length),
+      line,
+      this.doc.lines.length,
+    );
+    this.draw("RELOADED");
   }
 
   private save(): void {
@@ -744,6 +815,7 @@ export class TuiShell {
   }
 
   dispose(): void {
+    for (const w of this.watchers) w.close();
     this.renderer.keyInput.off("keypress", this.onKey);
     this.renderer.destroy();
     // OpenTUI's destroy() may not drain the process on its own, so the shell

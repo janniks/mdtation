@@ -78,3 +78,10 @@ Append-only detours / surprises that cost more than one attempt.
 - 2026-08-21: `TextareaRenderable` with `initialValue` leaves the cursor at offset 0; call `gotoBufferEnd()` after focus or typing prepends (showed up as "(edited)inline heading…" during a live test).
 
 - 2026-08-22 — scrolling "jumped": two causes stacked. `jumpToLine` sets `offset = line`, so using it to step over hidden rows re-anchored the window; and the viewport margin was in source lines while wrapped/hidden lines render N/0 rows. Row-aware `settle()` fixed both; reach for `moveCursor` when the window should stay put.
+
+- 2026-08-23 — recording gifs of the TUI: `asciinema rec` in a python pty + `agg` works, but three traps cost retries.
+  - writing keys char-by-char with a typing delay splits escape sequences, so mouse/arrow tokens arrive as plain keys (`M` toggled mouse capture, `m` the menu bar); write each `\x1b[...X` sequence in one `os.write` (`site/rec/record.py`).
+  - the cast's first frame is the blank alt screen and the last is teardown after `q`; trim both by timestamp and coalesce events <40 ms apart or the gif flashes half-drawn frames on loop.
+  - tapes that `^s` save write to `examples/tour.md`; `git checkout examples/tour.md` after a batch.
+- 2026-08-23 — `npm run build` in `site/` while `npm run dev` is running clobbers `.next`, and the dev server then 404s its own CSS/JS; restart dev after a build (`rm -rf .next`).
+- 2026-08-23 — Bun `fs.watch` on a directory reported only the `rename` for the `.tmp` of an atomic write, never the final name. Match on the target's name as a prefix.
