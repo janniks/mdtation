@@ -2,7 +2,7 @@ import { strict as assert } from "node:assert";
 import { test, describe } from "node:test";
 import { createViewport } from "../src/core/viewport.ts";
 import { parseDocument } from "../src/core/document.ts";
-import { hidden, render } from "../src/core/renderer.ts";
+import { hidden, render, span } from "../src/core/renderer.ts";
 
 // No trailing newline -> 8 clean lines, easy to assert exactly.
 const md = "# A\n## B\n### C\nhello\n```ts\nconst x = 1\n```\n# D";
@@ -230,4 +230,18 @@ describe("tables in the window", () => {
     assert.equal(out[2], "  | one   |…");
     assert.equal(out.length, 5); // 4 rows + trailing blank, nothing wrapped
   });
+});
+
+test("span counts inline comment rows, so the scroll margin sees them", () => {
+  const doc = parseDocument("a\nb\n");
+  const inline = new Map([[0, ["  x  note", "  y  more"]]]);
+  assert.equal(span(doc, 0, createViewport(0, 0, 80, 5), { inline }), 3);
+  assert.equal(span(doc, 1, createViewport(0, 0, 80, 5), { inline }), 1);
+  assert.deepEqual(render(doc, createViewport(0, 9, 80, 5), { inline }), [
+    "  a",
+    "    x  note",
+    "    y  more",
+    "  b",
+    "  ",
+  ]);
 });
