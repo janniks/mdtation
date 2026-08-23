@@ -196,19 +196,19 @@ function Tag({ children }: { children: string }) {
       <span className="h-px flex-1 bg-border" aria-hidden />
       <div className="relative px-3 py-1">
         <span
-          className="absolute top-0 left-0 size-2 border-t border-l border-primary"
+          className="absolute top-0 left-0 size-2 border-t border-l border-border"
           aria-hidden
         />
         <span
-          className="absolute top-0 right-0 size-2 border-t border-r border-primary"
+          className="absolute top-0 right-0 size-2 border-t border-r border-border"
           aria-hidden
         />
         <span
-          className="absolute bottom-0 left-0 size-2 border-b border-l border-primary"
+          className="absolute bottom-0 left-0 size-2 border-b border-l border-border"
           aria-hidden
         />
         <span
-          className="absolute right-0 bottom-0 size-2 border-r border-b border-primary"
+          className="absolute right-0 bottom-0 size-2 border-r border-b border-border"
           aria-hidden
         />
         <span className="font-mono text-xs text-muted-foreground">{children}</span>
@@ -260,8 +260,8 @@ function Section({
 }: {
   id: string;
   kicker: string;
-  /** Header treatment: centered corner-tick tag (default), centered eyebrow, red rule with a warning kicker, or crosshair marks. */
-  kind?: "tag" | "line" | "alert" | "cross";
+  /** Header treatment: centered corner-tick tag (default), centered eyebrow, red rule with a warning kicker, crosshair marks, or plain left-aligned title with no kicker. */
+  kind?: "tag" | "line" | "alert" | "cross" | "plain";
   title?: string;
   intro?: string;
   children: React.ReactNode;
@@ -271,7 +271,7 @@ function Section({
     <>
       {kind === "tag" && <Tag>{kicker}</Tag>}
       {kind === "line" && (
-        <div className="mb-8">
+        <div className="mb-6">
           <Eyebrow>{kicker}</Eyebrow>
         </div>
       )}
@@ -282,7 +282,7 @@ function Section({
       )}
       {intro && (
         <p
-          className={`mt-3 max-w-[640px] leading-relaxed text-muted-foreground ${mid ? "mx-auto" : ""}`}
+          className={`mt-3 max-w-[640px] leading-relaxed text-balance text-muted-foreground ${mid ? "mx-auto" : ""}`}
         >
           {code(intro)}
         </p>
@@ -292,7 +292,7 @@ function Section({
   return (
     <section id={id} className="scroll-mt-20 border-t py-16 sm:py-24">
       <div
-        className={`mb-10 ${mid ? "text-center" : ""} ${kind === "alert" ? "border-l-2 border-red-300 pl-5 sm:pl-6" : ""}`}
+        className={`mb-10 ${mid ? "text-center" : ""} ${kind === "alert" ? "border-l-2 border-red-300 pl-4" : ""}`}
       >
         {kind === "cross" ? <Cross>{head}</Cross> : head}
       </div>
@@ -409,7 +409,7 @@ export default function Page() {
             </Float>{" "}
             had a baby.<span className="text-primary">”</span>
           </blockquote>
-          <p className="mx-auto mt-14 mb-12 max-w-[560px] text-center leading-relaxed text-muted-foreground">
+          <p className="mx-auto mt-14 mb-8 max-w-[560px] text-center leading-relaxed text-muted-foreground">
             mdtation combines ideas and flows from a few great tools.
           </p>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
@@ -449,10 +449,12 @@ export default function Page() {
             {pains.map(([Icon, title, body]) => (
               <Card key={title}>
                 <CardHeader>
-                  <span className="mb-2 inline-flex size-9 items-center justify-center rounded-md bg-primary/10 text-primary">
-                    <Icon className="size-4" />
-                  </span>
-                  <CardTitle className="text-base leading-snug">{title}</CardTitle>
+                  <CardTitle className="flex items-center gap-3 text-base leading-snug">
+                    <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-md bg-red-100 text-red-700">
+                      <Icon className="size-4" />
+                    </span>
+                    {title}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="text-sm leading-relaxed text-muted-foreground">
                   {body}
@@ -465,8 +467,8 @@ export default function Page() {
         <Section
           id="loop"
           kicker="the loop"
-          title="Review the plan, not the diff"
-          intro="hunk does this for code diffs. mdtation does it for the prose around them: specs, plans, drafts, reviews."
+          title="Review the plan, not the chat."
+          intro="Specs, plans, drafts, reviews: the prose around the code deserves the same review flow as the diff."
         >
           <ol className="space-y-14 md:space-y-20">
             {steps.map(([title, body, key, clip], i) => (
@@ -489,14 +491,14 @@ export default function Page() {
               </li>
             ))}
           </ol>
-          <div className="mt-16 grid items-start gap-10 md:grid-cols-[1fr_1.1fr] [&>*]:min-w-0">
-            <div>
-              <h3 className="font-semibold">What lands on the clipboard</h3>
-              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+          <div className="mt-16 grid items-start gap-4 md:grid-cols-[1fr_1.1fr] md:gap-10 [&>*]:min-w-0">
+            <p className="text-sm leading-relaxed">
+              <span className="font-semibold text-foreground">What lands on the clipboard</span>{" "}
+              <span className="text-muted-foreground">
                 Line, section path, quote, note. Plain text, no schema to learn.
-              </p>
-            </div>
-            <Prompt title="clipboard, after C">
+              </span>
+            </p>
+            <Prompt title="clipboard">
               <pre className="whitespace-pre">{block}</pre>
               <pre className="whitespace-pre border-t pt-3 text-muted-foreground">{line}</pre>
             </Prompt>
@@ -532,6 +534,7 @@ export default function Page() {
         <Section
           id="faq"
           kicker="faq"
+          kind="plain"
           title="Questions"
           intro="Short answers. The README has the long ones."
         >

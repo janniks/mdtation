@@ -13,7 +13,7 @@ export function Agents({ className = "" }: { className?: string }) {
   return (
     <div className={`flex flex-wrap items-center gap-x-3 gap-y-2 ${className}`}>
       <span className="font-mono text-xs text-muted-foreground">
-        works with anything that can CLI
+        works with anything that can CLI, or you paste manually
       </span>
       <div className="flex items-center">
         {agents.map(([name, Icon, tilt]) => (
