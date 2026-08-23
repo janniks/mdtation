@@ -7,7 +7,15 @@ const rows: Row[] = [
   { n: 6, text: "" },
   { n: 7, text: "The renderer is a pure function from markdown to rows." },
   { n: 8, text: "Comments live beside the file, keyed by path, and re-anchor" },
-  { n: 9, text: <>by heading slug so they survive a <span className="italic">moved</span> section.</>, mark: "dot" },
+  {
+    n: 9,
+    text: (
+      <>
+        by heading slug so they survive a <span className="italic">moved</span> section.
+      </>
+    ),
+    mark: "dot",
+  },
   { n: 10, text: "" },
   { n: 11, text: <span className="font-bold">### The copy step</span> },
   {
@@ -22,7 +30,14 @@ const rows: Row[] = [
   { n: 13, text: "reference block on your clipboard. Paste it into the agent.", mark: "dot" },
   { n: 14, text: "" },
   { n: 15, text: <span className="text-muted-foreground">```sh</span> },
-  { n: 16, text: <>mdtation spec.md <span className="text-muted-foreground"># c to comment, C to copy</span></> },
+  {
+    n: 16,
+    text: (
+      <>
+        mdtation spec.md <span className="text-muted-foreground"># c to comment, C to copy</span>
+      </>
+    ),
+  },
   { n: 17, text: <span className="text-muted-foreground">```</span> },
   { n: 18, text: "" },
   { n: 19, text: "- [x] persist comments, - [ ] stdin", mark: "dot" },
@@ -41,7 +56,10 @@ export function Terminal() {
         <div className="min-w-[34rem]">
           <div className="flex gap-5 px-4 py-1 border-b border-border">
             {["File", "View", "Comments", "Help"].map((m) => (
-              <span key={m} className={m === "Comments" ? "bg-fg text-bg px-1" : "text-muted-foreground"}>
+              <span
+                key={m}
+                className={m === "Comments" ? "bg-fg text-bg px-1" : "text-muted-foreground"}
+              >
                 <u className="decoration-muted-foreground/60 underline-offset-2">{m[0]}</u>
                 {m.slice(1)}
               </span>
@@ -57,7 +75,9 @@ export function Terminal() {
                 key={r.n}
                 className={`flex px-2 ${r.mark === "caret" ? "bg-foreground/[0.06]" : ""}`}
               >
-                <span className="w-6 text-right text-muted-foreground-foreground/60 select-none">{r.n}</span>
+                <span className="w-6 text-right text-muted-foreground-foreground/60 select-none">
+                  {r.n}
+                </span>
                 <span className="w-5 text-center select-none">
                   {r.mark === "caret" && <span className="text-primary">+</span>}
                   {r.mark === "dot" && <span className="text-mark">●</span>}
@@ -75,17 +95,19 @@ export function Terminal() {
                 <span className="inline-block w-[0.6em] h-[1.1em] align-text-bottom bg-fg animate-pulse ml-px" />
               </div>
               <div className="px-3 py-1.5 border-t border-border text-muted-foreground text-[0.85em]">
-                enter save  esc cancel
+                enter save esc cancel
               </div>
             </div>
           </div>
           <div className="flex justify-between px-4 py-1 border-t border-border bg-foreground/[0.03] text-muted-foreground">
             <span>
-              <span className="text-foreground">Ln 12/131</span>  3 comments
+              <span className="text-foreground">Ln 12/131</span> 3 comments
             </span>
             <span>
-              <span className="text-foreground">c</span> comment  <span className="text-foreground">C</span> copy{" "}
-              <span className="text-foreground">/</span> palette  <span className="text-foreground">?</span> help
+              <span className="text-foreground">c</span> comment{" "}
+              <span className="text-foreground">C</span> copy{" "}
+              <span className="text-foreground">/</span> palette{" "}
+              <span className="text-foreground">?</span> help
             </span>
           </div>
         </div>

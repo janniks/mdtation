@@ -88,3 +88,5 @@ Append-only detours / surprises that cost more than one attempt.
 - 2026-08-23 recorder seeds silently ignored after the per-file store landed
   - `record.py` still wrote `comments.json`; the store reads `comments/<abs path, "/" -> "-">.json` with `{comments, marks}`. Every seeded tape rendered with "0 comments" and no error.
   - a tape that leaves a modal open swallows `q` and `waitpid` hangs the whole batch; `record.py` now kills the app after 5 s.
+- 2026-08-23 `record.py` must be run from the repo root with `site/rec/tapes/<name>.json`
+  - the child `chdir`s to the root before `asciinema`, so a tape path relative to `site/` points nowhere: the cast keeps its old header, the app never starts, and `agg` fails on an empty cast with no hint why.

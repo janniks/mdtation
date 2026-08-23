@@ -1,0 +1,2 @@
+{"file": "site/rec/fixtures/plan.md", "cols": 80, "rows": 24,
+ "steps": [[1.0, ""], [0.5, "jjjjjjjjjjjjjjj"], [0.4, "c"], [0.05, "Keep a 30 s grace window, parallel requests break otherwise"], [0.6, "<enter>"], [1.8, ""]]}

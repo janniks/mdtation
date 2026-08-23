@@ -66,7 +66,9 @@ def mouse(m):
     if kind == "wheeldown":
         return f"\x1b[<65;{x};{y}M"
     x2, y2 = b.split(",")
-    steps = "".join(f"\x1b[<32;{x};{y2 if i else y}M" for i in range(2))
+    # Sweep the pointer a few columns at a time so the selection is seen growing, not just appearing.
+    cols = range(int(x), int(x2), 3 if int(x2) > int(x) else -3)
+    steps = "".join(f"\x1b[<32;{c};{y2 if c != int(x) else y}M" for c in cols)
     return f"\x1b[<0;{x};{y}M{steps}\x1b[<32;{x2};{y2}M\x1b[<0;{x2};{y2}m"
 for delay, keys in t["steps"]:
     for k, v in TOK.items():

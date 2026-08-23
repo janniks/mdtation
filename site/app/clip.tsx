@@ -38,22 +38,26 @@ export function Clip({
     <figure className={`min-w-0 ${className}`}>
       <div className={`overflow-hidden border bg-[#1b1d1b] ${frame}`}>
         {still ? (
-          <img src={`/media/${name}.png`} alt={caption?.replaceAll("`", "") ?? ""} className={`block w-full ${box}`} />
+          <img
+            src={`/media/${name}.png`}
+            alt={caption?.replaceAll("`", "") ?? ""}
+            className={`block w-full ${box}`}
+          />
         ) : (
-        <video
-          ref={ref}
-          autoPlay
-          loop
-          muted
-          playsInline
-          preload="auto"
-          disablePictureInPicture
-          poster={`/media/${name}.png`}
-          aria-label={caption?.replaceAll("`", "")}
-          className={`block w-full ${box}`}
-        >
-          <source src={`/media/${name}.mp4`} type="video/mp4" />
-        </video>
+          <video
+            ref={ref}
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+            disablePictureInPicture
+            poster={`/media/${name}.png`}
+            aria-label={caption?.replaceAll("`", "")}
+            className={`block w-full ${box}`}
+          >
+            <source src={`/media/${name}.mp4`} type="video/mp4" />
+          </video>
         )}
       </div>
       {caption && (

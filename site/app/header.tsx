@@ -1,12 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Copy } from "./copy";
 import { GitHub } from "./icons";
+import { Zen } from "./zen";
 
 export const GITHUB = "https://github.com/janniks/mdtation";
 export const NPM = "https://www.npmjs.com/package/mdtation";
 export const INSTALL = "npm i -g mdtation";
 /** What the header copies: tells an agent how to install mdtation and learn the comment flow. */
-export const PROMPT = "Install mdtation with `npm i -g mdtation`, then run `mdtation skill` and follow it to read and address the comments I leave on your markdown.";
+export const PROMPT =
+  "Install mdtation with `npm i -g mdtation`, then run `mdtation skill` and follow it to read and address the comments I leave on your markdown.";
 
 const links = [
   ["#problem", "the problem"],
@@ -29,11 +31,11 @@ export function Header() {
             className="inline-flex size-7 items-center justify-center rounded-md border bg-card text-base leading-none shadow-xs"
             aria-hidden
           >
-            <span className="[filter:grayscale(1)_contrast(0)_brightness(1.02)_sepia(0.25)]">🧘‍♀️</span>
+            <Zen />
           </span>
           mdtation
         </a>
-        <nav className="hidden items-center gap-4 font-mono text-xs font-semibold text-muted-foreground sm:flex">
+        <nav className="hidden items-center gap-6 font-mono text-xs font-semibold text-muted-foreground sm:flex">
           {links.map(([href, label]) => (
             <a key={href} href={href} className="transition-colors hover:text-foreground">
               {label}
@@ -41,7 +43,7 @@ export function Header() {
           ))}
         </nav>
         <div className="flex items-center justify-end gap-1.5">
-          <Copy text={PROMPT} label="Copy prompt" />
+          <Copy text={PROMPT} label="Copy prompt" size="xs" />
           <Button asChild variant="outline" size="sm">
             <a href={GITHUB} target="_blank" rel="noreferrer">
               <GitHub />

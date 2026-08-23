@@ -2,7 +2,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Clip } from "./clip";
 import { code } from "./code";
-import { GIFS } from "./gifs";
+import { GIFS as ALL } from "./gifs";
+
+/** Only Navigate and Comments for now. The other groups stay in gifs.ts until the demo needs them. */
+const GIFS = ALL.slice(0, 2);
 
 /** Feature gallery: one tab per group, each feature a tight card with its clip on top. */
 export function Gallery() {
