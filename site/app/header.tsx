@@ -29,7 +29,7 @@ export function Header() {
             className="inline-flex size-7 items-center justify-center rounded-md border bg-card text-base leading-none shadow-xs"
             aria-hidden
           >
-            <span className="[filter:grayscale(1)_contrast(0)_brightness(1.15)_sepia(0.35)]">🧘</span>
+            <span className="[filter:grayscale(1)_contrast(0)_brightness(1.09)_sepia(0.25)]">🧘</span>
           </span>
           mdtation
         </a>

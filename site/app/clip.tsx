@@ -1,15 +1,6 @@
-/** Renders `key` spans in copy as <code>. */
-export function code(text: string) {
-  return text.split("`").map((part, i) =>
-    i % 2 ? (
-      <code key={i} className="rounded bg-muted px-1 font-mono text-[0.85em] text-foreground">
-        {part}
-      </code>
-    ) : (
-      part
-    ),
-  );
-}
+"use client";
+import { useEffect, useRef } from "react";
+import { code } from "./code";
 
 /** Looping feature clip: `/media/<name>.mp4` with a poster, in a hairline frame. Dark until the poster lands. */
 export function Clip({
@@ -31,6 +22,18 @@ export function Clip({
   still?: boolean;
 }) {
   const box = wide ? "aspect-[2/1] object-cover object-top" : "aspect-[1580/1120] object-cover";
+  const ref = useRef<HTMLVideoElement>(null);
+  // Mobile browsers ignore autoplay until the element is on screen and sometimes even then: nudge it.
+  useEffect(() => {
+    const v = ref.current;
+    if (!v) return;
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) v.play().catch(() => {});
+      else v.pause();
+    });
+    io.observe(v);
+    return () => io.disconnect();
+  }, []);
   return (
     <figure className={`min-w-0 ${className}`}>
       <div className={`overflow-hidden border bg-[#1b1d1b] ${frame}`}>
@@ -38,11 +41,13 @@ export function Clip({
           <img src={`/media/${name}.png`} alt={caption?.replaceAll("`", "") ?? ""} className={`block w-full ${box}`} />
         ) : (
         <video
+          ref={ref}
           autoPlay
           loop
           muted
           playsInline
-          preload="metadata"
+          preload="auto"
+          disablePictureInPicture
           poster={`/media/${name}.png`}
           aria-label={caption?.replaceAll("`", "")}
           className={`block w-full ${box}`}

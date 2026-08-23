@@ -11,10 +11,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Agents } from "./agents";
 import { Copy } from "./copy";
-import { Clip, code } from "./clip";
+import { Clip } from "./clip";
+import { code } from "./code";
 import { Gallery } from "./gallery";
 import { GITHUB, Header, INSTALL, NPM } from "./header";
-import { Agentation, GitHub, Herdr, Hunk, OpenTUI } from "./icons";
+import { Agentation, AgentationWord, GitHub, Herdr, Hunk, OpenTUI } from "./icons";
 import { Prompt } from "./prompt";
 import { Protos } from "./proto/groups";
 
@@ -202,9 +203,9 @@ export default function Page() {
             frame="rounded-2xl"
             className="mt-12 text-left shadow-[0_24px_60px_-30px_rgba(0,0,0,0.35)] sm:mt-16"
           />
-          <p className="mt-4 text-sm text-muted-foreground">
+          <p className="mt-4 text-sm text-balance text-muted-foreground">
             <ArrowUp className="mr-1 inline size-3.5 align-[-2px] text-primary" />
-            You just left a comment. The agent can read it now.
+            You just left a comment. Now the agent can read it.
           </p>
         </section>
 
@@ -216,11 +217,13 @@ export default function Page() {
             <span className="text-primary">“</span>If{" "}
             <Float icon={Herdr} at="-rotate-12 -bottom-[0.5em] left-[18%] size-[0.8em]">herdr</Float>,{" "}
             <Float icon={Hunk} at="rotate-6 -top-[0.3em] -right-[0.45em] size-[0.6em]">hunk</Float>, and{" "}
-            <Float icon={Agentation} at="-rotate-6 -top-[0.35em] -right-[0.5em] h-[0.6em] w-auto">agentation</Float> had a
-            baby.<span className="text-primary">”</span>
+            <Float icon={AgentationWord} at="-rotate-3 -bottom-[0.8em] left-[10%] h-[0.85em] w-auto px-[0.15em] py-[0.1em]">
+              agentation
+            </Float>{" "}
+            had a baby.<span className="text-primary">”</span>
           </blockquote>
           <p className="mx-auto mt-6 mb-12 max-w-[560px] text-center leading-relaxed text-muted-foreground">
-            mdtation is a small idea borrowed from a few bigger ones.
+            mdtation combines ideas and flows from a few great tools.
           </p>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
             {friends.map(([Icon, name, body, href]) => (
@@ -335,7 +338,7 @@ export default function Page() {
           id="features"
           kicker="features"
           title="Everything a viewer should have had"
-          intro="A real menu bar, a command palette, a settings popup, and a View menu that remembers what you picked. The CLI keeps growing."
+          intro="Menu bar, command palette, settings. View toggles are remembered."
         >
           <Gallery />
         </Section>

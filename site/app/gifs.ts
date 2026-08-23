@@ -1,42 +1,17 @@
-/** Feature data: [clip name, title, description]. Backticks render as <code>. */
+/** Feature data: [clip name or names, title, description]. Backticks render as <code>. */
 export const GIFS = [
   {
     title: "Navigate",
     items: [
       [
-        "scroll",
-        "Caret-driven scrolling",
-        "`j` and `k` move a caret line by line, and the page follows once it hits the scroll margin. You always know which line you are on.",
+        ["scroll", "click"],
+        "Caret, wheel, click",
+        "`j` and `k` move a caret, the wheel scrolls like a desktop app and the caret keeps up, and a click puts it on any row. You always know which line you are on.",
       ],
       [
-        "wheel",
-        "Mouse wheel",
-        "Scroll with the wheel like any desktop app, and the caret keeps up. `M` turns mouse capture off when you want the terminal's own selection back.",
-      ],
-      [
-        "click",
-        "Click to place the caret",
-        "Click any row and the caret goes there. Spot a problem mid-page and comment on it without counting lines.",
-      ],
-      [
-        "page",
-        "Page and jump keys",
-        "`^d` and `^u` move a page at a time, `g` and `G` jump to the top and bottom. Page Up and Page Down work too.",
-      ],
-      [
-        "menu",
-        "A real menu bar",
-        "File, View, Navigate, Edit, Comments, Help. Click a menu or arrow across it. Every View toggle lives here, so nothing needs a memorised chord.",
-      ],
-      [
-        "palette",
-        "Command palette",
-        "`/` filters every command by title as you type. Toggles that are already on read as Hide instead of Show.",
-      ],
-      [
-        "help",
-        "Help dialog",
-        "`?` lists every key and what it does. The same catalog powers the menu bar and the palette, so the three never disagree.",
+        ["menu", "palette"],
+        "Menu bar and command palette",
+        "File, View, Navigate, Edit, Comments, Help in a real menu bar. `/` filters the same commands by title. Toggles that are already on read as Hide.",
       ],
       [
         "narrow",
