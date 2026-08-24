@@ -1,12 +1,4 @@
-import {
-  ArrowRight,
-  ArrowUp,
-  ListChecks,
-  MessagesSquare,
-  Package,
-  ScrollText,
-  TriangleAlert,
-} from "lucide-react";
+import { ArrowRight, ArrowUp, Package, TriangleAlert } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -42,21 +34,9 @@ Address each one in order, then rewrite the file in place.
 Keep the headings so my remaining comments stay anchored.`;
 
 const pains = [
-  [
-    ListChecks,
-    "Option pickers",
-    'A, B or C, pick one. Your real answer is "B, but only if the second half of C", there is no box for that, and no way to ask where B came from. Clunky on a phone, too.',
-  ],
-  [
-    MessagesSquare,
-    "Itemized lists in a chat thread",
-    'Finding F7, section 2.1, Critical 6, recommended (b). You answer by label, and by the time you type "F7 no, 2.1 yes, (b) is wrong" the list has scrolled away and you are replying from memory.',
-  ],
-  [
-    ScrollText,
-    "Plans as scrollback",
-    "The agent wrote a 300-line spec and printed it into the terminal. You read it by scrolling a buffer, and what you think about line 140 goes nowhere.",
-  ],
+  ["pain-picker", "option pickers", "-rotate-2", "no box for your real answer"],
+  ["pain-findings", "label replies", "rotate-1", "answering findings from memory"],
+  ["pain-wall", "scrollback plans", "-rotate-1", "your thoughts on line 140 go nowhere"],
 ] as const;
 
 const steps = [
@@ -393,28 +373,27 @@ export default function Page() {
 
         <Section
           id="problem"
-          kicker="feedback, the problem today"
+          kicker="the problem today"
           kind="alert"
-          title="Agents ask for feedback in the worst possible ways"
-          intro="To get the best agentic results, we give our agents feedback: on their plans, their findings, their drafts. But the conversational flow and picker tools are slow and clunky. The `mdtation` flow is more natural, and still terminal friendly."
+          title="Giving feedback in a long conversation is awkward"
         >
-          <div className="grid gap-4 md:grid-cols-3 [&>*]:min-w-0">
-            {pains.map(([Icon, title, body]) => (
-              <Card key={title}>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-3 text-base leading-snug">
-                    <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-md bg-red-100 text-red-700">
-                      <Icon className="size-4" />
-                    </span>
-                    {title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm leading-relaxed text-muted-foreground">
-                  {body}
-                </CardContent>
-              </Card>
+          <div className="grid gap-6 sm:gap-8 md:grid-cols-3 [&>*]:min-w-0">
+            {pains.map(([name, label, tilt, note]) => (
+              <figure key={name} className={`relative ${tilt}`}>
+                <img
+                  src={`/media/${name}.png`}
+                  alt={label}
+                  className="w-full rounded-lg border shadow-[0_18px_40px_-20px_rgba(0,0,0,0.4)]"
+                />
+                <figcaption className="absolute -top-2 -left-1 -rotate-3 rounded-md border border-red-200 bg-red-50 px-2 py-0.5 font-mono text-xs text-red-700 shadow-xs">
+                  {note}
+                </figcaption>
+              </figure>
             ))}
           </div>
+          <p className="mt-10 text-center text-lg font-medium tracking-tight text-balance">
+            No more option pickers, label replies, or scrollback plans.
+          </p>
         </Section>
 
         <Section
