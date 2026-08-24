@@ -17,41 +17,44 @@ const links = [
   ["#faq", "faq"],
 ] as const;
 
-/** Sticky translucent bar: icon tile + name, centered nav, buttons on the right. Ported from openindex home-nav without the scroll morph. */
+/** Floating pill nav, fixed so iOS Safari's collapsing bottom bar can't open a gap above it. Ported from openindex home-nav without the scroll morph. */
 export function Header() {
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/75 pt-[env(safe-area-inset-top)] backdrop-blur-md before:absolute before:inset-x-0 before:-top-24 before:h-24 before:bg-background">
-      <div className="mx-auto grid max-w-[1040px] grid-cols-[1fr_auto] items-center gap-4 px-5 py-3 sm:grid-cols-[auto_1fr_auto] sm:px-8">
-        <a
-          href="#"
-          className="inline-flex items-center gap-2.5 font-semibold tracking-tight"
-          title="feedback your agent can use"
-        >
-          <span
-            className="inline-flex size-7 items-center justify-center rounded-md border bg-card text-base leading-none shadow-xs"
-            aria-hidden
+    <>
+      <header className="fixed inset-x-3 top-[calc(0.75rem+env(safe-area-inset-top))] z-40 sm:inset-x-8">
+        <div className="mx-auto grid max-w-[960px] grid-cols-[1fr_auto] items-center gap-4 rounded-full border bg-background/80 py-2 pr-2 pl-4 shadow-sm backdrop-blur-md sm:grid-cols-[auto_1fr_auto]">
+          <a
+            href="#"
+            className="inline-flex items-center gap-2.5 font-semibold tracking-tight"
+            title="feedback your agent can use"
           >
-            <Zen />
-          </span>
-          mdtation
-        </a>
-        <nav className="hidden items-center justify-center gap-6 font-mono text-xs text-foreground/70 sm:flex">
-          {links.map(([href, label]) => (
-            <a key={href} href={href} className="transition-colors hover:text-foreground">
-              {label}
-            </a>
-          ))}
-        </nav>
-        <div className="flex items-center justify-end gap-1.5">
-          <Copy text={PROMPT} label="Copy prompt" size="xs" />
-          <Button asChild variant="outline" size="sm">
-            <a href={GITHUB} target="_blank" rel="noreferrer">
-              <GitHub />
-              GitHub
-            </a>
-          </Button>
+            <span
+              className="inline-flex size-7 items-center justify-center rounded-md border bg-card text-base leading-none shadow-xs"
+              aria-hidden
+            >
+              <Zen />
+            </span>
+            mdtation
+          </a>
+          <nav className="hidden items-center justify-center gap-6 font-mono text-xs text-foreground/70 sm:flex">
+            {links.map(([href, label]) => (
+              <a key={href} href={href} className="transition-colors hover:text-foreground">
+                {label}
+              </a>
+            ))}
+          </nav>
+          <div className="flex items-center justify-end gap-1.5">
+            <Copy text={PROMPT} label="Copy prompt" size="xs" />
+            <Button asChild variant="outline" size="sm">
+              <a href={GITHUB} target="_blank" rel="noreferrer">
+                <GitHub />
+                GitHub
+              </a>
+            </Button>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+      <div className="h-[calc(4.5rem+env(safe-area-inset-top))]" aria-hidden />
+    </>
   );
 }
