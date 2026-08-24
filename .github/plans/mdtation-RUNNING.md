@@ -161,3 +161,4 @@ Pure models live in `src/core` with node tests; `src/ui` only wires OpenTUI.
 | 2026-08-24 | header pill: concentric squircle corners (14px = inner 6px + 8px pad), equal padding all around | site/app/header.tsx |
 | 2026-08-24 | page: lead "now comment", friends copy (herdr/hunk/agentation/OpenTUI), herdr sticker 1px down | site/app/page.tsx |
 | 2026-08-24 | problem: tilted bad-example screenshots (picker/findings/wall) w red keyword chips, new title/kicker, intro removed, "No more" line | site/app/page.tsx, pain-* fixtures/tapes/pngs |
+| 2026-08-24 | agents: human-first kicker+copy w mouse/keyboard icons, both prompt terminals removed; scrollwheel; mantra logo tilt; twitter in footer | site/app/page.tsx, gifs.ts, mantra.tsx |

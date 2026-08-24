@@ -1,4 +1,4 @@
-import { ArrowRight, ArrowUp, Package, TriangleAlert } from "lucide-react";
+import { ArrowRight, ArrowUp, Keyboard, MousePointer2, Package, TriangleAlert } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -16,22 +16,6 @@ import { Gallery } from "./gallery";
 import { GITHUB, Header, INSTALL, NPM } from "./header";
 import { Agentation, AgentationWord, GitHub, Herdr, Hunk, OpenTUI } from "./icons";
 import { Mantra } from "./mantra";
-import { Prompt } from "./prompt";
-
-/** Exactly what `copyFormat(comment, doc, "detailed")` puts on the clipboard. */
-const block = `Line 41  Auth / Session refresh
-    Refresh tokens are rotated on every request and the old token is
-    revoked immediately.
-> Immediate revoke breaks parallel requests from the same tab. Keep a 30 s grace window, then revoke.`;
-
-/** Same format without a selection: the line itself is quoted. */
-const line = `Line 58  Auth / Logout
-    Logout clears the cookie and does nothing server-side.
-> Also revoke the refresh token, otherwise the cookie is the only thing keeping the session out.`;
-
-const prompt = `Read the comments I left on plans/auth.md by running \`mdtation plans/auth.md list\`.
-Address each one in order, then rewrite the file in place.
-Keep the headings so my remaining comments stay anchored.`;
 
 const pains = [
   ["pain-picker", "option pickers", "-rotate-2", "no box for your real answer"],
@@ -428,36 +412,28 @@ export default function Page() {
               </li>
             ))}
           </ol>
-          <div className="mx-auto mt-16 max-w-[720px] space-y-4 [&>*]:min-w-0">
-            <p className="text-sm leading-relaxed">
-              <span className="mr-2 font-semibold text-foreground">
-                What lands on the clipboard
-              </span>{" "}
-              <span className="text-muted-foreground">
-                Line, section path, quote, note. Plain text, no schema to learn.
-              </span>
-            </p>
-            <Prompt title="clipboard">
-              <pre className="whitespace-pre">{block}</pre>
-              <pre className="whitespace-pre border-t pt-3 text-muted-foreground">{line}</pre>
-            </Prompt>
-          </div>
         </Section>
 
         <Section
           id="agents"
-          kicker="built for agents"
+          kicker="built for agents, human-first design"
           kind="cross"
           narrow
           title="Meditate on the plan, then send comments back"
-          intro="Plain markdown with a line number, a heading path, the passage and your note. For a whole review, `mdtation file.md list` prints every comment as one report."
-          tail={<Agents className="mt-5" />}
+          tail={
+            <>
+              <p className="mt-3 leading-relaxed text-balance text-muted-foreground">
+                Human-friendly notes. Mouse-enabled{" "}
+                <MousePointer2 className="inline size-4 align-[-0.15em]" aria-hidden /> even as a
+                TUI, keyboard-first{" "}
+                <Keyboard className="inline size-4 align-[-0.15em]" aria-hidden />, command palette
+                and menus included.
+              </p>
+              <Agents className="mt-5" />
+            </>
+          }
         >
-          <div>
-            <Prompt title="claude">
-              <pre className="whitespace-pre-wrap">{prompt}</pre>
-            </Prompt>
-          </div>
+          {null}
         </Section>
 
         <Section
@@ -516,6 +492,9 @@ export default function Page() {
           <div className="flex flex-wrap items-center justify-between gap-4 font-mono text-xs text-muted-foreground">
             <span className="whitespace-pre">mdtation MIT 2026 janniks</span>
             <nav className="flex gap-5">
+              <a href="https://x.com/janniksco" className="hover:text-foreground">
+                twitter
+              </a>
               <a href={GITHUB} className="hover:text-foreground">
                 GitHub
               </a>

@@ -5,7 +5,7 @@ export const GIFS = [
     items: [
       [
         "navigate",
-        "Caret, wheel, click",
+        "Caret, scrollwheel, click",
         "`j` and `k` move a caret, the wheel scrolls like a desktop app and the caret keeps up, and a click puts it on any row. You always know which line you are on.",
       ],
       [
