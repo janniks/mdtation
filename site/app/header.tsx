@@ -20,7 +20,7 @@ const links = [
 /** Sticky translucent bar: icon tile + name, centered nav, buttons on the right. Ported from openindex home-nav without the scroll morph. */
 export function Header() {
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/75 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b bg-background/75 pt-[env(safe-area-inset-top)] backdrop-blur-md before:absolute before:inset-x-0 before:-top-24 before:h-24 before:bg-background">
       <div className="mx-auto grid max-w-[1040px] grid-cols-[1fr_auto] items-center gap-4 px-5 py-3 sm:grid-cols-[auto_1fr_auto] sm:px-8">
         <a
           href="#"
