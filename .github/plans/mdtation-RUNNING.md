@@ -158,3 +158,4 @@ Pure models live in `src/core` with node tests; `src/ui` only wires OpenTUI.
 | 2026-08-24 | banner: border slimmed to 1px, tinted to match window bar | site/app/banner, .github/media/banner.png |
 | 2026-08-24 | header: cover iOS overscroll hole above sticky bar (before-extender), safe-area top padding | site/app/header.tsx |
 | 2026-08-24 | header: floating fixed pill nav (openindex style), replaces sticky bar, fixes iOS bottom-bar gap | site/app/header.tsx |
+| 2026-08-24 | header pill: concentric squircle corners (14px = inner 6px + 8px pad), equal padding all around | site/app/header.tsx |
