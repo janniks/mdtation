@@ -367,7 +367,7 @@ export default function Page() {
                 <img
                   src={`/media/${name}.png`}
                   alt={label}
-                  className="w-full rounded-lg border shadow-[0_18px_40px_-20px_rgba(0,0,0,0.4)]"
+                  className="w-full rounded-lg border border-[#1b1d1b] shadow-[0_18px_40px_-20px_rgba(0,0,0,0.4)]"
                 />
                 <figcaption className="absolute -top-2 -left-1 -rotate-3 rounded-md border border-red-200 bg-red-50 px-2 py-0.5 font-mono text-xs text-red-700 shadow-xs">
                   {note}
@@ -383,7 +383,7 @@ export default function Page() {
         <Section
           id="loop"
           kicker="the loop"
-          title="Review the plan, not the chat."
+          title="Comment on the plan, not the chat."
           intro="Specs, plans, drafts, reviews: the prose your agent writes deserves a real review flow, not a chat reply."
         >
           <ol className="space-y-14 md:space-y-20">
