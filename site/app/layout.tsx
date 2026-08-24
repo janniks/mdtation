@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { Inter } from "next/font/google";
 import type { Metadata } from "next";
@@ -46,6 +47,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body className="min-h-screen">
         <TooltipProvider>{children}</TooltipProvider>
+        <Analytics />
         {process.env.NODE_ENV === "development" && <Agentation />}
         {process.env.NODE_ENV === "development" && <Breakpoint />}
       </body>
