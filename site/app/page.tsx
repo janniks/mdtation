@@ -32,13 +32,13 @@ const steps = [
   ],
   [
     "You read, comment, and copy",
-    "Press `c` on a line, or drag-select a sentence, and write what is wrong. `C` copies it as a reference: line, section, quote, note.",
+    "Press `c` on a line, or drag-select a sentence, and add a comment. Read and comment step by step.",
     "",
     "select",
   ],
   [
     "The agent revises, you loop",
-    "The agent reads the report and edits the file. Open it again: your comments are still anchored. Archive what landed, go again.",
+    "The agent reads the comments and edits the file. Open it again: your comments are still anchored. Archive what landed, go again.",
     "mdtation plans/auth.md list",
     "agent",
   ],
@@ -123,7 +123,7 @@ function Eyebrow({ children, wide }: { children: string; wide?: boolean }) {
   const rule = wide ? "h-px flex-1 bg-border" : "h-px w-12 shrink-0 bg-border";
   return (
     <p
-      className={`flex items-center justify-center gap-3 text-xs text-muted-foreground ${wide ? "mx-auto w-[60%]" : ""}`}
+      className={`flex items-center justify-center gap-2 text-xs text-muted-foreground sm:gap-3 ${wide ? "mx-auto w-[60%]" : ""}`}
     >
       <span className={rule} aria-hidden />
       <span className="text-center text-balance">{children}</span>
@@ -440,7 +440,7 @@ export default function Page() {
           id="features"
           kicker="features"
           title="Everything a TUI should have"
-          intro="Menu bar, command palette, settings, all mouse ready. View toggles are remembered."
+          intro="Keyboard-first but fully mouse friendly, adopting desktop patterns like menu bars and command palettes."
         >
           <Gallery />
         </Section>

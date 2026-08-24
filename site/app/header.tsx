@@ -22,7 +22,7 @@ export function Header() {
   return (
     <>
       <header className="fixed inset-x-3 top-[calc(0.75rem+env(safe-area-inset-top))] z-40 sm:inset-x-8">
-        <div className="mx-auto grid max-w-[960px] grid-cols-[1fr_auto] items-center gap-4 rounded-[14px] [corner-shape:squircle] border bg-background/80 p-2 shadow-sm backdrop-blur-md sm:grid-cols-[auto_1fr_auto]">
+        <div className="mx-auto grid max-w-[960px] grid-cols-[1fr_auto] items-center gap-4 rounded-[14px] [corner-shape:squircle] border bg-background/80 p-2 shadow-[0_1px_3px_0_rgba(0,0,0,0.09),0_1px_2px_-1px_rgba(0,0,0,0.09)] backdrop-blur-md sm:grid-cols-[auto_1fr_auto]">
           <a
             href="#"
             className="inline-flex items-center gap-2.5 font-semibold tracking-tight"

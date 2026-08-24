@@ -163,3 +163,4 @@ Pure models live in `src/core` with node tests; `src/ui` only wires OpenTUI.
 | 2026-08-24 | problem: tilted bad-example screenshots (picker/findings/wall) w red keyword chips, new title/kicker, intro removed, "No more" line | site/app/page.tsx, pain-* fixtures/tapes/pngs |
 | 2026-08-24 | agents: human-first kicker+copy w mouse/keyboard icons, both prompt terminals removed; scrollwheel; mantra logo tilt; twitter in footer | site/app/page.tsx, gifs.ts, mantra.tsx |
 | 2026-08-24 | loop title "Comment on the plan, not the chat."; pain screenshots get 1px #1b1d1b border against tilt aliasing | site/app/page.tsx |
+| 2026-08-24 | header shadow softer; eyebrow gap-2 on mobile; step copy (add a comment / reads the comments); features intro rewrite | site/app/page.tsx, header.tsx |
