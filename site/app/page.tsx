@@ -84,25 +84,25 @@ const friends = [
   [
     Herdr,
     "herdr",
-    "The multiplexer mdtation lives in. Its menus, mouse and calm layout set the bar.",
+    "The multiplexer that you maybe already use. Keyboard-first but mouse-ready.",
     "https://github.com/herdrdev/herdr",
   ],
   [
     Hunk,
     "hunk",
-    "Diff review with a comment flow built for agents. mdtation is hunk for prose.",
+    "Diff review with a comment flow built for agents. mdtation is hunk for markdown.",
     "https://github.com/modem-dev/hunk",
   ],
   [
     Agentation,
     "agentation",
-    "Click an element, copy a structured reference. That idea became mdtation's copy.",
+    "Click a website element to tell your agent exactly which part of a page you mean. This inspired our flow.",
     "https://github.com/benjitaylor/agentation",
   ],
   [
     OpenTUI,
     "OpenTUI",
-    "The terminal renderer underneath, the same one OpenCode and hunk are built on.",
+    "The terminal renderer we use, the same one OpenCode and hunk are built on.",
     "https://github.com/sst/opentui",
   ],
 ] as const;
@@ -305,8 +305,8 @@ export default function Page() {
             A better agentic feedback flow.
           </h1>
           <p className="mx-auto mt-6 max-w-[560px] text-lg leading-7 text-balance text-muted-foreground">
-            Your agent writes a spec. You comment on the exact section, inline. The agent reads it
-            instead of long conversation chunks.
+            Your agent writes a spec. You now comment on the exact section, inline. The agent reads
+            it instead of long conversation chunks.
           </p>
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -346,7 +346,7 @@ export default function Page() {
         <Section id="friends" kicker="inspiration and friends" kind="line">
           <blockquote className="text-center text-3xl font-semibold leading-snug tracking-tight text-balance sm:text-4xl">
             <span className="text-primary">“</span>If{" "}
-            <Float icon={Herdr} at="-rotate-12 -bottom-[calc(0.5em-4px)] left-[22%] size-[0.8em]">
+            <Float icon={Herdr} at="-rotate-12 -bottom-[calc(0.5em-3px)] left-[22%] size-[0.8em]">
               herdr
             </Float>
             ,{" "}
