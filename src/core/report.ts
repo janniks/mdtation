@@ -1,5 +1,5 @@
 /**
- * Markdown report of a file's comments: what `Comments › Show in editor` opens
+ * Markdown report of a file's comments: what `Comments › Show all in editor` opens
  * in `$EDITOR` and what `--list` / `--archived` print. Pure; no I/O.
  */
 import { basename } from "node:path";

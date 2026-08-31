@@ -27,7 +27,7 @@ export interface Command {
  * chords on purpose: they are reached via the menu bar, palette, or help. */
 export const COMMANDS = [
   { id: "save", title: "Save", category: "File", keys: ["ctrl+s"] },
-  { id: "palette", title: "Command Palette", category: "File", keys: ["/"], group: "Tools" },
+  { id: "palette", title: "Command palette", category: "File", keys: ["/"], group: "Tools" },
   { id: "settings", title: "Settings", category: "File", keys: [], group: "Tools" },
   { id: "quit", title: "Quit", category: "File", keys: ["q", "ctrl+c"], group: " " },
   { id: "viewColor", title: "Color", category: "View", keys: [] },
@@ -59,24 +59,31 @@ export const COMMANDS = [
   { id: "cursorUp", title: "Cursor Up", category: "Navigate", keys: ["k", "up"], menu: false },
   {
     id: "pageDown",
-    title: "Page Down",
+    title: "Page down",
     category: "Navigate",
     keys: ["ctrl+d", "pagedown"],
     menu: false,
   },
-  { id: "pageUp", title: "Page Up", category: "Navigate", keys: ["ctrl+u", "pageup"], menu: false },
+  { id: "pageUp", title: "Page up", category: "Navigate", keys: ["ctrl+u", "pageup"], menu: false },
   { id: "top", title: "Top", category: "Navigate", keys: ["g"], menu: false },
   { id: "bottom", title: "Bottom", category: "Navigate", keys: ["shift+g"], menu: false },
-  { id: "comment", title: "New Comment", category: "Comments", keys: ["c"] },
+  { id: "comment", title: "New comment", category: "Comments", keys: ["c"] },
   { id: "edit", title: "Edit comment", category: "Comments", keys: ["e"] },
   { id: "reply", title: "Reply", category: "Comments", keys: ["r"] },
-  { id: "prevComment", title: "Previous Comment", category: "Comments", keys: ["["] },
-  { id: "nextComment", title: "Next Comment", category: "Comments", keys: ["]"] },
+  {
+    id: "prevComment",
+    title: "Previous comment",
+    category: "Comments",
+    keys: ["["],
+    group: "Navigate",
+  },
+  { id: "nextComment", title: "Next comment", category: "Comments", keys: ["]"] },
   { id: "prevAgent", title: "Previous agent comment", category: "Comments", keys: ["{"] },
   { id: "nextAgent", title: "Next agent comment", category: "Comments", keys: ["}"] },
-  { id: "all", title: "Show all", category: "Comments", keys: ["a"] },
-  { id: "editor", title: "Show in editor", category: "Comments", keys: [] },
-  { id: "copy", title: "Copy comments to clipboard", category: "Comments", keys: ["shift+c"] },
+  { id: "all", title: "Show all", category: "Comments", keys: ["a"], group: "Copy" },
+  { id: "editor", title: "Show all in editor", category: "Comments", keys: [] },
+  { id: "copy", title: "Copy all to clipboard", category: "Comments", keys: ["shift+c"] },
+  { id: "viewCopy", title: "Copy format", category: "Comments", keys: [] },
   {
     id: "viewSelect",
     title: "Select to comment",
@@ -99,7 +106,7 @@ export const COMMANDS = [
     keys: [],
     group: "Options",
   },
-  { id: "viewCopy", title: "Copy format", category: "Comments", keys: [], group: "Options" },
+
   { id: "help", title: "Help", category: "Help", keys: ["?"] },
 ] as const satisfies readonly Command[];
 
