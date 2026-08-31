@@ -193,7 +193,7 @@ function isRule(raw: string): boolean {
 
 /** Like `wrapLine`, but SGR escapes are zero-width and every chunk is closed
  * with a reset and reopened with the styles still active. */
-function wrapStyled(text: string, width: number): string[] {
+function wrapStyled(text: string, width: number, hang = 0): string[] {
   const rows: string[] = [];
   let cur = "";
   let cols = 0;
@@ -210,7 +210,8 @@ function wrapStyled(text: string, width: number): string[] {
       continue;
     }
     const w = colWidth(tok);
-    if (cols + w > width && cols > 0) {
+    const limit = rows.length ? width - hang : width;
+    if (cols + w > limit && cols > 0) {
       if (gap >= 0) {
         // Break at the last space: the word in progress moves whole to the next row.
         const rest = cur.slice(gap + 1);
@@ -357,6 +358,46 @@ export function hidden(doc: Document, line: number, opts: RenderOptions = {}): b
   return line > close;
 }
 
+// oxlint-disable-next-line no-control-regex -- SGR escapes are the point here
+const CODES = /\u001b\[[0-9;]*m/g;
+
+/** Display width of `s` with SGR codes stripped. */
+function bare(s: string): number {
+  return displayWidth(s.replace(CODES, ""));
+}
+
+/** Hanging prefix for a wrapped line's continuation rows: quote bars, list indent, prose indent. */
+function cont(line: number, raw: string, doc: Document, opts: RenderOptions): string {
+  if (headingAt(doc, line) || codeBlockAt(doc, line) || isRule(raw)) {
+    return "";
+  }
+  const q = /^(\s*)((?:>\s?)+)/.exec(raw);
+  if (q && opts.quote !== ">") {
+    const depth = q[2]!.split(">").length - 1;
+    const bars =
+      opts.quote === "hide"
+        ? "  ".repeat(depth)
+        : paint(opts.color === true, SGR.gray, "\u2502 ".repeat(depth));
+    return q[1] + bars;
+  }
+  const m = raw.match(/^( *)([-*+\u2022]|\d+\.)\s+(.*)$/);
+  if (m) {
+    return " ".repeat(m[1]!.length + m[2]!.length + 1 + (/^\[( |x|X)\] /.test(m[3]!) ? 2 : 0));
+  }
+  if (opts.indent && prose(doc, line, opts) && !prose(doc, line - 1, opts)) {
+    return "  ";
+  }
+  return "";
+}
+
+/** Display rows for one line: wrapped, with the hanging prefix on continuation rows. */
+export function flow(doc: Document, line: number, opts: RenderOptions, cols: number): string[] {
+  const raw = doc.lines[line] ?? "";
+  const lead = cont(line, raw, doc, opts);
+  const rows = wrapStyled(bodyFor(line, raw, doc, opts, cols), cols, bare(lead));
+  return rows.map((r, i) => (i ? lead + r : r));
+}
+
 export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): string[] {
   const counts = new Map<number, number>();
   for (const m of opts.markers ?? []) {
@@ -379,7 +420,7 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
       lines.push(gutterFor(i, vp, cursorOn, counts, opts) + styleTable(cut(row, cols), opts));
       continue;
     }
-    wrapStyled(bodyFor(i, doc.lines[i] ?? "", doc, opts, cols), cols).forEach((chunk, ri) => {
+    flow(doc, i, opts, cols).forEach((chunk, ri) => {
       lines.push((ri === 0 ? gutterFor(i, vp, cursorOn, counts, opts) : "  ") + chunk);
     });
     for (const extra of opts.inline?.get(i) ?? []) {
@@ -421,7 +462,7 @@ export function span(doc: Document, line: number, vp: Viewport, opts: RenderOpti
     return 1 + extra;
   }
   const cols = Math.max(1, vp.width - GUTTER_WIDTH);
-  return wrapStyled(bodyFor(line, doc.lines[line] ?? "", doc, opts, cols), cols).length + extra;
+  return flow(doc, line, opts, cols).length + extra;
 }
 
 /** Status line: cursor position, comment count, an edit hint when the cursor row has comments, mode. */

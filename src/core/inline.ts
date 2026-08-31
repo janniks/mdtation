@@ -90,7 +90,16 @@ function wrap(text: string, width: number): string[] {
   const out: string[] = [];
   for (const para of text.split("\n")) {
     let cur = "";
-    for (const word of para.split(" ")) {
+    for (let word of para.split(" ")) {
+      // A word wider than the row is chopped, so it can never overflow the block.
+      while (displayWidth(word) > width) {
+        if (cur) {
+          out.push(cur);
+          cur = "";
+        }
+        out.push(word.slice(0, width));
+        word = word.slice(width);
+      }
       if (cur && displayWidth(cur) + 1 + displayWidth(word) > width) {
         out.push(cur);
         cur = word;

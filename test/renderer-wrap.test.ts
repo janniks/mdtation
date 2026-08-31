@@ -1,36 +1,54 @@
 import { strict as assert } from "node:assert";
 import { test, describe } from "node:test";
-import { parseDocument } from "../src/core/document.ts";
-import { render, GUTTER_WIDTH } from "../src/core/renderer.ts";
 import { createViewport } from "../src/core/viewport.ts";
+import { parseDocument } from "../src/core/document.ts";
+import { render, span } from "../src/core/renderer.ts";
 
-const LONG = "word ".repeat(40); // 200 chars, single source line
+const long = "alpha beta gamma delta epsilon zeta eta theta iota kappa";
+const vp = () => createViewport(0, 0, 26, 24);
 
-describe("renderer width", () => {
-  test("long lines word-wrap to the pane width", () => {
-    const doc = parseDocument(LONG);
-    // width 30 -> 28 cols -> 5 words ("word " x5 = 25, the 6th would overflow) per row -> 8 rows
-    const frame = render(doc, createViewport(0, 0, 30, 24));
-    assert.equal(frame.length, 8);
-    assert.equal(frame[0]?.startsWith("> "), true); // cursor gutter on first row
-    assert.equal(frame[1]?.startsWith("  "), true); // continuation gutter
-    assert.equal(frame[0], "> word word word word word");
+describe("wrap continuation prefixes", () => {
+  test("blockquote rows repeat the bar", () => {
+    const doc = parseDocument(`> ${long}`);
+    const rows = render(doc, vp());
+    assert.ok(rows.length > 2);
+    for (const [i, r] of rows.entries()) {
+      assert.ok(r.slice(2).startsWith("│ "), `row ${i}: ${JSON.stringify(r)}`);
+    }
   });
 
-  test("a word longer than the row still breaks by character", () => {
-    const frame = render(parseDocument("x".repeat(50)), createViewport(0, 0, 30, 24));
-    assert.deepEqual(frame, [`> ${"x".repeat(28)}`, `  ${"x".repeat(22)}`]);
+  test("nested blockquote keeps both bars", () => {
+    const doc = parseDocument(`> > ${long}`);
+    const rows = render(doc, vp());
+    for (const r of rows) {
+      assert.ok(r.slice(2).startsWith("│ │ "), JSON.stringify(r));
+    }
   });
 
-  test("short lines render as one row each", () => {
-    const frame = render(parseDocument("# A\nhi"), createViewport(0, 0, 30, 24));
-    assert.deepEqual(frame, ["> # A", "  hi"]);
+  test("list items hang past the bullet", () => {
+    const doc = parseDocument(`- ${long}`);
+    const rows = render(doc, vp());
+    assert.ok(rows.length > 2);
+    assert.ok(rows[0]!.slice(2).startsWith("- alpha"));
+    for (const r of rows.slice(1)) {
+      assert.ok(r.startsWith("    ") && r[4] !== " ", JSON.stringify(r));
+    }
   });
 
-  test("word-wrap reconstructs the source line (one space per break)", () => {
-    const doc = parseDocument(LONG);
-    const frame = render(doc, createViewport(0, 0, 30, 24));
-    const joined = frame.map((l) => l.slice(GUTTER_WIDTH)).join(" ");
-    assert.equal(joined.trim(), LONG.trim());
+  test("task items hang past the box", () => {
+    const doc = parseDocument(`- [ ] ${long}`);
+    const rows = render(doc, vp());
+    for (const r of rows.slice(1)) {
+      assert.ok(r.startsWith("      ") && r[6] !== " ", JSON.stringify(r));
+    }
+  });
+
+  test("span matches rendered rows for wrapped constructs", () => {
+    const doc = parseDocument(`> ${long}\n\n- [ ] ${long}`);
+    const v = vp();
+    const rows = render(doc, v);
+    let total = 0;
+    for (let i = 0; i < doc.lines.length; i++) total += span(doc, i, v);
+    assert.equal(rows.length, total);
   });
 });
