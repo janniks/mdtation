@@ -22,7 +22,9 @@ describe("menu", () => {
     );
     assert.deepEqual(m[2]!.entries[0], { id: "comment", title: "New Comment", hint: "c" });
     assert.ok(!m.some((x) => x.label === "Navigate")); // menu: false, still in help
-    assert.equal(m[0]!.entries[0]!.hint, "q");
+    assert.equal(m[0]!.entries[0]!.hint, "^s");
+    assert.equal(m[0]!.entries.at(-1)!.id, "quit"); // last, in its own unnamed section
+    assert.equal(m[0]!.entries.at(-1)!.group, " ");
     assert.equal(m[1]!.entries[0]!.hint, "");
   });
 

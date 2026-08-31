@@ -26,10 +26,10 @@ export interface Command {
  * Comments, Help). View toggles have no
  * chords on purpose: they are reached via the menu bar, palette, or help. */
 export const COMMANDS = [
-  { id: "quit", title: "Quit", category: "File", keys: ["q", "ctrl+c"] },
   { id: "save", title: "Save", category: "File", keys: ["ctrl+s"] },
   { id: "palette", title: "Command Palette", category: "File", keys: ["/"], group: "Tools" },
   { id: "settings", title: "Settings", category: "File", keys: [], group: "Tools" },
+  { id: "quit", title: "Quit", category: "File", keys: ["q", "ctrl+c"], group: " " },
   { id: "viewColor", title: "Color", category: "View", keys: [] },
   { id: "viewMouse", title: "Capture mouse", category: "View", keys: ["shift+m"] },
   { id: "viewBar", title: "Show menu bar", category: "View", keys: ["m"] },
