@@ -11,6 +11,7 @@ export type Time = "relative" | "absolute" | "hide";
 export type Align = "right" | "left";
 
 export interface Note {
+  readonly id: string;
   readonly who: string;
   readonly text: string;
   readonly at: number;
@@ -51,7 +52,7 @@ export function notes(
     const line = store.resolve(c.anchor, doc)?.startLine;
     if (line === undefined) continue;
     const who = c.author && c.author !== opts.me ? c.author : "you";
-    map.set(line, [...(map.get(line) ?? []), { who, text: c.text, at: c.createdAt }]);
+    map.set(line, [...(map.get(line) ?? []), { id: c.id, who, text: c.text, at: c.createdAt }]);
   }
   return map;
 }
@@ -72,18 +73,37 @@ export function rows(
   const timeW = Math.max(...times.map(displayWidth));
   const textW = Math.max(8, cols - nameW - timeW - 6);
   const plain: string[] = [];
+  const of: number[] = [];
   list.forEach((n, i) => {
     const lines = wrap(n.text, textW);
     lines.forEach((t, j) => {
       const who = j === 0 ? n.who : "";
       const time = j === lines.length - 1 ? times[i]! : "";
       plain.push(`${who.padStart(nameW)}  ${t}  ${time.padStart(timeW)}`.trimEnd());
+      of.push(i);
     });
   });
   // One block: every row starts at the same column, flush right or two in from the left.
   const width = Math.max(...plain.map(displayWidth));
   const lead = " ".repeat(opts.align === "right" ? Math.max(0, cols - width) : 2);
   return plain.map((row) => paint(opts.color, SGR.gray, lead + row));
+}
+
+/** Which note each screen row from `rows()` belongs to, as indices into `list`.
+ * Must be called with the same `cols` and opts as `rows()` so the wraps agree. */
+export function owners(
+  list: readonly Note[],
+  cols: number,
+  opts: { readonly time: Time; readonly now: number },
+): number[] {
+  const nameW = Math.max(...list.map((n) => displayWidth(n.who)));
+  const timeW = Math.max(...list.map((n) => displayWidth(when(n.at, opts.now, opts.time))));
+  const textW = Math.max(8, cols - nameW - timeW - 6);
+  const of: number[] = [];
+  list.forEach((n, i) => {
+    for (const _ of wrap(n.text, textW)) of.push(i);
+  });
+  return of;
 }
 
 function wrap(text: string, width: number): string[] {

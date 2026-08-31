@@ -56,7 +56,7 @@ test("rows: one block, names padded, right flush or left indented, long text wra
     "                  you  why?",
     "               claude  because",
   ]);
-  const long = rows([{ who: "me", text: "one two three four five", at: 0 }], 20, {
+  const long = rows([{ id: "x", who: "me", text: "one two three four five", at: 0 }], 20, {
     ...o,
     align: "left",
   });

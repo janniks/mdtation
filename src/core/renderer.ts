@@ -30,6 +30,10 @@ export interface RenderOptions {
   readonly deco?: boolean;
   /** Highlight fenced code (needs `color`). Default true. */
   readonly syntax?: boolean;
+  /** Caret row inside the cursor line's block (wrap rows, then inline note rows). Default 0. */
+  readonly seg?: number;
+  /** Status-bar hint for the comment under the caret (author and snippet). */
+  readonly note?: string;
   /** One-column cursor glyph. Default `>`. */
   readonly caret?: string;
   /** Index into `CHECKS`: how task boxes are drawn. Default 0 (`[ ]`/`[x]`). */
@@ -239,6 +243,12 @@ function wrapStyled(text: string, width: number, hang = 0): string[] {
   return rows;
 }
 
+/** Caret gutter for a continuation or inline note row. */
+function caretFor(opts: RenderOptions): string {
+  const g = opts.caret ?? ">";
+  return `${paint(opts.color === true, SGR.green, g)} `;
+}
+
 /** Gutter cell: caret on the cursor line, else a comment mark (`▶`, or the count past one).
  * In color the mark is a yellow background instead, kept even under the caret. */
 function gutterFor(
@@ -420,12 +430,23 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
       lines.push(gutterFor(i, vp, cursorOn, counts, opts) + styleTable(cut(row, cols), opts));
       continue;
     }
-    flow(doc, i, opts, cols).forEach((chunk, ri) => {
-      lines.push((ri === 0 ? gutterFor(i, vp, cursorOn, counts, opts) : "  ") + chunk);
+    const chunks = flow(doc, i, opts, cols);
+    const extras = opts.inline?.get(i) ?? [];
+    // The caret sits on one row of the cursor line's block; other rows keep the plain gutter.
+    const at = i === vp.cursor ? Math.min(opts.seg ?? 0, chunks.length + extras.length - 1) : 0;
+    chunks.forEach((chunk, ri) => {
+      const g =
+        ri === 0
+          ? gutterFor(i, vp, cursorOn && at === 0, counts, opts)
+          : i === vp.cursor && ri === at
+            ? caretFor(opts)
+            : "  ";
+      lines.push(g + chunk);
     });
-    for (const extra of opts.inline?.get(i) ?? []) {
-      lines.push(`  ${extra}`);
-    }
+    extras.forEach((extra, k) => {
+      const g = i === vp.cursor && chunks.length + k === at ? caretFor(opts) : "  ";
+      lines.push(g + extra);
+    });
   }
   return lines;
 }
@@ -471,7 +492,7 @@ export function statusBar(doc: Document, vp: Viewport, opts: RenderOptions = {})
   const cur = Math.min(vp.cursor + 1, doc.lines.length);
   const plural = count === 1 ? "" : "s";
   const here = opts.markers?.filter((m) => m === vp.cursor).length ?? 0;
-  const hint = here ? `  ${here} here  (e to edit)` : "";
+  const hint = opts.note ? `  ${opts.note}` : here ? `  ${here} here  (e to edit)` : "";
   if (!opts.color) {
     return `Ln ${cur}/${doc.lines.length}  ${count} comment${plural}${hint}`;
   }

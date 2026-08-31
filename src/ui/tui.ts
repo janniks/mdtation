@@ -24,9 +24,10 @@ import { Modal } from "./modal.ts";
 import { All } from "./all.ts";
 import { copy } from "./clipboard.ts";
 import { CommentStore } from "../core/comment.ts";
+import { fit, pin, place, step as walk } from "../core/caret.ts";
 import type { Comment } from "../core/comment.ts";
 import { anchorFor, create, markers } from "../core/comments.ts";
-import { notes, rows, type Align, type Time } from "../core/inline.ts";
+import { notes, owners, rows, type Align, type Time } from "../core/inline.ts";
 import { home, load, path as storePath, save } from "../core/store.ts";
 import { load as loadPrefs, save as savePrefs } from "../core/prefs.ts";
 import { report } from "../core/report.ts";
@@ -41,6 +42,7 @@ import { crumb } from "../core/crumb.ts";
 import { loadConfig } from "../core/config.ts";
 import { hint, menus, specs, step } from "../core/menu.ts";
 import {
+  flow,
   CHECKS,
   GUTTER_WIDTH,
   hidden,
@@ -53,7 +55,6 @@ import {
   createViewport,
   jumpToLine,
   moveCursor,
-  settle,
   type Viewport,
 } from "../core/viewport.ts";
 import {
@@ -207,10 +208,12 @@ export class TuiShell {
         this.draw("COPIED SELECTION");
       } else {
         const row = Math.min(s.anchor.y, s.focus.y) - this.text.y;
+        const hit = place(this.view.offset, row, this.doc.lines.length, this.spans(this.lay()));
         this.view = {
           ...this.view,
-          cursor: Math.max(0, Math.min(this.view.offset + row, this.doc.lines.length - 1)),
+          cursor: hit ? hit.line : Math.max(0, this.doc.lines.length - 1),
         };
+        this.seg = 0;
         this.comment(undefined, text);
       }
     });
@@ -218,6 +221,11 @@ export class TuiShell {
     renderer.on("resize", () => this.resize());
     this.draw();
   }
+
+  /** Caret row inside the cursor line's block (wrap rows, then inline note rows). */
+  private seg = 0;
+  /** Comment id per rendered inline note row, keyed by line; refreshed by `lay()`. */
+  private ids = new Map<number, string[]>();
 
   get vp(): Viewport {
     return this.view;
@@ -313,9 +321,14 @@ export class TuiShell {
     if (dir !== "up" && dir !== "down") {
       return;
     }
-    const prev = this.view.cursor;
-    this.view = moveCursor(this.view, dir === "down" ? 1 : -1, this.doc.lines.length);
-    this.settle(prev);
+    const c = walk(
+      { line: this.view.cursor, seg: this.seg },
+      dir === "down" ? 1 : -1,
+      this.doc.lines.length,
+      this.spans(this.lay()),
+    );
+    this.view = { ...this.view, cursor: c.line };
+    this.seg = c.seg;
     this.draw();
   }
 
@@ -342,8 +355,18 @@ export class TuiShell {
     if (row < 0 || row >= this.view.height || this.doc.lines.length === 0) {
       return;
     }
-    const line = Math.min(this.view.offset + row, this.doc.lines.length - 1);
+    const hit = place(this.view.offset, row, this.doc.lines.length, this.spans(this.lay()));
+    if (!hit) {
+      return;
+    }
+    const line = hit.line;
     this.view = { ...this.view, cursor: line };
+    this.seg = hit.seg;
+    if (hit.seg > 0) {
+      // Continuation and note rows just take the caret; targets below live on a line's first row.
+      this.draw();
+      return;
+    }
     const b = box(this.doc.lines[line] ?? "");
     const col = e.x - this.text.x - GUTTER_WIDTH;
     const left = b ? displayWidth(this.doc.lines[line]!.slice(0, b.at)) : -1;
@@ -548,12 +571,10 @@ export class TuiShell {
     }
   }
 
-  draw(mode = this.dirty ? "UNSAVED" : "VIEW"): void {
-    const marks = markers(this.store, this.doc);
-    this.crumb.node.visible = this.on.viewCrumb === true;
-    this.bar.node.visible = this.on.viewBar === true;
-    this.crumb.text = crumb(this.doc, this.view.cursor, Number(this.prefs.crumb) || Infinity);
+  /** Render options for the current view; refreshes inline note rows and their comment ids. */
+  private lay() {
     const inline = new Map<number, string[]>();
+    this.ids.clear();
     const laid = {
       align: this.prefs.align as Align,
       time: this.prefs.time as Time,
@@ -567,8 +588,12 @@ export class TuiShell {
       me: process.env.USER,
     })) {
       inline.set(line, rows(list, cols, laid));
+      this.ids.set(
+        line,
+        owners(list, cols, laid).map((i) => list[i]!.id),
+      );
     }
-    const opts = {
+    return {
       inline,
       color: this.on.viewColor,
       emphasis: this.on.viewEmphasis,
@@ -580,13 +605,58 @@ export class TuiShell {
       pipes: this.on.viewPipes,
       ...this.style(),
     };
+  }
+
+  /** Screen rows per line under the current options. */
+  private spans(opts: ReturnType<TuiShell["lay"]>): (l: number) => number {
+    return (l) => span(this.doc, l, this.view, opts);
+  }
+
+  /** Quote for a new comment: the caret's wrap segment when the line wraps, else nothing. */
+  private slice(): string | undefined {
+    const cols = Math.max(1, this.view.width - GUTTER_WIDTH);
+    const chunks = flow(this.doc, this.view.cursor, { ...this.lay(), inline: undefined }, cols);
+    if (chunks.length < 2 || this.seg >= chunks.length) {
+      return undefined;
+    }
+    // oxlint-disable-next-line no-control-regex -- SGR escapes are the point here
+    return chunks[this.seg]!.replace(/\u001b\[[0-9;]*m/g, "").trim();
+  }
+
+  /** The comment id under the caret when it rests on an inline note row. */
+  private note(opts = this.lay()): string | undefined {
+    const w = span(this.doc, this.view.cursor, this.view, { ...opts, inline: undefined });
+    return this.seg >= w ? this.ids.get(this.view.cursor)?.[this.seg - w] : undefined;
+  }
+
+  draw(mode = this.dirty ? "UNSAVED" : "VIEW"): void {
+    const marks = markers(this.store, this.doc);
+    this.crumb.node.visible = this.on.viewCrumb === true;
+    this.bar.node.visible = this.on.viewBar === true;
+    this.crumb.text = crumb(this.doc, this.view.cursor, Number(this.prefs.crumb) || Infinity);
+    const opts = this.lay();
     // Keep the scroll margin honest in screen rows (hidden lines take none, wrapped ones several).
     const total = this.doc.lines.length;
-    this.view = settle(this.view, total, (l) => span(this.doc, l, this.view, opts));
+    const c = pin({ line: this.view.cursor, seg: this.seg }, total, this.spans(opts));
+    this.seg = c.seg;
+    this.view = {
+      ...this.view,
+      cursor: c.line,
+      offset: fit(this.view, c, total, this.spans(opts)),
+    };
     this.text.content = styled(
-      renderFrame(this.doc, this.view, { ...opts, markers: marks }).join("\n"),
+      renderFrame(this.doc, this.view, { ...opts, markers: marks, seg: this.seg }).join("\n"),
     );
-    this.status.update(statusBar(this.doc, this.view, { markers: marks }));
+    const held = this.note(opts);
+    const badge = held && this.store.get(held);
+    this.status.update(
+      statusBar(this.doc, this.view, {
+        markers: marks,
+        note: badge
+          ? `${badge.author ?? "you"}: ${badge.text.split("\n")[0]!}  (r replies)`
+          : undefined,
+      }),
+    );
     // `View > Status badge` picks its corner; file name + edit state take the other one.
     const top = this.value("viewStatus") === "top";
     const name = { state: this.dirty ? "(unsaved changes)" : "", file: basename(this.file) };
@@ -637,6 +707,17 @@ export class TuiShell {
           close: () => this.close(),
         }),
       );
+    const held = this.note();
+    if (held) {
+      let p = this.store.get(held);
+      while (p?.re && this.store.get(p.re)) {
+        p = this.store.get(p.re);
+      }
+      if (p) {
+        open(p);
+        return;
+      }
+    }
     if (tops.length === 0) {
       this.draw("NO COMMENT HERE");
     } else if (tops.length === 1) {
@@ -670,8 +751,21 @@ export class TuiShell {
       .filter((x) => this.store.resolve(x.anchor, this.doc)?.startLine === this.view.cursor);
   }
 
-  /** `e`: edit the comment on the cursor row; with several, pick one first. */
+  /** `e`: edit the comment on the cursor row; with several, pick one first.
+   * On an inline note row the caret names the comment, so it is edited directly. */
   private amend(): void {
+    const held = this.note();
+    if (held) {
+      const c = this.store.get(held);
+      if (c?.agent) {
+        this.draw("AGENT COMMENT  r replies");
+        return;
+      }
+      if (c) {
+        this.comment(c);
+        return;
+      }
+    }
     const list = this.here();
     if (list.length === 0) {
       this.draw("NO COMMENT HERE");
@@ -741,7 +835,7 @@ export class TuiShell {
         );
         return;
       case "comment":
-        this.comment();
+        this.comment(undefined, this.slice());
         return;
       case "edit":
         this.amend();
@@ -833,23 +927,39 @@ export class TuiShell {
         break;
       case "nextComment":
         this.view = nextComment(this.view, total, this.store, this.doc);
+        this.seg = 0;
         this.draw();
         return;
       case "prevComment":
         this.view = prevComment(this.view, total, this.store, this.doc);
+        this.seg = 0;
         this.draw();
         return;
       case "nextAgent":
         this.view = nextComment(this.view, total, this.store, this.doc, (c) => c.agent === true);
+        this.seg = 0;
         this.draw();
         return;
       case "prevAgent":
         this.view = prevComment(this.view, total, this.store, this.doc, (c) => c.agent === true);
+        this.seg = 0;
         this.draw();
         return;
       case "reply":
         this.reply();
         return;
+    }
+    if (id === "cursorDown" || id === "cursorUp") {
+      const c = walk(
+        { line: this.view.cursor, seg: this.seg },
+        id === "cursorDown" ? 1 : -1,
+        total,
+        this.spans(this.lay()),
+      );
+      this.view = { ...this.view, cursor: c.line };
+      this.seg = c.seg;
+      this.draw();
+      return;
     }
     const action = reduceCommand(id, this.view, this.doc.lines.length);
     if (action.quit) {
@@ -857,6 +967,7 @@ export class TuiShell {
     } else if (action.vp) {
       const prev = this.view.cursor;
       this.view = action.vp;
+      this.seg = 0;
       this.settle(prev);
       this.draw();
     }
