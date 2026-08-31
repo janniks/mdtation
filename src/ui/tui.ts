@@ -23,7 +23,7 @@ import { Palette } from "./palette.ts";
 import { Modal } from "./modal.ts";
 import { All } from "./all.ts";
 import { copy } from "./clipboard.ts";
-import { CommentStore, copyFormat } from "../core/comment.ts";
+import { CommentStore } from "../core/comment.ts";
 import type { Comment } from "../core/comment.ts";
 import { anchorFor, create, markers } from "../core/comments.ts";
 import { notes, rows, type Align, type Time } from "../core/inline.ts";
@@ -187,20 +187,22 @@ export class TuiShell {
     // Drag-select in the body opens a comment on the selection (stored verbatim, see `Comment.quote`);
     // with `Comments › Select to comment` off it copies the text instead (OSC-52, like hunk).
     renderer.on("selection", (s: Selection) => {
-      // Rows after the first start at column 0, so drop their 2-col gutter.
-      const text = s.isDragging
-        ? ""
-        : s
-            .getSelectedText()
-            .split("\n")
-            .map((l, i) => (i ? l.slice(GUTTER_WIDTH) : l))
-            .join("\n")
-            .trim();
+      // Rows after the first start at column 0, so drop their 2-col gutter (overlays have none).
+      const raw = s.isDragging ? "" : s.getSelectedText();
+      const text = (
+        this.overlay
+          ? raw
+          : raw
+              .split("\n")
+              .map((l, i) => (i ? l.slice(GUTTER_WIDTH) : l))
+              .join("\n")
+      ).trim();
       if (!text) {
         return;
       }
       renderer.clearSelection();
-      if (!this.on.viewSelect) {
+      // Inside an overlay (e.g. All comments) a selection only copies; commenting is for the body.
+      if (this.overlay || !this.on.viewSelect) {
         copy(text, renderer);
         this.draw("COPIED SELECTION");
       } else {
@@ -697,25 +699,26 @@ export class TuiShell {
     }
   }
 
-  /** Copy the structured reference of the comment under the cursor (OSC-52 + file).
-   * With `View › Archive comments on copy`, the comment is archived (recoverable via `--restore`). */
+  /** Copy the full comments report (OSC-52 + file).
+   * With `Comments › Archive on copy`, the copied comments are archived (recoverable via `--restore`). */
   private copy(): void {
-    const c = this.here()[0];
-    if (!c) {
-      this.draw("NO COMMENT HERE");
+    const list = this.store.live();
+    if (!list.length) {
+      this.draw("NO COMMENTS");
       return;
     }
-    const replies = this.store.live().filter((r) => r.re === c.id);
-    copy(copyFormat(c, this.doc, this.value("viewCopy"), replies), this.renderer);
+    copy(report(list, this.doc, this.file, { mode: this.value("viewCopy") }), this.renderer);
     // OSC-52 is fire-and-forget: over SSH/remote the terminal may accept it without reaching the host clipboard.
     const note = this.renderer.capabilities?.remote ? "  a to show comments" : "";
     if (this.on.viewArchive) {
-      this.store.archive(c.id);
+      for (const c of list) {
+        this.store.archive(c.id);
+      }
       this.persist();
-      this.draw(`COPIED  ARCHIVED${note}`);
+      this.draw(`COPIED ${list.length}  ARCHIVED${note}`);
       return;
     }
-    this.draw(`COPIED${note}`);
+    this.draw(`COPIED ${list.length}${note}`);
   }
 
   /** Run a command by id. */
