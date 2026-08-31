@@ -30,20 +30,18 @@ Nothing is lost to a slipped keypress; permanence comes only from the retention 
 
 ## CLI: the one place archives are managed
 
-The TUI only archives; the CLI is where archived comments are inspected and changed.
-Proposed verbs (small, reuses the store):
+Most of this already exists; only true removal is new.
 
-- `mdtation comments <file> --archived` — list archived threads with ids and ages.
-- `mdtation restore <file> <id>` — un-archive a thread (the undo).
-- `mdtation purge <file> [--older <dur>]` — permanent removal, explicit and scriptable; no flag = retention setting.
+- Have: `mdtation <file> list --archived` (inspect), `restore <id>` (undo), `archive <id>`, `clear` (wipe all).
+- Add: `mdtation <file> purge [--older <dur>]` — permanent removal of archived comments; no flag = the retention setting.
 
-Reasoning: agents already talk to the store through the CLI; recovery and true deletion are rare,
-deliberate acts that suit a typed command better than a modal.
-The retention sweep stays the automatic path; `purge` is the manual one.
+Reasoning: recovery and true deletion are rare, deliberate acts that suit a typed command better than a modal;
+the retention sweep stays the automatic path, `purge` is the manual one.
+`clear` today deletes everything live; consider fencing it to archived-only later.
 
 ## Touches
 
-`commands.ts` (archive verb + menu entry), `tui.ts` (`d` handler), `bin.ts`/`comments.ts` (CLI verbs), tests per piece.
+`commands.ts` (archive verb + menu entry), `tui.ts` (`d` handler), `bin.ts` (`purge` verb), tests per piece.
 
 ## Open questions
 
