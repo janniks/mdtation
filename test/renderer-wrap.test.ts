@@ -52,3 +52,18 @@ describe("wrap continuation prefixes", () => {
     assert.equal(rows.length, total);
   });
 });
+
+test("render never exceeds the viewport height when the last line wraps", () => {
+  const doc = parseDocument(
+    ["short", "a long trailing line that wraps into several rows at a narrow width"].join("\n"),
+  );
+  const vp = { offset: 0, cursor: 0, height: 3, width: 24, margin: 0 };
+  assert.ok(render(doc, vp, {}).length <= 3);
+});
+
+test("render clamps inline note rows at the bottom edge", () => {
+  const doc = parseDocument("one\ntwo");
+  const inline = new Map([[1, ["  a", "  b", "  c", "  d"]]]);
+  const vp = { offset: 0, cursor: 0, height: 3, width: 40, margin: 0 };
+  assert.equal(render(doc, vp, { inline }).length, 3);
+});

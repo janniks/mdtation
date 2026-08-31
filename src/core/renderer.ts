@@ -435,6 +435,7 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
     // The caret sits on one row of the cursor line's block; other rows keep the plain gutter.
     const at = i === vp.cursor ? Math.min(opts.seg ?? 0, chunks.length + extras.length - 1) : 0;
     chunks.forEach((chunk, ri) => {
+      if (lines.length >= height) return;
       const g =
         ri === 0
           ? gutterFor(i, vp, cursorOn && at === 0, counts, opts)
@@ -444,6 +445,7 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
       lines.push(g + chunk);
     });
     extras.forEach((extra, k) => {
+      if (lines.length >= height) return;
       const g = i === vp.cursor && chunks.length + k === at ? caretFor(opts) : "  ";
       lines.push(g + extra);
     });
