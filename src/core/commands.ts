@@ -106,7 +106,6 @@ export const COMMANDS = [
     keys: [],
     group: "Options",
   },
-
   { id: "help", title: "Help", category: "Help", keys: ["?"] },
 ] as const satisfies readonly Command[];
 

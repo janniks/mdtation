@@ -22,3 +22,11 @@ export const SGR = {
 export function paint(on: boolean, sgr: string, s: string): string {
   return on ? `${sgr}${s}${SGR.reset}` : s;
 }
+
+// oxlint-disable-next-line no-control-regex -- SGR escapes are the point here
+const CODES = /\u001b\[[0-9;]*m/g;
+
+/** `s` with all SGR escapes removed. */
+export function strip(s: string): string {
+  return s.replace(CODES, "");
+}

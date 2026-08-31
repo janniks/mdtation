@@ -15,6 +15,7 @@ import { mkdirSync, watch, writeFileSync, type FSWatcher } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
+import { strip } from "../core/sgr.ts";
 import { styled } from "./styled.ts";
 import type { Overlay } from "./overlay.ts";
 import { Crumb, Dropdown, MenuBar, StatusBar } from "./chrome.ts";
@@ -355,10 +356,12 @@ export class TuiShell {
     if (row < 0 || row >= this.view.height || this.doc.lines.length === 0) {
       return;
     }
-    const hit = place(this.view.offset, row, this.doc.lines.length, this.spans(this.lay()));
-    if (!hit) {
-      return;
-    }
+    const total = this.doc.lines.length;
+    const rows = this.spans(this.lay());
+    // A click below the last rendered row lands on the last row instead of nowhere.
+    const hit =
+      place(this.view.offset, row, total, rows) ??
+      pin({ line: total - 1, seg: Infinity }, total, rows);
     const line = hit.line;
     this.view = { ...this.view, cursor: line };
     this.seg = hit.seg;
@@ -619,8 +622,10 @@ export class TuiShell {
     if (chunks.length < 2 || this.seg >= chunks.length) {
       return undefined;
     }
-    // oxlint-disable-next-line no-control-regex -- SGR escapes are the point here
-    return chunks[this.seg]!.replace(/\u001b\[[0-9;]*m/g, "").trim();
+    // Continuation rows carry the hanging prefix (quote bars, list indent); the quote drops it.
+    return strip(chunks[this.seg]!)
+      .replace(/^[\s\u2502]+/, "")
+      .trimEnd();
   }
 
   /** The comment id under the caret when it rests on an inline note row. */

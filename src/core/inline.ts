@@ -68,6 +68,29 @@ export function rows(
     readonly color: boolean;
   },
 ): string[] {
+  const plain = build(list, cols, opts).plain;
+  // One block: every row starts at the same column, flush right or two in from the left.
+  const width = Math.max(...plain.map(displayWidth));
+  const lead = " ".repeat(opts.align === "right" ? Math.max(0, cols - width) : 2);
+  return plain.map((row) => paint(opts.color, SGR.gray, lead + row));
+}
+
+/** Which note each screen row from `rows()` belongs to, as indices into `list`.
+ * Must be called with the same `cols` and opts as `rows()` so the wraps agree. */
+export function owners(
+  list: readonly Note[],
+  cols: number,
+  opts: { readonly time: Time; readonly now: number },
+): number[] {
+  return build(list, cols, opts).of;
+}
+
+/** Shared layout: `who  text  time` rows plus each row's note index. */
+function build(
+  list: readonly Note[],
+  cols: number,
+  opts: { readonly time: Time; readonly now: number },
+): { plain: string[]; of: number[] } {
   const nameW = Math.max(...list.map((n) => displayWidth(n.who)));
   const times = list.map((n) => when(n.at, opts.now, opts.time));
   const timeW = Math.max(...times.map(displayWidth));
@@ -83,27 +106,7 @@ export function rows(
       of.push(i);
     });
   });
-  // One block: every row starts at the same column, flush right or two in from the left.
-  const width = Math.max(...plain.map(displayWidth));
-  const lead = " ".repeat(opts.align === "right" ? Math.max(0, cols - width) : 2);
-  return plain.map((row) => paint(opts.color, SGR.gray, lead + row));
-}
-
-/** Which note each screen row from `rows()` belongs to, as indices into `list`.
- * Must be called with the same `cols` and opts as `rows()` so the wraps agree. */
-export function owners(
-  list: readonly Note[],
-  cols: number,
-  opts: { readonly time: Time; readonly now: number },
-): number[] {
-  const nameW = Math.max(...list.map((n) => displayWidth(n.who)));
-  const timeW = Math.max(...list.map((n) => displayWidth(when(n.at, opts.now, opts.time))));
-  const textW = Math.max(8, cols - nameW - timeW - 6);
-  const of: number[] = [];
-  list.forEach((n, i) => {
-    for (const _ of wrap(n.text, textW)) of.push(i);
-  });
-  return of;
+  return { plain, of };
 }
 
 function wrap(text: string, width: number): string[] {

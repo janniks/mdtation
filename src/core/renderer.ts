@@ -12,7 +12,7 @@
 import type { Document, Heading } from "./document.ts";
 import { end as fence } from "./front.ts";
 import type { Viewport } from "./viewport.ts";
-import { paint, SGR } from "./sgr.ts";
+import { paint, SGR, strip } from "./sgr.ts";
 import { highlight } from "./syntax.ts";
 import { isRow, isSep, laid } from "./table.ts";
 import { colWidth, displayWidth } from "./unicode.ts";
@@ -244,7 +244,7 @@ function wrapStyled(text: string, width: number, hang = 0): string[] {
 }
 
 /** Caret gutter for a continuation or inline note row. */
-function caretFor(opts: RenderOptions): string {
+function caret(opts: RenderOptions): string {
   const g = opts.caret ?? ">";
   return `${paint(opts.color === true, SGR.green, g)} `;
 }
@@ -368,12 +368,9 @@ export function hidden(doc: Document, line: number, opts: RenderOptions = {}): b
   return line > close;
 }
 
-// oxlint-disable-next-line no-control-regex -- SGR escapes are the point here
-const CODES = /\u001b\[[0-9;]*m/g;
-
 /** Display width of `s` with SGR codes stripped. */
 function bare(s: string): number {
-  return displayWidth(s.replace(CODES, ""));
+  return displayWidth(strip(s));
 }
 
 /** Hanging prefix for a wrapped line's continuation rows: quote bars, list indent, prose indent. */
@@ -440,13 +437,13 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
         ri === 0
           ? gutterFor(i, vp, cursorOn && at === 0, counts, opts)
           : i === vp.cursor && ri === at
-            ? caretFor(opts)
+            ? caret(opts)
             : "  ";
       lines.push(g + chunk);
     });
     extras.forEach((extra, k) => {
       if (lines.length >= height) return;
-      const g = i === vp.cursor && chunks.length + k === at ? caretFor(opts) : "  ";
+      const g = i === vp.cursor && chunks.length + k === at ? caret(opts) : "  ";
       lines.push(g + extra);
     });
   }
