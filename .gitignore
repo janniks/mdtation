@@ -1,6 +1,38 @@
+# Build outputs and dependencies.
 node_modules/
 dist/
 *.tsbuildinfo
+*.tgz
+
+# Node runtime noise.
+*.log
+npm-debug.log*
+coverage/
+.env
+.env.*
+!.env.example
+
+# macOS.
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+*.icloud
+
+# Windows.
+Thumbs.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux.
+*~
+.directory
+.Trash-*
+
+# Dropbox leftovers; this repo lives inside a synced folder.
+*conflicted copy*
+*selective sync conflict*
 
 # Learning references (clones of sibling / upstream projects) — read-only, never commit.
 _learn/
