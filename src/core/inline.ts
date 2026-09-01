@@ -5,7 +5,7 @@
 import type { CommentStore } from "./comment.ts";
 import type { Document } from "./document.ts";
 import { SGR } from "./sgr.ts";
-import { displayWidth, pad } from "./unicode.ts";
+import { displayWidth, pad, wrapWords } from "./unicode.ts";
 
 export type Time = "relative" | "absolute" | "hide";
 export type Align = "right" | "left";
@@ -142,7 +142,7 @@ function build(
   const body: string[] = [];
   const of: number[] = [];
   list.forEach((n, i) => {
-    const lines = wrap(n.text, textW);
+    const lines = wrapWords(n.text, textW);
     lines.forEach((t, j) => {
       body.push(t);
       // Who and when close the note, on its last row.
@@ -151,30 +151,4 @@ function build(
     });
   });
   return { meta, body, of };
-}
-
-function wrap(text: string, width: number): string[] {
-  const out: string[] = [];
-  for (const para of text.split("\n")) {
-    let cur = "";
-    for (let word of para.split(" ")) {
-      // A word wider than the row is chopped, so it can never overflow the block.
-      while (displayWidth(word) > width) {
-        if (cur) {
-          out.push(cur);
-          cur = "";
-        }
-        out.push(word.slice(0, width));
-        word = word.slice(width);
-      }
-      if (cur && displayWidth(cur) + 1 + displayWidth(word) > width) {
-        out.push(cur);
-        cur = word;
-      } else {
-        cur = cur ? `${cur} ${word}` : word;
-      }
-    }
-    out.push(cur);
-  }
-  return out;
 }

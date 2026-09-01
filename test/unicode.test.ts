@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 import { test, describe } from "node:test";
-import { colWidth, wrapLine } from "../src/core/unicode.ts";
+import { colWidth, wrapLine, wrapWords } from "../src/core/unicode.ts";
 
 describe("unicode", () => {
   describe("colWidth", () => {
@@ -61,6 +61,21 @@ describe("unicode", () => {
       const thumbs = "👍\ufe0f"; // thumbs up + VS16
       const out = wrapLine(thumbs.repeat(3), 6);
       assert.equal(out.length, 1); // 3 thumbs (6 cols) fit exactly at width 6
+    });
+  });
+
+  describe("wrapWords", () => {
+    test("breaks between words, never inside one", () => {
+      assert.deepEqual(wrapWords("aaa bbb ccc", 7), ["aaa bbb", "ccc"]);
+    });
+    test("a newline starts a new row", () => {
+      assert.deepEqual(wrapWords("aa\nbb", 10), ["aa", "bb"]);
+    });
+    test("a word wider than the row is chopped so nothing overflows", () => {
+      assert.deepEqual(wrapWords("abcdefgh", 3), ["abc", "def", "gh"]);
+    });
+    test("empty input is a single empty row", () => {
+      assert.deepEqual(wrapWords("", 5), [""]);
     });
   });
 });

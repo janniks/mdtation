@@ -1,6 +1,8 @@
-/** Centered comment modal: quoted target line, a one-line input that grows with newlines (shift+↵), esc cancel / ↵ save (both clickable). */
+/** Centered comment modal: quoted target line, an input that grows with the text it holds
+ * (word wraps and shift+↵ breaks), esc cancel / ↵ save (both clickable). */
 import { BoxRenderable, TextareaRenderable, TextRenderable } from "@opentui/core";
 import type { CliRenderer, KeyEvent } from "@opentui/core";
+import { wrapWords } from "../core/unicode.ts";
 import { center } from "./overlay.ts";
 import type { Overlay } from "./overlay.ts";
 
@@ -18,6 +20,8 @@ export class Modal implements Overlay {
   private readonly renderer: CliRenderer;
   private readonly input: TextareaRenderable;
   private readonly opts: ModalOpts;
+  /** Columns the input has for text; the row count is measured against it. */
+  private readonly inner: number;
 
   constructor(renderer: CliRenderer, opts: ModalOpts) {
     this.opts = opts;
@@ -39,18 +43,19 @@ export class Modal implements Overlay {
       paddingRight: 1,
     });
     this.place();
-    const inner = width - 4;
+    const inner = (this.inner = width - 4);
     const quote = opts.quote.length > inner ? opts.quote.slice(0, inner - 1) + "…" : opts.quote;
     this.node.add(new TextRenderable(renderer, { content: quote, fg: "#808080", width: inner }));
     this.input = new TextareaRenderable(renderer, {
       width: inner,
       height: 1,
+      wrapMode: "word",
       placeholder: "your comment",
       initialValue: opts.value ?? "",
       backgroundColor: "#2a2d2a",
       focusedBackgroundColor: "#2a2d2a",
     });
-    this.input.on("input", () => this.grow());
+    this.input.onContentChange = () => this.grow();
     this.node.add(this.input);
     const foot = new BoxRenderable(renderer, {
       width: inner,
@@ -75,15 +80,23 @@ export class Modal implements Overlay {
     this.node.add(foot);
     this.input.focus();
     this.input.gotoBufferEnd();
+    // An edit opens on an existing comment, which may already be several rows tall.
+    this.grow();
   }
 
-  /** Size the input to its lines (1–4) so a single line stays compact. */
+  /** Size the input to the rows its text really takes, wraps and shift+↵ breaks alike,
+   * so one line stays compact and a long comment is read whole. Past what the screen
+   * holds the input scrolls instead of growing, keeping the end (where you type) in view. */
   private grow(): void {
-    const rows = Math.min(4, this.input.plainText.split("\n").length);
+    // 4 = border top and bottom, the quoted line, the footer.
+    const rows = Math.min(
+      Math.max(1, this.renderer.height - 6),
+      wrapWords(this.input.plainText, this.inner).length,
+    );
     if (rows !== this.input.height) {
       this.input.height = rows;
       this.node.height = rows + 4;
-      this.place();
+      center(this.node, this.renderer, rows + 4);
     }
   }
 

@@ -19,8 +19,9 @@ export interface Overlay {
   dispose?(): void;
 }
 
-/** Center `node` in the terminal (its own width/height must already be set). */
-export function center(node: BoxRenderable, renderer: CliRenderer): void {
+/** Center `node` in the terminal (its own width/height must already be set).
+ * A node resized this tick still reports its old height, so pass `h` after a resize. */
+export function center(node: BoxRenderable, renderer: CliRenderer, h = node.height): void {
   node.left = Math.max(0, Math.floor((renderer.width - node.width) / 2));
-  node.top = Math.max(0, Math.floor((renderer.height - node.height) / 2));
+  node.top = Math.max(0, Math.floor((renderer.height - h) / 2));
 }

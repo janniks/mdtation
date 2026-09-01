@@ -84,3 +84,31 @@ export function displayWidth(s: string): number {
 export function pad(s: string, w: number): string {
   return s + " ".repeat(Math.max(0, w - displayWidth(s)));
 }
+
+/** Word-wrap `text` into rows no wider than `width` columns; explicit newlines
+ * start a new row, and a word wider than the row is chopped so nothing overflows. */
+export function wrapWords(text: string, width: number): string[] {
+  const out: string[] = [];
+  for (const para of text.split("\n")) {
+    let cur = "";
+    for (let word of para.split(" ")) {
+      // A word wider than the row is chopped, so it can never overflow the block.
+      while (displayWidth(word) > width) {
+        if (cur) {
+          out.push(cur);
+          cur = "";
+        }
+        out.push(word.slice(0, width));
+        word = word.slice(width);
+      }
+      if (cur && displayWidth(cur) + 1 + displayWidth(word) > width) {
+        out.push(cur);
+        cur = word;
+      } else {
+        cur = cur ? `${cur} ${word}` : word;
+      }
+    }
+    out.push(cur);
+  }
+  return out;
+}
