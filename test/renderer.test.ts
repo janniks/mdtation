@@ -131,7 +131,7 @@ describe("hide markup", () => {
     const src = "a|bb\n--|--\n|ccc | d\n| e|f|";
     assert.deepEqual(show(src), [
       "  | a   | bb |",
-      "  | --- | -- |",
+      "  ├─────┼────┤",
       "  | ccc | d  |",
       "  | e   | f  |",
     ]);
@@ -176,6 +176,12 @@ describe("prose", () => {
   test("indent prefixes the first line of each paragraph only", () => {
     const out = render(parseDocument(src), vp, { indent: true });
     assert.deepEqual(out.slice(2, 4), ["    One.", "  Two."]);
+  });
+  test("indent leaves a paragraph's wrapped rows flush left", () => {
+    const out = render(parseDocument("aaaa bbbb cccc"), createViewport(0, 0, 10, 5), {
+      indent: true,
+    });
+    assert.deepEqual(out, [">   aaaa", "  bbbb", "  cccc"]);
   });
   test("flow wraps the joined text", () => {
     const out = render(parseDocument("aaaa bbbb\ncccc dddd"), createViewport(0, 0, 12, 5), {

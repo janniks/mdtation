@@ -10,8 +10,11 @@ export const SETTINGS = [
   { id: "crumb", title: "Section > Crumb depth", values: ["all", "1", "2", "3", "4", "5", "6"] },
   { id: "front", title: "Beta > Frontmatter editing", values: ["on", "off"] },
   { id: "purge", title: "Archive > Remove after", values: ["1d", "7d", "30d", "1y", "never"] },
-  { id: "align", title: "Inline > Align", values: ["right", "left"] },
+  { id: "width", title: "Inline > Width", values: ["fit", "50", "60", "70", "80", "90", "full"] },
+  { id: "agent", title: "Inline > Agent side", values: ["left", "right"] },
+  { id: "own", title: "Inline > Your side", values: ["right", "left"] },
   { id: "time", title: "Inline > Time", values: ["relative", "absolute", "hide"] },
+  { id: "corners", title: "Popup > Corners", values: ["pointy", "round"] },
 ] as const;
 
 const DAY = 86_400_000;
@@ -32,8 +35,11 @@ export const DEFAULTS: Values = {
   crumb: "all",
   front: "on",
   purge: "30d",
-  align: "right",
+  width: "60",
+  agent: "left",
+  own: "right",
   time: "relative",
+  corners: "pointy",
 };
 
 /** Move setting `id` by `dir` steps through its values (wrapping). Unknown ids are ignored. */

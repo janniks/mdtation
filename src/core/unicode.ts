@@ -79,3 +79,8 @@ export function displayWidth(s: string): number {
   }
   return n;
 }
+
+/** `s` right-padded with spaces to `w` display columns; wider strings are left alone. */
+export function pad(s: string, w: number): string {
+  return s + " ".repeat(Math.max(0, w - displayWidth(s)));
+}

@@ -14,7 +14,7 @@ import { end as fence } from "./front.ts";
 import type { Viewport } from "./viewport.ts";
 import { paint, SGR, strip } from "./sgr.ts";
 import { highlight } from "./syntax.ts";
-import { isRow, isSep, laid } from "./table.ts";
+import { isRow, isSep, laid, rule } from "./table.ts";
 import { colWidth, displayWidth } from "./unicode.ts";
 
 export interface RenderOptions {
@@ -331,10 +331,11 @@ function bodyFor(
 function styleTable(row: string, opts: RenderOptions): string {
   const color = opts.color === true;
   if (opts.pipes !== false) {
-    return !color
-      ? row
-      : isSep(row)
-        ? paint(color, SGR.dim, row)
+    // The separator becomes a real rule, so the grid reads as lines and not as dashes.
+    return isSep(row)
+      ? paint(color, SGR.gray, rule(row))
+      : !color
+        ? row
         : row.replace(/\|/g, paint(color, SGR.gray, "|"));
   }
   if (isSep(row)) {
@@ -391,9 +392,8 @@ function cont(line: number, raw: string, doc: Document, opts: RenderOptions): st
   if (m) {
     return " ".repeat(m[1]!.length + m[2]!.length + 1 + (/^\[( |x|X)\] /.test(m[3]!) ? 2 : 0));
   }
-  if (opts.indent && prose(doc, line, opts) && !prose(doc, line - 1, opts)) {
-    return "  ";
-  }
+  // No prose branch: the book indent belongs to the paragraph's first row only,
+  // so its wrapped rows hang flush left.
   return "";
 }
 

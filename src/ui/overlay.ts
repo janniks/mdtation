@@ -3,12 +3,12 @@
  * comment modal, menu dropdown). While open, the overlay gets every key first;
  * it returns true when it consumed the key. The shell removes `node` on close.
  */
-import type { CliRenderer, KeyEvent, Renderable } from "@opentui/core";
+import type { CliRenderer, KeyEvent } from "@opentui/core";
 import type { BoxRenderable } from "@opentui/core";
 
 export interface Overlay {
-  /** Absolutely positioned renderable the shell adds to `renderer.root`. */
-  readonly node: Renderable;
+  /** Absolutely positioned box the shell adds to `renderer.root`; it also styles the border. */
+  readonly node: BoxRenderable;
   /** Handle a key. Return true if consumed. */
   key(e: KeyEvent): boolean;
   /** A click outside the overlay. Return true to close; the click never reaches the body either way. */

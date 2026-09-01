@@ -16,6 +16,10 @@ export const SGR = {
   blue: "\x1b[34m",
   magenta: "\x1b[35m",
   gray: "\x1b[90m",
+  silver: "\x1b[37m",
+  // `ansi.ts` maps these onto the hex palette: #3a3d3a behind #e8e6df.
+  // A dark slab, not a bright one, so the note reads as a block without shouting.
+  bgGray: "\x1b[40m",
 } as const;
 
 /** `s` wrapped in `sgr` + reset, or untouched when `on` is false. */

@@ -14,7 +14,7 @@ describe("renderer tables", () => {
     const doc = parseDocument(md);
     const frame = render(doc, createViewport(0, 99, 80, 4));
     assert.equal(frame[0]!, "  | n   | age |");
-    assert.equal(frame[1]!, "  | --- | --- |");
+    assert.equal(frame[1]!, "  ├─────┼─────┤");
     assert.equal(frame[2]!, "  | Al  | 3   |");
     assert.equal(frame[3]!, "  | B   | 2   |");
   });
@@ -24,16 +24,16 @@ describe("renderer tables", () => {
     const doc = parseDocument(md);
     const frame = render(doc, createViewport(0, 2, 80, 3));
     assert.equal(frame[0]!, "  | n   | age |");
-    assert.equal(frame[1]!, "  | --- | --- |");
+    assert.equal(frame[1]!, "  ├─────┼─────┤");
     assert.equal(frame[2]!, "> | Al  | 3   |");
   });
 
-  test("color mode paints borders gray and dims the separator", () => {
+  test("color mode paints borders gray and draws the separator as a rule", () => {
     const md = "| name | age |\n| --- | --- |\n| Ali | 30 |\n";
     const doc = parseDocument(md);
     const frame = render(doc, createViewport(0, 99, 80, 3), { color: true });
     assert.ok(frame[0]!.includes(`${ESC}[90m|`), frame[0]); // gray borders
-    assert.ok(frame[1]!.includes(`${ESC}[2m`), frame[1]); // sep dimmed
+    assert.ok(frame[1]!.includes(`${ESC}[90m├`), frame[1]); // sep is a gray rule
     assert.ok(frame[2]!.includes(`${ESC}[90m|`), frame[2]);
   });
 
@@ -66,7 +66,7 @@ describe("renderer tables", () => {
     // no lone surrogate -> the whole frame round-trips through UTF-8
     Buffer.from(frame.join("\n"), "utf-8");
     assert.equal(frame[0]!, "  | name | sig    |");
-    assert.equal(frame[1]!, "  | ---- | ------ |");
+    assert.equal(frame[1]!, "  ├──────┼────────┤");
     assert.equal(frame[2]!, `  | 团队 | ${emoji} |`);
   });
 

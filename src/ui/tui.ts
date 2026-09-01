@@ -28,7 +28,7 @@ import { CommentStore } from "../core/comment.ts";
 import { fit, pin, place, step as walk } from "../core/caret.ts";
 import type { Comment } from "../core/comment.ts";
 import { anchorFor, create, markers } from "../core/comments.ts";
-import { notes, owners, rows, type Align, type Time } from "../core/inline.ts";
+import { notes, owners, rows, type Align, type Layout, type Time } from "../core/inline.ts";
 import { home, load, path as storePath, save } from "../core/store.ts";
 import { load as loadPrefs, save as savePrefs } from "../core/prefs.ts";
 import { report } from "../core/report.ts";
@@ -267,6 +267,7 @@ export class TuiShell {
   /** Show `o` (replacing any open overlay). It sees keys first until closed. */
   open(o: Overlay): void {
     this.close();
+    o.node.borderStyle = this.prefs.corners === "round" ? "rounded" : "single";
     this.overlay = o;
     this.renderer.root.add(o.node);
     this.renderer.requestRender();
@@ -579,7 +580,9 @@ export class TuiShell {
     const inline = new Map<number, string[]>();
     this.ids.clear();
     const laid = {
-      align: this.prefs.align as Align,
+      agent: this.prefs.agent as Align,
+      own: this.prefs.own as Align,
+      width: this.prefs.width as Layout,
       time: this.prefs.time as Time,
       now: Date.now(),
       color: this.on.viewColor === true,

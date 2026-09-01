@@ -21,9 +21,9 @@ const store = CommentStore.fromJSON([
 test("when: relative steps, absolute is time today and date later, hide is empty", () => {
   const now = Date.UTC(2026, 0, 2, 12);
   assert.equal(when(now - 5000, now, "relative"), "now");
-  assert.equal(when(now - 90_000, now, "relative"), "1m");
-  assert.equal(when(now - 3 * 3_600_000, now, "relative"), "3h");
-  assert.equal(when(now - 50 * 3_600_000, now, "relative"), "2d");
+  assert.equal(when(now - 90_000, now, "relative"), "1m ago");
+  assert.equal(when(now - 3 * 3_600_000, now, "relative"), "3h ago");
+  assert.equal(when(now - 50 * 3_600_000, now, "relative"), "2d ago");
   assert.equal(when(now - 50 * 3_600_000, now, "absolute"), "2025-12-31");
   assert.match(when(now - 60_000, now, "absolute"), /^\d\d:\d\d$/);
   assert.equal(when(now, now, "hide"), "");
@@ -45,20 +45,46 @@ test("notes picks voices and labels the local human `you`", () => {
   assert.equal(notes(store, doc, { agent: false, own: false }).size, 0);
 });
 
-test("rows: one block, names padded, right flush or left indented, long text wraps", () => {
+test("rows: text first, meta closes the note, each side set per author", () => {
   const list = notes(store, doc, { agent: true, own: true }).get(2)!;
-  const o = { time: "hide" as const, now: 0, color: false };
-  assert.deepEqual(rows(list, 30, { ...o, align: "left" }), [
-    "     you  why?",
-    "  claude  because",
+  const o = { time: "hide" as const, now: 0, color: false, width: "fit" as const };
+  assert.deepEqual(rows(list, 30, { ...o, agent: "left", own: "left" }), [
+    "  why?        you",
+    "  because  claude",
   ]);
-  assert.deepEqual(rows(list, 30, { ...o, align: "right" }), [
-    "                  you  why?",
-    "               claude  because",
+  assert.deepEqual(rows(list, 30, { ...o, agent: "right", own: "right" }), [
+    "               why?        you",
+    "               because  claude",
   ]);
-  const long = rows([{ id: "x", who: "me", text: "one two three four five", at: 0 }], 20, {
-    ...o,
-    align: "left",
-  });
-  assert.deepEqual(long, ["  me  one two", "      three four", "      five"]);
+  // `you` right, agent left: the thread reads as a chat.
+  assert.deepEqual(rows(list, 30, { ...o, agent: "left", own: "right" }), [
+    "               why?        you",
+    "  because  claude",
+  ]);
+});
+
+test("rows: long text wraps and only the last row carries the meta", () => {
+  const one = [{ id: "x", who: "me", text: "one two three four five", at: 0, agent: false }];
+  assert.deepEqual(
+    rows(one, 24, {
+      time: "hide",
+      now: 0,
+      color: false,
+      width: "fit",
+      agent: "left",
+      own: "left",
+    }),
+    ["  one two three four", "  five            me"],
+  );
+});
+
+test("rows: chat layout holds the block to 60% of the width", () => {
+  const one = [{ id: "x", who: "me", text: "hi", at: 0, agent: false }];
+  const o = { time: "hide" as const, now: 0, color: false, agent: "left" as const };
+  const wide = rows(one, 40, { ...o, width: "60", own: "left" })[0]!;
+  const snug = rows(one, 40, { ...o, width: "fit", own: "left" })[0]!;
+  // 60% of the 38-column pane is 22, so the block is padded out to it.
+  assert.equal(wide, `  ${"hi".padEnd(22 - 4)}  me`);
+  assert.equal(wide.length, 2 + 22);
+  assert.equal(snug, "  hi  me");
 });

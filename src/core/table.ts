@@ -75,6 +75,20 @@ export function layout(rows: readonly string[], pipes = true): string[] {
   });
 }
 
+/** A laid separator row as one continuous rule: `├──────┼:────:┼───────:┤`.
+ * Dashes and padding become the line, the pipes become junctions, and the
+ * alignment colons stay so the row still shows (and cycles) its alignment. */
+export function rule(row: string): string {
+  const last = row.length - 1;
+  let out = "";
+  for (let i = 0; i < row.length; i++) {
+    const ch = row[i]!;
+    out +=
+      ch === "|" ? (i === 0 ? "├" : i === last ? "┤" : "┼") : ch === "-" || ch === " " ? "─" : ch;
+  }
+  return out;
+}
+
 /** `[start, end)` of the table run containing `line`, or null. */
 function run(lines: readonly string[], line: number): [number, number] | null {
   if (line < 0 || line >= lines.length || !isRow(lines[line]!)) {

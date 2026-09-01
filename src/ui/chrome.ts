@@ -7,7 +7,7 @@ import { BoxRenderable, TextRenderable } from "@opentui/core";
 import type { CliRenderer, KeyEvent } from "@opentui/core";
 import type { Overlay } from "./overlay.ts";
 import { prefix, step, type Menu, type Spec, width } from "../core/menu.ts";
-import { displayWidth } from "../core/unicode.ts";
+import { displayWidth, pad } from "../core/unicode.ts";
 
 export const THEME = {
   bar: "#242624",
@@ -15,14 +15,12 @@ export const THEME = {
   active: "#34402f",
   border: "#5c615c",
   text: "#e8e6df",
+  // Key hints sit a step below the label they belong to, so the title reads first.
+  hint: "#b3b7b1",
   muted: "#8a8f8a",
   badge: "#6f9e68",
   warn: "#e9d28a",
 } as const;
-
-function pad(s: string, w: number): string {
-  return s + " ".repeat(Math.max(0, w - displayWidth(s)));
-}
 
 export class MenuBar {
   readonly node: BoxRenderable;
@@ -113,7 +111,10 @@ export class Dropdown implements Overlay {
             position: "absolute",
             top: rows,
             left: -1,
-            content: `├─ ${e.group} ${"─".repeat(Math.max(0, inner - displayWidth(e.group) - 3))}┤`,
+            // A nameless section is just a rule; no gap where the title would sit.
+            content: e.group.trim()
+              ? `├─ ${e.group} ${"─".repeat(Math.max(0, inner - displayWidth(e.group) - 3))}┤`
+              : `├${"─".repeat(inner)}┤`,
             fg: THEME.border,
             selectable: false,
             wrapMode: "none",
@@ -131,12 +132,25 @@ export class Dropdown implements Overlay {
       });
       row.add(
         new TextRenderable(renderer, {
-          content: pad(prefix(e) + e.title, inner - displayWidth(e.hint) - 1) + e.hint,
+          content: pad(prefix(e) + e.title, inner - displayWidth(e.hint) - 1),
           fg: THEME.text,
           selectable: false,
           wrapMode: "none",
         }),
       );
+      if (e.hint) {
+        row.add(
+          new TextRenderable(renderer, {
+            position: "absolute",
+            top: 0,
+            left: inner - displayWidth(e.hint) - 1,
+            content: e.hint,
+            fg: THEME.hint,
+            selectable: false,
+            wrapMode: "none",
+          }),
+        );
+      }
       this.node.add(row);
       this.rows.push(row);
     });
