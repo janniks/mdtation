@@ -15,6 +15,7 @@ export const SETTINGS = [
   { id: "own", title: "Inline > Your side", values: ["right", "left"] },
   { id: "time", title: "Inline > Time", values: ["relative", "absolute", "hide"] },
   { id: "corners", title: "Popup > Corners", values: ["pointy", "round"] },
+  { id: "status", title: "Status > Badge corner", values: ["bottom", "top"] },
 ] as const;
 
 const DAY = 86_400_000;
@@ -40,6 +41,7 @@ export const DEFAULTS: Values = {
   own: "right",
   time: "relative",
   corners: "pointy",
+  status: "bottom",
 };
 
 /** Move setting `id` by `dir` steps through its values (wrapping). Unknown ids are ignored. */

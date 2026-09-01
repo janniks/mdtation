@@ -80,7 +80,6 @@ const CYCLES = {
   viewCheck: CHECKS.map((c) => c[1]),
   viewCopy: ["simple", "detailed"],
   viewQuote: ["bar", ">", "hide"],
-  viewStatus: ["bottom", "top"],
 } as const;
 type Cycle = keyof typeof CYCLES;
 
@@ -110,7 +109,6 @@ export class TuiShell {
     viewCheck: 0,
     viewCopy: 0,
     viewQuote: 0,
-    viewStatus: 0,
   };
   private timer: ReturnType<typeof setTimeout> | null = null;
   /** Clears a transient status badge after `AGAIN` ms. */
@@ -666,8 +664,8 @@ export class TuiShell {
           : undefined,
       }),
     );
-    // `View > Status badge` picks its corner; file name + edit state take the other one.
-    const top = this.value("viewStatus") === "top";
+    // `Status > Badge corner` picks its corner; file name + edit state take the other one.
+    const top = this.prefs.status === "top";
     const name = { state: this.dirty ? "(unsaved changes)" : "", file: basename(this.file) };
     this.bar.tail.set(top ? { badge: mode } : name);
     this.status.tail.set(top ? name : { badge: mode });
@@ -891,7 +889,6 @@ export class TuiShell {
       case "viewCheck":
       case "viewCopy":
       case "viewQuote":
-      case "viewStatus":
         this.step(id, 1);
         return;
       case "save":
