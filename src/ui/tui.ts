@@ -72,6 +72,8 @@ import {
 const FOOTER = 1;
 /** Window for the second quit on unsaved changes (Claude Code uses the same 2 s). */
 const AGAIN = 2000;
+/** Window for a double click, macOS's default. */
+const DOUBLE = 500;
 
 /** View › Style cyclers: each pick moves to the next value; the menu shows the current one. */
 const CYCLES = {
@@ -225,6 +227,8 @@ export class TuiShell {
   private seg = 0;
   /** Comment id per rendered inline note row, keyed by line; refreshed by `lay()`. */
   private ids = new Map<number, string[]>();
+  /** Where and when the body was last clicked, for `again()`. */
+  private tap = { at: 0, line: -1, seg: -1 };
 
   get vp(): Viewport {
     return this.view;
@@ -361,15 +365,22 @@ export class TuiShell {
       return;
     }
     const total = this.doc.lines.length;
-    const rows = this.spans(this.lay());
+    const opts = this.lay();
+    const rows = this.spans(opts);
     // A click below the last rendered row lands on the last row instead of nowhere.
     const hit =
       place(this.top(), row, total, rows) ?? pin({ line: total - 1, seg: Infinity }, total, rows);
     const line = hit.line;
     this.view = { ...this.view, cursor: line };
     this.seg = hit.seg;
+    const twice = this.again(hit);
     if (hit.seg > 0) {
       // Continuation and note rows just take the caret; targets below live on a line's first row.
+      // A second click on a wrapped row comments on it; note rows are the comments already.
+      if (twice && !this.note(opts)) {
+        this.comment(undefined, this.slice());
+        return;
+      }
       this.draw();
       return;
     }
@@ -387,7 +398,22 @@ export class TuiShell {
       this.edit(align(this.doc.text, t.sep, t.col));
       return;
     }
+    // Nothing else was under it: a second click on the same row comments on the line.
+    if (twice) {
+      this.comment(undefined, this.slice());
+      return;
+    }
     this.draw();
+  }
+
+  /** True when this click lands on the row the last one did, inside the double-click window.
+   * The pair is then spent, so a third click starts over instead of firing again. */
+  private again(hit: Caret): boolean {
+    const now = Date.now();
+    const twice =
+      now - this.tap.at < DOUBLE && this.tap.line === hit.line && this.tap.seg === hit.seg;
+    this.tap = { at: twice ? 0 : now, line: hit.line, seg: hit.seg };
+    return twice;
   }
 
   /** Flip the task box on the cursor line, or edit a frontmatter field there; marks the document dirty. */
