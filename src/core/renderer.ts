@@ -417,12 +417,18 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
   const end = Math.min(doc.lines.length, start + 2 * height);
   const cols = Math.max(1, vp.width - GUTTER_WIDTH);
   const lines: string[] = [];
+  // Rows of the first line's block that have already scrolled off the top.
+  let skip = Math.max(0, vp.skip ?? 0);
   for (let i = start; i < end && lines.length < height; i++) {
     if (hidden(doc, i, opts)) {
       continue;
     }
     const row = tableRow(doc, i, opts);
     if (row !== null) {
+      if (skip > 0) {
+        skip--;
+        continue;
+      }
       // Tables never wrap: a too-wide row is cut so its columns stay aligned.
       lines.push(gutterFor(i, vp, cursorOn, counts, opts) + styleTable(cut(row, cols), opts));
       continue;
@@ -432,6 +438,10 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
     // The caret sits on one row of the cursor line's block; other rows keep the plain gutter.
     const at = i === vp.cursor ? Math.min(opts.seg ?? 0, chunks.length + extras.length - 1) : 0;
     chunks.forEach((chunk, ri) => {
+      if (skip > 0) {
+        skip--;
+        return;
+      }
       if (lines.length >= height) return;
       const g =
         ri === 0
@@ -442,6 +452,10 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
       lines.push(g + chunk);
     });
     extras.forEach((extra, k) => {
+      if (skip > 0) {
+        skip--;
+        return;
+      }
       if (lines.length >= height) return;
       const g = i === vp.cursor && chunks.length + k === at ? caret(opts) : "  ";
       lines.push(g + extra);

@@ -10,7 +10,6 @@ import {
   pageDown,
   pageUp,
   scroll,
-  settle,
 } from "../src/core/viewport.ts";
 
 const W = 80;
@@ -140,26 +139,4 @@ test("first: lines before it are unreachable and never shown", () => {
   assert.equal(jumpToLine(c, 0, 20).offset, 3);
   const tail = jumpToLine(c, 19, 20);
   assert.equal(tail.offset, 15);
-});
-
-const gone = (l: number) => (l < 4 ? 0 : 1); // lines 0..3 hidden
-
-describe("settle (row-aware margin)", () => {
-  const base = { offset: 0, cursor: 0, width: 80, height: 10, margin: 2 };
-  test("hidden lines do not count toward the margin", () => {
-    // lines 0..3 hidden (0 rows): cursor on 6 needs 2 visible rows above -> offset 4
-    assert.equal(settle({ ...base, offset: 4, cursor: 6 }, 40, gone).offset, 4);
-    assert.equal(settle({ ...base, offset: 5, cursor: 6 }, 40, gone).offset, 4);
-  });
-  test("wrapped lines push the window down so the cursor plus margin fits", () => {
-    // offset 0..cursor 7: rows 0-4 (5) + line5 (4) + 6,7 (2) = 11 > 10 even before the margin
-    assert.equal(settle({ ...base, cursor: 7 }, 40, (l) => (l === 5 ? 4 : 1)).offset, 3);
-  });
-  test("plain lines leave a line-correct viewport alone", () => {
-    const v = { ...base, offset: 3, cursor: 7 };
-    assert.deepEqual(
-      settle(v, 40, () => 1),
-      v,
-    );
-  });
 });

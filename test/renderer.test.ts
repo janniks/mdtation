@@ -238,6 +238,12 @@ describe("tables in the window", () => {
   });
 });
 
+test("skip starts the window mid-block, so scrolling is row by row", () => {
+  const doc = parseDocument("aaaa bbbb cccc\nz\n");
+  const vp = { ...createViewport(0, 9, 10, 3), skip: 2 };
+  assert.deepEqual(render(doc, vp), ["  cccc", "  z", "  "]);
+});
+
 test("span counts inline comment rows, so the scroll margin sees them", () => {
   const doc = parseDocument("a\nb\n");
   const inline = new Map([[0, ["  x  note", "  y  more"]]]);

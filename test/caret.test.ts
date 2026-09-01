@@ -23,11 +23,17 @@ describe("caret", () => {
   });
 
   test("place maps screen rows through blocks", () => {
-    assert.deepEqual(place(0, 0, total, rows), { line: 0, seg: 0 });
-    assert.deepEqual(place(0, 2, total, rows), { line: 2, seg: 1 });
-    assert.deepEqual(place(0, 4, total, rows), { line: 3, seg: 0 });
-    assert.deepEqual(place(2, 3, total, rows), { line: 3, seg: 0 });
-    assert.equal(place(0, 99, total, rows), null);
+    const top = { line: 0, seg: 0 };
+    assert.deepEqual(place(top, 0, total, rows), { line: 0, seg: 0 });
+    assert.deepEqual(place(top, 2, total, rows), { line: 2, seg: 1 });
+    assert.deepEqual(place(top, 4, total, rows), { line: 3, seg: 0 });
+    assert.deepEqual(place({ line: 2, seg: 0 }, 3, total, rows), { line: 3, seg: 0 });
+    assert.equal(place(top, 99, total, rows), null);
+  });
+
+  test("place counts from a top that starts mid-block", () => {
+    assert.deepEqual(place({ line: 2, seg: 2 }, 0, total, rows), { line: 2, seg: 2 });
+    assert.deepEqual(place({ line: 2, seg: 2 }, 1, total, rows), { line: 3, seg: 0 });
   });
 
   test("pin clamps a stale caret", () => {
@@ -38,16 +44,30 @@ describe("caret", () => {
 
   test("fit scrolls in row steps", () => {
     const vp = { offset: 0, cursor: 0, width: 80, height: 3, margin: 0 };
-    // Caret on the last row of line 2's block: rows above it (1 + 2) exceed the window.
-    assert.equal(fit(vp, { line: 2, seg: 2 }, total, rows), 1);
-    // Same line, first row: fits with offset 2 as well once line 0 scrolls away.
-    assert.equal(fit(vp, { line: 2, seg: 0 }, total, rows), 0);
-    // Scrolled past the caret: offset comes back to it.
-    assert.equal(fit({ ...vp, offset: 4 }, { line: 2, seg: 0 }, total, rows), 2);
+    // Caret on the last row of line 2's block: the top lands mid-block, not on a line edge.
+    assert.deepEqual(fit(vp, { line: 2, seg: 2 }, total, rows), { line: 2, seg: 0 });
+    // Same line, first row: it already fits below line 0.
+    assert.deepEqual(fit(vp, { line: 2, seg: 0 }, total, rows), { line: 0, seg: 0 });
+    // Scrolled past the caret: the top comes back to it.
+    assert.deepEqual(fit({ ...vp, offset: 4 }, { line: 2, seg: 0 }, total, rows), {
+      line: 2,
+      seg: 0,
+    });
   });
 
   test("fit honors the margin", () => {
     const vp = { offset: 0, cursor: 0, width: 80, height: 5, margin: 1 };
-    assert.equal(fit(vp, { line: 4, seg: 1 }, total, rows), 3);
+    assert.deepEqual(fit(vp, { line: 4, seg: 1 }, total, rows), { line: 2, seg: 1 });
+  });
+
+  test("fit pulls back off the end so no blank rows show", () => {
+    // 7 rendered rows in all; a window of 5 must always start on row 2.
+    const vp = { offset: 4, skip: 1, cursor: 4, width: 80, height: 5, margin: 0 };
+    assert.deepEqual(fit(vp, { line: 4, seg: 1 }, total, rows), { line: 2, seg: 1 });
+  });
+
+  test("fit keeps a short document at the top", () => {
+    const vp = { offset: 0, cursor: 0, width: 80, height: 20, margin: 3 };
+    assert.deepEqual(fit(vp, { line: 4, seg: 1 }, total, rows), { line: 0, seg: 0 });
   });
 });

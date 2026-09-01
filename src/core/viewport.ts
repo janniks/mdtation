@@ -20,8 +20,10 @@
  */
 
 export interface Viewport {
-  /** 0-based index into Document.lines of the first visible row. */
+  /** 0-based index into Document.lines of the line the window starts on. */
   readonly offset: number;
+  /** Rows of that line's block already scrolled off the top, so the window can start mid-block. */
+  readonly skip?: number;
   /** 0-based index into Document.lines of the focused (cursor) row. */
   readonly cursor: number;
   /** Terminal width in columns. */
@@ -117,40 +119,22 @@ export function moveCursor(vp: Viewport, delta: number, total: number): Viewport
 /** Advance the window one page (height-1) and follow with the cursor. */
 export function pageDown(vp: Viewport, total: number): Viewport {
   const step = Math.max(1, vp.height - 1);
-  return withCursorVisible({ ...vp, offset: vp.offset + step, cursor: vp.cursor + step }, total);
+  return anchor({ ...vp, offset: vp.offset + step, cursor: vp.cursor + step }, total);
 }
 
 export function pageUp(vp: Viewport, total: number): Viewport {
   const step = Math.max(1, vp.height - 1);
-  return withCursorVisible({ ...vp, offset: vp.offset - step, cursor: vp.cursor - step }, total);
+  return anchor({ ...vp, offset: vp.offset - step, cursor: vp.cursor - step }, total);
 }
 
 /** Set the cursor to `line` (clamped) and scroll it on-screen. */
 export function jumpToLine(vp: Viewport, line: number, total: number): Viewport {
-  return withCursorVisible({ ...vp, cursor: line, offset: line }, total);
+  return anchor({ ...vp, cursor: line, offset: line }, total);
 }
 
-/** Re-fit `offset` so the cursor keeps `margin` *rendered rows* on each side.
- * `rows(line)` is how many screen rows a line takes (0 when hidden, >1 when wrapped);
- * the line-based clamp above only knows 1 row per line. */
-export function settle(vp: Viewport, total: number, rows: (line: number) => number): Viewport {
-  if (total <= 0 || vp.height <= 0) {
-    return vp;
-  }
-  const first = vp.first ?? 0;
-  const m = gap(vp);
-  const sum = (a: number, b: number) => {
-    let n = 0;
-    for (let i = a; i < b; i++) n += rows(i);
-    return n;
-  };
-  let offset = Math.min(vp.offset, vp.cursor);
-  // Rows above the cursor inside the window must reach the margin (unless at the top).
-  while (offset > first && sum(offset, vp.cursor) < m) offset--;
-  // Rows from the window top through the cursor plus the margin below must fit.
-  const after = Math.min(m, sum(vp.cursor + 1, total));
-  while (offset < vp.cursor && sum(offset, vp.cursor + 1) + after > vp.height) offset++;
-  return { ...vp, offset };
+/** Re-anchor the window on a whole line, so any row offset inside the old top line goes away. */
+function anchor(vp: Viewport, total: number): Viewport {
+  return { ...withCursorVisible(vp, total), skip: 0 };
 }
 
 /** 0-based row of the cursor within the window, or -1 if it's off-screen. */

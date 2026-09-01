@@ -25,7 +25,7 @@ import { Modal } from "./modal.ts";
 import { All } from "./all.ts";
 import { copy } from "./clipboard.ts";
 import { CommentStore } from "../core/comment.ts";
-import { fit, pin, place, step as walk } from "../core/caret.ts";
+import { fit, pin, place, step as walk, type Caret } from "../core/caret.ts";
 import type { Comment } from "../core/comment.ts";
 import { anchorFor, create, markers } from "../core/comments.ts";
 import { notes, owners, rows, type Align, type Layout, type Time } from "../core/inline.ts";
@@ -209,7 +209,7 @@ export class TuiShell {
         this.draw("COPIED SELECTION");
       } else {
         const row = Math.min(s.anchor.y, s.focus.y) - this.text.y;
-        const hit = place(this.view.offset, row, this.doc.lines.length, this.spans(this.lay()));
+        const hit = place(this.top(), row, this.doc.lines.length, this.spans(this.lay()));
         this.view = {
           ...this.view,
           cursor: hit ? hit.line : Math.max(0, this.doc.lines.length - 1),
@@ -230,6 +230,11 @@ export class TuiShell {
 
   get vp(): Viewport {
     return this.view;
+  }
+
+  /** The window's top row, as a caret. */
+  private top(): Caret {
+    return { line: this.view.offset, seg: this.view.skip ?? 0 };
   }
 
   private fit(): Viewport {
@@ -361,8 +366,7 @@ export class TuiShell {
     const rows = this.spans(this.lay());
     // A click below the last rendered row lands on the last row instead of nowhere.
     const hit =
-      place(this.view.offset, row, total, rows) ??
-      pin({ line: total - 1, seg: Infinity }, total, rows);
+      place(this.top(), row, total, rows) ?? pin({ line: total - 1, seg: Infinity }, total, rows);
     const line = hit.line;
     this.view = { ...this.view, cursor: line };
     this.seg = hit.seg;
@@ -647,11 +651,8 @@ export class TuiShell {
     const total = this.doc.lines.length;
     const c = pin({ line: this.view.cursor, seg: this.seg }, total, this.spans(opts));
     this.seg = c.seg;
-    this.view = {
-      ...this.view,
-      cursor: c.line,
-      offset: fit(this.view, c, total, this.spans(opts)),
-    };
+    const t = fit(this.view, c, total, this.spans(opts));
+    this.view = { ...this.view, cursor: c.line, offset: t.line, skip: t.seg };
     this.text.content = styled(
       renderFrame(this.doc, this.view, { ...opts, markers: marks, seg: this.seg }).join("\n"),
     );

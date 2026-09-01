@@ -33,10 +33,11 @@ export function step(c: Caret, d: 1 | -1, total: number, rows: Rows): Caret {
   return c;
 }
 
-/** Caret for the screen row `row` below `offset`, or null past the end. */
-export function place(offset: number, row: number, total: number, rows: Rows): Caret | null {
-  let acc = 0;
-  for (let l = Math.max(0, offset); l < total; l++) {
+/** Caret for the screen row `row` below the window's top caret `top`, or null past the end. */
+export function place(top: Caret, row: number, total: number, rows: Rows): Caret | null {
+  // The first line contributes only the rows left after `top.seg` scrolled off.
+  let acc = -top.seg;
+  for (let l = Math.max(0, top.line); l < total; l++) {
     const n = rows(l);
     if (row < acc + n) {
       return { line: l, seg: row - acc };
@@ -44,6 +45,21 @@ export function place(offset: number, row: number, total: number, rows: Rows): C
     acc += n;
   }
   return null;
+}
+
+/** Rendered rows from `a` down to `b`; negative when `b` sits above `a`. */
+export function gap(a: Caret, b: Caret, rows: Rows): number {
+  if (a.line > b.line) {
+    return -gap(b, a, rows);
+  }
+  let n = b.seg - a.seg;
+  for (let l = a.line; l < b.line; l++) n += rows(l);
+  return n;
+}
+
+/** The document's last rendered row. */
+function end(total: number, rows: Rows): Caret {
+  return pin({ line: total - 1, seg: Infinity }, total, rows);
 }
 
 /** Clamp a stale caret onto a real row of its (or the nearest visible) line. */
@@ -56,22 +72,33 @@ export function pin(c: Caret, total: number, rows: Rows): Caret {
   return step({ line, seg: 0 }, line + 1 < total ? 1 : -1, total, rows);
 }
 
-/** Offset that keeps the caret row inside the scrolloff margin; row-accurate `settle`.
- * A block taller than the window pins its top row on-screen (offsets are line-granular). */
-export function fit(vp: Viewport, c: Caret, total: number, rows: Rows): number {
+/** The window's top row: the caret keeps `margin` rows on each side, and the
+ * window never shows blank rows below the last one while the document can fill it.
+ * Row-granular, so scrolling advances one wrapped row at a time and a tall block
+ * may start half off the top. */
+export function fit(vp: Viewport, c: Caret, total: number, rows: Rows): Caret {
   if (total <= 0 || vp.height <= 0) {
-    return vp.offset;
+    return { line: vp.offset, seg: vp.skip ?? 0 };
   }
-  const first = vp.first ?? 0;
   const m = Math.max(0, Math.min(vp.margin ?? 0, Math.floor((vp.height - 1) / 2)));
-  const sum = (a: number, b: number) => {
-    let n = 0;
-    for (let i = a; i < b; i++) n += rows(i);
-    return n;
-  };
-  let offset = Math.min(vp.offset, c.line);
-  while (offset > first && sum(offset, c.line) + c.seg < m) offset--;
-  const below = Math.min(m, rows(c.line) - 1 - c.seg + sum(c.line + 1, total));
-  while (offset < c.line && sum(offset, c.line) + c.seg + 1 + below > vp.height) offset++;
-  return offset;
+  const home = pin({ line: vp.first ?? 0, seg: 0 }, total, rows);
+  const tail = end(total, rows);
+  let top = pin({ line: vp.offset, seg: vp.skip ?? 0 }, total, rows);
+  // The caret may have moved above the window; never start below it.
+  if (gap(top, c, rows) < 0) {
+    top = c;
+  }
+  // Margin above, then caret plus margin below, both measured in rendered rows.
+  while (gap(home, top, rows) > 0 && gap(top, c, rows) < m) {
+    top = step(top, -1, total, rows);
+  }
+  const below = Math.min(m, gap(c, tail, rows));
+  while (gap(top, c, rows) + 1 + below > vp.height) {
+    top = step(top, 1, total, rows);
+  }
+  // Pull back off the end so the last row sits at the bottom edge, not above it.
+  while (gap(home, top, rows) > 0 && gap(top, tail, rows) + 1 < vp.height) {
+    top = step(top, -1, total, rows);
+  }
+  return top;
 }
