@@ -217,3 +217,11 @@ Unchecked entries are swept on occasional cleanup passes.
 - [ ] `metadataBase` set to `https://mdtation.dev` so the OG image URL is absolute.
   - alternative: leave `metadataBase` unset and accept a relative `og:image`, which most crawlers reject.
   - why: the domain is not decided anywhere in the repo; change the one line in `site/app/layout.tsx` once it is.
+
+## 2026-09-01 — cursor line highlight
+- [ ] `Cursor > Highlight line` slabs every row of the cursor line's block (wrap rows included), not just the caret's row.
+  - alternative: highlight the one row the caret sits on, which pinpoints it inside a long wrapped paragraph.
+  - why: "current line" reads as the whole line, and the caret glyph already marks the exact row; a long paragraph does turn into a large block though.
+- [ ] Its slab is `#2b2d2b`, a new background-only entry in the `ansi.ts` palette rather than one of the 16 SGR colors reused.
+  - alternative: reuse `bgGray` (`#3a3d3a`), the comment slab's tone.
+  - why: the user asked for the comment slabs to stay the more visible of the two, so the line highlight has to sit under them.

@@ -14,6 +14,7 @@ export const SETTINGS = [
   { id: "agent", title: "Inline > Agent side", values: ["left", "right"] },
   { id: "own", title: "Inline > Your side", values: ["right", "left"] },
   { id: "time", title: "Inline > Time", values: ["relative", "absolute", "hide"] },
+  { id: "line", title: "Cursor > Highlight line", values: ["off", "on"] },
   { id: "corners", title: "Popup > Corners", values: ["pointy", "round"] },
   { id: "status", title: "Status > Badge corner", values: ["bottom", "top"] },
 ] as const;
@@ -40,6 +41,7 @@ export const DEFAULTS: Values = {
   agent: "left",
   own: "right",
   time: "relative",
+  line: "off",
   corners: "pointy",
   status: "bottom",
 };

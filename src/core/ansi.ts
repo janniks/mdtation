@@ -40,6 +40,12 @@ const FG: Record<number, string> = {
 // oxlint-disable-next-line no-control-regex
 const SGR_RE = /\u001b\[([0-9;]*)m/g;
 
+/** Background codes with their own tone, rather than a foreground color reused. */
+const BG: Record<number, string> = {
+  // Cursor-line slab: a shade under the #3a3d3a comment slab, so the two never blur together.
+  100: "#2b2d2b",
+};
+
 function apply(style: Style, codes: string): Style {
   let s: Style = style;
   for (const part of codes === "" ? ["0"] : codes.split(";")) {
@@ -68,6 +74,8 @@ function apply(style: Style, codes: string): Style {
       s = { ...s, fg: undefined };
     } else if (n === 49) {
       s = { ...s, bg: undefined };
+    } else if (BG[n]) {
+      s = { ...s, bg: BG[n] };
     } else if (FG[n]) {
       s = { ...s, fg: FG[n] };
     } else if (FG[n - 10]) {

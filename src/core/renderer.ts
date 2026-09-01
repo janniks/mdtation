@@ -54,6 +54,8 @@ export interface RenderOptions {
   readonly flow?: boolean;
   /** Indent the first line of each paragraph, book style. Default false. */
   readonly indent?: boolean;
+  /** Lay the cursor line's rows on a slab, for readers who lose the caret (needs `color`). */
+  readonly highlight?: boolean;
 }
 
 /** Width (in columns) of the gutter prepended to every rendered line. */
@@ -423,6 +425,8 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
     if (hidden(doc, i, opts)) {
       continue;
     }
+    // The cursor line's own rows sit on a slab; its inline notes keep theirs.
+    const hot = opts.highlight === true && opts.color === true && i === vp.cursor;
     const row = tableRow(doc, i, opts);
     if (row !== null) {
       if (skip > 0) {
@@ -430,7 +434,8 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
         continue;
       }
       // Tables never wrap: a too-wide row is cut so its columns stay aligned.
-      lines.push(gutterFor(i, vp, cursorOn, counts, opts) + styleTable(cut(row, cols), opts));
+      const g = gutterFor(i, vp, cursorOn, counts, opts);
+      lines.push(g + lit(styleTable(cut(row, cols), opts), cols, hot));
       continue;
     }
     const chunks = flow(doc, i, opts, cols);
@@ -449,7 +454,7 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
           : i === vp.cursor && ri === at
             ? caret(opts)
             : "  ";
-      lines.push(g + chunk);
+      lines.push(g + lit(chunk, cols, hot));
     });
     extras.forEach((extra, k) => {
       if (skip > 0) {
@@ -462,6 +467,17 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
     });
   }
   return lines;
+}
+
+/** `row` on a slab spanning the pane, or untouched when `on` is false.
+ * Every reset inside re-opens the slab; the gutter is left out of it so the
+ * caret and the gap before the text stay clear of the color. */
+function lit(row: string, cols: number, on: boolean): string {
+  if (!on) {
+    return row;
+  }
+  const fill = " ".repeat(Math.max(0, cols - displayWidth(strip(row))));
+  return SGR.bgLine + row.replaceAll(SGR.reset, SGR.reset + SGR.bgLine) + fill + SGR.reset;
 }
 
 /** Aligned table row for `line` (code blocks excluded), else null. */

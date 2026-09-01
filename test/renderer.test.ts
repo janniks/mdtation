@@ -238,6 +238,31 @@ describe("tables in the window", () => {
   });
 });
 
+describe("highlight the cursor line", () => {
+  const doc = parseDocument("aaaa bbbb\nz\n");
+  test("the slab spans the pane and leaves the gutter alone", () => {
+    const out = render(doc, createViewport(0, 0, 8, 3), { color: true, highlight: true });
+    assert.deepEqual(out, [
+      "\x1b[32m>\x1b[0m \x1b[100maaaa  \x1b[0m",
+      "  \x1b[100mbbbb  \x1b[0m",
+      "  z",
+    ]);
+  });
+  test("styling inside re-opens the slab, so a reset cannot cut it short", () => {
+    const out = render(parseDocument("**b** c"), createViewport(0, 0, 9, 1), {
+      color: true,
+      deco: true,
+      marks: false,
+      highlight: true,
+    });
+    assert.equal(out[0], "\x1b[32m>\x1b[0m \x1b[100m\x1b[1m\x1b[33mb\x1b[0m\x1b[100m c    \x1b[0m");
+  });
+  test("plain text mode has no slab to draw", () => {
+    const out = render(doc, createViewport(0, 0, 8, 3), { highlight: true });
+    assert.deepEqual(out, ["> aaaa", "  bbbb", "  z"]);
+  });
+});
+
 test("skip starts the window mid-block, so scrolling is row by row", () => {
   const doc = parseDocument("aaaa bbbb cccc\nz\n");
   const vp = { ...createViewport(0, 9, 10, 3), skip: 2 };

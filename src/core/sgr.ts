@@ -20,6 +20,8 @@ export const SGR = {
   // `ansi.ts` maps these onto the hex palette: #3a3d3a behind #e8e6df.
   // A dark slab, not a bright one, so the note reads as a block without shouting.
   bgGray: "\x1b[40m",
+  // The cursor-line slab: darker than `bgGray`, so a note on that line still reads on top of it.
+  bgLine: "\x1b[100m",
 } as const;
 
 /** `s` wrapped in `sgr` + reset, or untouched when `on` is false. */
