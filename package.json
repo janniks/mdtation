@@ -1,6 +1,6 @@
 {
   "name": "mdtation",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Desktop-inspired terminal markdown viewer for the agentic era — inline comments that flow to your clipboard and CLI.",
   "license": "MIT",
   "author": "janniks",
