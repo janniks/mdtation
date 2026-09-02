@@ -253,6 +253,8 @@ export class TuiShell {
       ),
       // Shown frontmatter starts under its opener; without any, line 0 (often the H1) stays reachable.
       first: this.on.viewFront && end(this.doc.lines) > 0 ? 1 : this.first(),
+      // Keep the row inside the top line, so a resize or toggle doesn't snap the window to a line edge.
+      skip: this.view?.skip ?? 0,
     };
   }
 
