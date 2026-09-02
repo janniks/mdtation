@@ -225,3 +225,9 @@ Unchecked entries are swept on occasional cleanup passes.
 - [ ] Its slab is `#2b2d2b`, a new background-only entry in the `ansi.ts` palette rather than one of the 16 SGR colors reused.
   - alternative: reuse `bgGray` (`#3a3d3a`), the comment slab's tone.
   - why: the user asked for the comment slabs to stay the more visible of the two, so the line highlight has to sit under them.
+
+## 2026-09-02 — comment slab tone
+
+- [ ] The comment slab is now `#303330` and the cursor-line slab `#252725`, both as background-only palette entries in `ansi.ts`.
+  - alternative: only darken the comment slab and leave the cursor line at `#2b2d2b`.
+  - why: the ask was less contrast against the page; the cursor line had to stay a step darker than the notes on it, so both moved.

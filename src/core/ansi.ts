@@ -42,8 +42,10 @@ const SGR_RE = /\u001b\[([0-9;]*)m/g;
 
 /** Background codes with their own tone, rather than a foreground color reused. */
 const BG: Record<number, string> = {
-  // Cursor-line slab: a shade under the #3a3d3a comment slab, so the two never blur together.
-  100: "#2b2d2b",
+  // Comment slab: just off the page, so a thread reads as a block without shouting.
+  40: "#303330",
+  // Cursor-line slab: a shade under the comment slab, so the two never blur together.
+  100: "#252725",
 };
 
 function apply(style: Style, codes: string): Style {
