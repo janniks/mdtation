@@ -17,7 +17,7 @@ Each phase leaves the loop working and tests green; dogfood as we go.
 - [x] One watcher implementation, both callers, a save from vim reloads every time.
 - [x] `watch --until quit` returns when the TUI closes; `--since last` replays first.
 - [x] Agent replies show inline without a keypress; edits and archives badge too.
-- [ ] Skill fits one screen.
+- [x] Skill fits one screen.
 
 ## Log
 
@@ -28,3 +28,4 @@ Each phase leaves the loop working and tests green; dogfood as we go.
 | 3 | events | `store.ts`: `Event`, `log()`, `append()`, `events()`; append-only `<doc>.events.jsonl` beside the json. Writers: CLI add/edit/archive/restore, TUI comment/reply/edit/archive, TUI `open`/`quit`. Verified from both processes. |
 | 4 | tail | `watching()` tails `events(file, at)` instead of diffing the store; `--until <event>` stops the watcher (process exits by itself); `--since last|mark|iso` replays via the shared `from()`; `open`/`quit` print as one line, `--json` puts `event` and `what` beside the comment. Dogfood: TUI open, comment, quit; watcher printed all three and exited 0. |
 | 5 | reload | Line anchors carry `text`; `resolveAnchor` moves to the nearest line reading it, else stays on `n`. TUI: a markdown change under an overlay or unsaved edits badges `FILE CHANGED ON DISK` and applies on close; `File > Reload` takes the disk; `save()` is tmp + rename and awaited. Dogfood: comment moved 4 to 5 after an insert above; two writes under an open box badged twice, one `RELOADED` on Esc. |
+| 6 | story | README loop in five steps with `watch --until quit`; CLI block leads with `watch`, `add --re`, `mark`; `skill` gains the loop in three lines and the `watch` flags (33 lines). `test/pty.ts` runs the TUI under `script` with scheduled keys (Linux only, skipped elsewhere); `test/tui.test.ts` checks open, comment, quit in the events log. |

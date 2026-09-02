@@ -27,10 +27,11 @@ Agents ask for feedback in the worst possible ways.
 
 ## The loop
 
-- The agent writes the plan as a markdown file, not a message.
-- You open it in mdtation, read it full screen, and press `c` on the line (or drag-select the sentence) you disagree with.
-- Copy the comment to the clipboard: line number, section path, quote, and your note. Paste it, or let the agent run `list`.
-- The agent revises the file. You open it again, your comments are still anchored, and you go round once more.
+1. The agent writes the plan as a markdown file, not a message, and runs `mdtation plan.md watch --until quit`.
+2. You open the file in mdtation, read it full screen, and press `c` on the line (or drag-select the sentence) you disagree with.
+3. Each comment lands in the agent's terminal as you make it: line number, section path, quote, and your note.
+4. The agent replies with `add --re <id>` or rewrites the file. Both show up on your screen at once, no keypress.
+5. You quit, the watcher returns, the agent revises, and you go round once more.
 
 Review the plan, not the chat. Specs, plans, drafts, reviews: the prose your agent writes deserves a real review flow, not a chat reply.
 
@@ -69,18 +70,21 @@ Everything a TUI should have: menu bar, command palette, settings, all mouse rea
 ## CLI
 
 ```sh
-mdtation plan.md list             # print live comments as markdown
-mdtation plan.md list --archived  # include archived ones, each with an id
-mdtation plan.md restore a1,b2    # un-archive by id
-mdtation plan.md clear            # forget every comment for this file
-mdtation plan.md print            # render to stdout and exit
-mdtation plan.md status           # print the data dir
-mdtation skill                    # print the agent skill
+mdtation plan.md watch                # block; print each comment as it lands (--json for one object per line)
+mdtation plan.md watch --until quit   # ...and return when the viewer closes
+mdtation plan.md list                 # print live comments as markdown (--since last for the new ones)
+mdtation plan.md add "text" --re <id> # reply in a thread, shows inline in the viewer at once
+mdtation plan.md mark                 # checkpoint for --since last
+mdtation plan.md archive a1 b2        # done with these (restore to undo)
+mdtation plan.md print                # render to stdout and exit
+mdtation plan.md status               # print the data dir
+mdtation skill                        # print the agent skill
 ```
 
-Comments live in one json per file under `$MDTATION_HOME`, `$XDG_DATA_HOME/mdtation`, or `~/.mdtation`, keyed by absolute path.
+Comments live in one json per file under `$MDTATION_HOME`, `$XDG_DATA_HOME/mdtation`, or `~/.mdtation`, keyed by absolute path, with an append-only `.events.jsonl` beside it that `watch` tails.
+Set `MDTATION_AUTHOR` so the agent's replies carry its name.
 
-Tell your agent: "Read the comments I left on plans/auth.md with `mdtation plans/auth.md list`, address each, then rewrite the file."
+Tell your agent: "Run `mdtation skill` and follow it for plans/auth.md."
 
 ## License
 
