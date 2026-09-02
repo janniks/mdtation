@@ -9,7 +9,8 @@ import { displayWidth, pad, wrapWords } from "./unicode.ts";
 
 export type Time = "relative" | "absolute" | "hide";
 export type Align = "right" | "left";
-/** Block width: `fit` shrinks to the text, `full` spans the pane, a number is a percent of it. */
+/** Block width: `fit` shrinks to the text, `full` spans the pane, a number is a percent of it.
+ * Text wraps inside that width, so a long comment stays a narrow column, not a pane-wide slab. */
 export type Layout = "fit" | "full" | "50" | "60" | "70" | "80" | "90";
 
 export interface Note {
@@ -79,11 +80,11 @@ export function rows(
   },
 ): string[] {
   const b = build(list, cols, opts);
-  // One block: never narrower than the configured share of the pane, never wider than its text.
-  const width = Math.max(
-    ...b.body.map((t, i) => displayWidth(t) + tail(b.meta[i]!)),
-    floor(opts.width, cols),
-  );
+  // One block: the configured share of the pane, or for `fit` just as wide as its text.
+  const width =
+    opts.width === "fit"
+      ? Math.max(...b.body.map((t, i) => displayWidth(t) + tail(b.meta[i]!)))
+      : span(opts.width, cols);
   // Each note takes the side its author is configured to sit on.
   const right = (i: number) => (list[b.of[i]!]!.agent ? opts.agent : opts.own) === "right";
   if (!opts.color) {
@@ -106,14 +107,11 @@ function tail(meta: string): number {
   return meta ? displayWidth(meta) + 2 : 0;
 }
 
-/** Narrowest the block may be: nothing for `fit`, the pane for `full`, else that percent of it.
+/** Widest the block may be: the pane for `fit` and `full`, else that percent of it.
  * Two columns come off for the slab's padding so the block still fits the pane. */
-function floor(width: Layout, cols: number): number {
-  if (width === "fit") {
-    return 0;
-  }
+function span(width: Layout, cols: number): number {
   const pane = Math.max(0, cols - 2);
-  return width === "full" ? pane : Math.floor((pane * Number(width)) / 100);
+  return width === "fit" || width === "full" ? pane : Math.floor((pane * Number(width)) / 100);
 }
 
 /** Which note each screen row from `rows()` belongs to, as indices into `list`.
@@ -121,7 +119,7 @@ function floor(width: Layout, cols: number): number {
 export function owners(
   list: readonly Note[],
   cols: number,
-  opts: { readonly time: Time; readonly now: number },
+  opts: { readonly width: Layout; readonly time: Time; readonly now: number },
 ): number[] {
   return build(list, cols, opts).of;
 }
@@ -130,14 +128,14 @@ export function owners(
 function build(
   list: readonly Note[],
   cols: number,
-  opts: { readonly time: Time; readonly now: number },
+  opts: { readonly width: Layout; readonly time: Time; readonly now: number },
 ): { meta: string[]; body: string[]; of: number[] } {
   const metas = list.map((n) => {
     const t = when(n.at, opts.now, opts.time);
     return t ? `${n.who}, ${t}` : n.who;
   });
-  // 4 = the two-space gap before the meta plus a space of slab padding either side.
-  const textW = Math.max(8, cols - Math.max(...metas.map(displayWidth)) - 4);
+  // The text shares the block with the widest meta and the two-space gap before it.
+  const textW = Math.max(8, span(opts.width, cols) - Math.max(...metas.map(displayWidth)) - 2);
   const meta: string[] = [];
   const body: string[] = [];
   const of: number[] = [];

@@ -78,6 +78,22 @@ test("rows: long text wraps and only the last row carries the meta", () => {
   );
 });
 
+test("rows: a long comment wraps inside the configured width, not the pane", () => {
+  const one = [{ id: "x", who: "me", text: "word ".repeat(30).trim(), at: 0, agent: false }];
+  const o = {
+    time: "hide" as const,
+    now: 0,
+    color: false,
+    agent: "left" as const,
+    own: "left" as const,
+  };
+  const half = rows(one, 100, { ...o, width: "50" });
+  const full = rows(one, 100, { ...o, width: "full" });
+  // 50% of the 98-column pane is 49; every row stays inside it, so the text takes more rows.
+  assert.ok(half.every((r) => r.length <= 2 + 49));
+  assert.ok(half.length > full.length);
+});
+
 test("rows: chat layout holds the block to 60% of the width", () => {
   const one = [{ id: "x", who: "me", text: "hi", at: 0, agent: false }];
   const o = { time: "hide" as const, now: 0, color: false, agent: "left" as const };
