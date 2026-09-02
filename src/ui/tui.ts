@@ -12,7 +12,7 @@ import { createCliRenderer, TextRenderable } from "@opentui/core";
 import type { CliRenderer, KeyEvent, MouseEvent, Selection } from "@opentui/core";
 import { spawnSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
-import { readFile, rename, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { strip } from "../core/sgr.ts";
@@ -30,7 +30,7 @@ import { end as last, fit, pin, place, step as walk, type Caret } from "../core/
 import type { Comment } from "../core/comment.ts";
 import { anchorFor, create, markers } from "../core/comments.ts";
 import { lay, notes, type Align, type Layout, type Time } from "../core/inline.ts";
-import { append, home, load, path as storePath, save } from "../core/store.ts";
+import { append, atomic, home, load, path as storePath, save } from "../core/store.ts";
 import type { Change } from "../core/comment.ts";
 import { load as loadPrefs, save as savePrefs } from "../core/prefs.ts";
 import { report } from "../core/report.ts";
@@ -294,7 +294,7 @@ export class TuiShell {
   close(): void {
     this.drop();
     if (this.stale) {
-      void this.reloadDoc();
+      this.safe(this.reloadDoc());
     }
   }
 
@@ -476,10 +476,15 @@ export class TuiShell {
     this.draw();
   }
 
+  /** A background promise's failure becomes a status badge; unhandled, OpenTUI would pop its console over the page. */
+  private safe(p: Promise<unknown>): void {
+    p.catch((e: unknown) => this.draw(`ERROR ${e instanceof Error ? e.message : String(e)}`));
+  }
+
   /** Write the store once; with `what` and ids, log each change for anyone watching. */
   private persist(what?: Change["what"], ...ids: string[]): void {
     if (this.file) {
-      void save(this.file, this.store);
+      this.safe(save(this.file, this.store));
       for (const id of what ? ids : []) {
         append(this.file, { event: "comment", by: process.env.USER ?? "you", id, what });
       }
@@ -501,12 +506,12 @@ export class TuiShell {
         follow(
           dir,
           (name) => name.startsWith(mine),
-          () => void this.reloadStore(),
+          () => this.safe(this.reloadStore()),
         ),
         follow(
           dirname(this.file),
           () => true,
-          () => void this.reloadDoc(),
+          () => this.safe(this.reloadDoc()),
         ),
       ];
     } catch {
@@ -563,12 +568,9 @@ export class TuiShell {
     this.draw("RELOADED");
   }
 
-  /** Write atomically (tmp + rename) so the watcher never reads a half-written file. */
   private async save(): Promise<void> {
     if (this.file) {
-      const tmp = `${this.file}.${process.pid}.tmp`;
-      await writeFile(tmp, this.doc.text);
-      await rename(tmp, this.file);
+      await atomic(this.file, this.doc.text);
     }
     this.dirty = false;
     this.draw("SAVED");
@@ -957,10 +959,10 @@ export class TuiShell {
         return;
       case "reload":
         this.dirty = false;
-        void this.reloadDoc().then(() => this.reloadStore());
+        this.safe(this.reloadDoc().then(() => this.reloadStore()));
         return;
       case "save":
-        void this.save();
+        this.safe(this.save());
         return;
       case "viewMouse":
         // Off: the terminal keeps the mouse, so its native select-to-copy works; `M` turns it back on.

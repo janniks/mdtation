@@ -98,3 +98,5 @@ Append-only detours / surprises that cost more than one attempt.
   - Seen on `@opentui/core` 0.5.3 and 0.5.4. Keep full-width rows attribute-free (color only), or one column short.
 - 2026-09-02: `store.save` used one tmp name per process, so two saves in flight (copy-all with archive-on-copy saved once per comment) renamed each other's file away: `ENOENT rename ….tmp`.
   - tmp names now carry a counter; the loop saves once. Any per-item `persist()` loop is the smell to watch for.
+  - Sibling class: a `void promise` in the TUI. OpenTUI registers `unhandledRejection` and pops its log console over the page (`openConsoleOnError`), which is what the "console focused" screen was. Every background promise now goes through `safe()`, which badges the error instead.
+  - One `atomic(to, text)` in `store.ts` is the only async tmp + rename writer; `prefs.ts` stays sync, which cannot interleave.

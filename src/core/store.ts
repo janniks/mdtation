@@ -71,13 +71,18 @@ export async function load(file: string): Promise<CommentStore> {
 
 let seq = 0;
 
-/** Persist `store` atomically (tmp + rename). Each save gets its own tmp name: two saves in
- * flight at once (a comment right after open, say) must not rename each other's file away. */
+/** Write `text` to `to` atomically (tmp + rename), so a reader never sees half a file.
+ * Each call gets its own tmp name: two writes in flight at once must not rename each other's file away. */
+export async function atomic(to: string, text: string): Promise<void> {
+  const tmp = `${to}.${process.pid}.${seq++}.tmp`;
+  await writeFile(tmp, text, "utf-8");
+  await rename(tmp, to);
+}
+
+/** Persist `store`. */
 export async function save(file: string, store: CommentStore): Promise<void> {
   await mkdir(join(home(), "comments"), { recursive: true });
-  const tmp = `${path(file)}.${process.pid}.${seq++}.tmp`;
-  await writeFile(tmp, JSON.stringify(store.toJSON(), null, 2), "utf-8");
-  await rename(tmp, path(file));
+  await atomic(path(file), JSON.stringify(store.toJSON(), null, 2));
 }
 
 /** Forget the comments saved for `file` (marks too); returns how many were removed. */
