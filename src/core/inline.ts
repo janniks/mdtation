@@ -99,10 +99,10 @@ export function lay(
   const rows = b.meta.map((m, i) => {
     const text = pad(b.body[i]!, width - tail(m));
     if (!opts.color) {
-      const lead = " ".repeat(right(i) ? Math.max(0, cols - width) : 2);
+      const lead = " ".repeat(right(i) ? Math.max(0, cols - width) : 0);
       return (lead + text + (m ? `  ${m}` : "")).trimEnd();
     }
-    const lead = " ".repeat(right(i) ? Math.max(0, cols - width - 2) : 2);
+    const lead = " ".repeat(right(i) ? Math.max(0, cols - width - 2) : 0);
     return `${lead}${SGR.bgGray} ${SGR.silver}${text}${m ? `${SGR.gray}  ${m}` : ""} ${SGR.reset}`;
   });
   return { rows, of: b.of };

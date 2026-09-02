@@ -49,8 +49,8 @@ test("rows: text first, meta closes the note, each side set per author", () => {
   const list = notes(store, doc, { agent: true, own: true }).get(2)!;
   const o = { time: "hide" as const, now: 0, color: false, width: "fit" as const };
   assert.deepEqual(rows(list, 30, { ...o, agent: "left", own: "left" }), [
-    "  why?        you",
-    "  because  claude",
+    "why?        you",
+    "because  claude",
   ]);
   assert.deepEqual(rows(list, 30, { ...o, agent: "right", own: "right" }), [
     "               why?        you",
@@ -59,7 +59,7 @@ test("rows: text first, meta closes the note, each side set per author", () => {
   // `you` right, agent left: the thread reads as a chat.
   assert.deepEqual(rows(list, 30, { ...o, agent: "left", own: "right" }), [
     "               why?        you",
-    "  because  claude",
+    "because  claude",
   ]);
 });
 
@@ -74,7 +74,7 @@ test("rows: long text wraps and only the last row carries the meta", () => {
       agent: "left",
       own: "left",
     }),
-    ["  one two three four", "  five            me"],
+    ["one two three four", "five            me"],
   );
 });
 
@@ -90,13 +90,13 @@ test("rows: text takes the whole block; who and when get their own row only when
     ...o,
     time: "hide",
   });
-  assert.deepEqual(fits, ["  ab cd   me"]);
+  assert.deepEqual(fits, ["ab cd   me"]);
   // 10 columns of block: "abcdefghij" fills it, so "me" drops to a row of its own.
   const spills = rows([{ id: "x", who: "me", text: "abcdefghij", at: 0, agent: false }], 12, {
     ...o,
     time: "hide",
   });
-  assert.deepEqual(spills, ["  abcdefghij", "  " + " ".repeat(6) + "  me"]);
+  assert.deepEqual(spills, ["abcdefghij", " ".repeat(6) + "  me"]);
 });
 
 test("rows: a long comment wraps inside the configured width, not the pane", () => {
@@ -111,7 +111,7 @@ test("rows: a long comment wraps inside the configured width, not the pane", () 
   const half = rows(one, 100, { ...o, width: "50" });
   const full = rows(one, 100, { ...o, width: "full" });
   // 50% of the 98-column pane is 49; every row stays inside it, so the text takes more rows.
-  assert.ok(half.every((r) => r.length <= 2 + 49));
+  assert.ok(half.every((r) => r.length <= 49));
   assert.ok(half.length > full.length);
 });
 
@@ -121,7 +121,7 @@ test("rows: chat layout holds the block to 60% of the width", () => {
   const wide = rows(one, 40, { ...o, width: "60", own: "left" })[0]!;
   const snug = rows(one, 40, { ...o, width: "fit", own: "left" })[0]!;
   // 60% of the 38-column pane is 22, so the block is padded out to it.
-  assert.equal(wide, `  ${"hi".padEnd(22 - 4)}  me`);
-  assert.equal(wide.length, 2 + 22);
-  assert.equal(snug, "  hi  me");
+  assert.equal(wide, `${"hi".padEnd(22 - 4)}  me`);
+  assert.equal(wide.length, 22);
+  assert.equal(snug, "hi  me");
 });
