@@ -1,36 +1,11 @@
 import { defineCommand, runMain } from "citty";
 import { readFile } from "node:fs/promises";
-import { basename, join, resolve } from "node:path";
-import { mkdirSync } from "node:fs";
+import { resolve } from "node:path";
 import { SKILL } from "./core/skill.ts";
 import { parseDocument, type Document } from "./core/document.ts";
 import { render as renderFrame } from "./core/renderer.ts";
 import { createViewport, DEFAULT_WIDTH } from "./core/viewport.ts";
-import { archive, clear, home, load, path, restore, save } from "./core/store.ts";
-import { report } from "./core/report.ts";
-import { json, read } from "./core/read.ts";
-import { CommentStore, changes, copyFormat, type Comment } from "./core/comment.ts";
-import { follow } from "./core/watch.ts";
-import { create } from "./core/comments.ts";
-
-const VERBS = [
-  "list",
-  "mark",
-  "read",
-  "print",
-  "status",
-  "add",
-  "edit",
-  "archive",
-  "restore",
-  "clear",
-  "watch",
-] as const;
-
-/** The CLI's own author: `$MDTATION_AUTHOR`, else `agent`. */
-const me = () => process.env.MDTATION_AUTHOR ?? "agent";
-/** Label for comments without an author: the local human. */
-const human = () => process.env.USER ?? "you";
+import { VERBS, me, run, watching, type Verb } from "./verbs.ts";
 
 runMain(
   defineCommand({
@@ -66,85 +41,30 @@ runMain(
         return;
       }
       const file = resolve(args.file);
-      const verb = args.verb as (typeof VERBS)[number] | undefined;
+      const verb = args.verb as Verb | undefined;
       if (verb && !VERBS.includes(verb)) {
-        console.error(`mdtation: unknown verb ${verb}; try ${VERBS.join(", ")}`);
-        process.exit(2);
+        die(`unknown verb ${verb}; try ${VERBS.join(", ")}`);
       }
-      const rest = args._.slice(2);
       const who = args.author ?? me();
-      if (verb === "status") {
-        const store = await load(file);
-        console.log(
-          [
-            `file      ${file}`,
-            `comments  ${path(file)}`,
-            `live      ${store.live().length}`,
-            `archived  ${store.all().length - store.live().length}`,
-            `marks     ${store.marks.map((m) => `${new Date(m.at).toISOString()}${m.by ? ` ${m.by}` : ""}${m.name ? ` ${m.name}` : ""}`).join(", ") || "none"}`,
-            `last copy ${home()}/last-copy.md`,
-          ].join("\n"),
-        );
-        return;
-      }
-      if (verb === "clear") {
-        console.error(`mdtation: cleared ${await clear(file)} comments for ${basename(file)}`);
-        return;
-      }
-      if (verb === "archive" || verb === "restore") {
-        const n = await (verb === "archive" ? archive : restore)(file, rest);
-        console.error(`mdtation: ${verb}d ${n} comments`);
-        return;
-      }
-      if (verb === "mark") {
-        const store = await load(file);
-        store.mark(Date.now(), who, rest[0]);
-        await save(file, store);
-        console.error(`mdtation: marked${rest[0] ? ` ${rest[0]}` : ""} for ${who}`);
-        return;
-      }
-      let text: string;
-      try {
-        text = await readFile(file, "utf-8");
-      } catch {
-        console.error(`mdtation: cannot read ${file}`);
-        process.exit(1);
-      }
-      const doc = parseDocument(text);
-      if (verb === "add" || verb === "edit") {
-        const store = await load(file);
-        const id = (verb === "add" ? add : edit)(store, doc, rest, args, who);
-        await save(file, store);
-        console.error(`mdtation: ${verb === "add" ? "added" : "edited"} ${id}`);
-        return;
-      }
-      if (verb === "list" || verb === "read") {
-        const store = await load(file);
-        const list = pick(store, args.archived === true, args.since, who);
-        if (verb === "read") {
-          process.stdout.write(
-            args.json
-              ? JSON.stringify(json(list, store, doc, file, human())) + "\n"
-              : read(list, store, doc, human()),
-          );
-        } else if (args.json) {
-          process.stdout.write(
-            list.map((c) => JSON.stringify(c)).join("\n") + (list.length ? "\n" : ""),
-          );
-        } else {
-          process.stdout.write(report(list, doc, file, { archived: args.archived }));
-        }
-        if (args.archive) {
-          await archive(
-            file,
-            list.map((c) => c.id),
-          );
-        }
-        return;
-      }
       if (verb === "watch") {
-        watching(file, who, args.json === true);
+        watching(file, who, args.json === true, (s) => process.stdout.write(s));
         return;
+      }
+      if (verb && verb !== "print") {
+        try {
+          const r = await run(file, verb, args._.slice(2), args, who);
+          if (r.err) console.error(`mdtation: ${r.err}`);
+          if (r.out) process.stdout.write(r.out);
+        } catch (e) {
+          die(e instanceof Error ? e.message : String(e));
+        }
+        return;
+      }
+      let doc: Document;
+      try {
+        doc = parseDocument(await readFile(file, "utf-8"));
+      } catch {
+        die(`cannot read ${file}`, 1);
       }
       if (verb === "print" || !process.stdout.isTTY) {
         await stdoutRender(doc);
@@ -166,93 +86,9 @@ runMain(
   }),
 );
 
-type Opts = { line?: string; re?: string; human?: boolean };
-
-/** `add "text" --line N | --re <id>`: a new comment by `who`; replies copy the parent's anchor. */
-function add(store: CommentStore, doc: Document, rest: string[], a: Opts, who: string): string {
-  const text = rest[0];
-  const parent = a.re ? store.get(a.re) : undefined;
-  if (!text || (!a.line && !parent)) {
-    die(a.re && !parent ? `no comment ${a.re}` : 'add needs "text" and --line N or --re <id>');
-  }
-  const line = parent ? (store.resolve(parent.anchor, doc)?.startLine ?? 0) : Number(a.line) - 1;
-  if (!parent && !(line >= 0 && line < doc.lines.length)) {
-    die(`--line ${a.line} is outside 1..${doc.lines.length}`);
-  }
-  const c: Comment = {
-    ...create(doc, line, text),
-    author: who,
-    ...(a.human ? {} : { agent: true as const }),
-    ...(parent ? { re: parent.id } : {}),
-  };
-  store.add(c);
-  return c.id;
-}
-
-/** `edit <id> "text"`. */
-function edit(store: CommentStore, _doc: Document, rest: string[]): string {
-  const c = rest[0] ? store.get(rest[0]) : undefined;
-  if (!c || !rest[1]) {
-    die(c ? 'edit needs the new "text"' : `no comment ${rest[0]}`);
-  }
-  store.add({ ...c, text: rest[1] });
-  return c.id;
-}
-
-function die(msg: string): never {
+function die(msg: string, code = 2): never {
   console.error(`mdtation: ${msg}`);
-  process.exit(2);
-}
-
-/** Live (or all) comments, optionally only those after `since`: `last` = my latest mark, a mark name, or an ISO time. */
-function pick(
-  store: CommentStore,
-  all: boolean,
-  since: string | undefined,
-  who: string,
-): Comment[] {
-  const list = [...(all ? store.all() : store.live())];
-  if (!since) {
-    return list;
-  }
-  const at =
-    since === "last"
-      ? (store.since(who)?.at ?? 0)
-      : (store.since(undefined, since)?.at ?? Date.parse(since));
-  if (Number.isNaN(at)) {
-    console.error(`mdtation: --since ${since} is neither last, a mark name, nor a date`);
-    process.exit(2);
-  }
-  return list.filter((c) => c.createdAt > at);
-}
-
-/** Block and print every new live comment by someone else as it lands (markdown block or JSON line). */
-function watching(file: string, who: string, asJson: boolean): void {
-  const dir = join(home(), "comments");
-  mkdirSync(dir, { recursive: true });
-  const mine = basename(path(file));
-  let last = new CommentStore();
-  const tick = async (first = false) => {
-    const store = await load(file);
-    // The document is re-read each tick, so `Line N` and the quote follow a rewrite.
-    const doc = parseDocument(await readFile(file, "utf-8").catch(() => ""));
-    const fresh = changes(last, store).filter(
-      (x) => x.what === "new" && (x.c.author ?? "") !== who,
-    );
-    last = store;
-    if (first) {
-      return;
-    }
-    for (const { c } of fresh) {
-      process.stdout.write(asJson ? JSON.stringify(c) + "\n" : copyFormat(c, doc) + "\n\n");
-    }
-  };
-  void tick(true);
-  follow(
-    dir,
-    (name) => name.startsWith(mine),
-    () => void tick(),
-  );
+  process.exit(code);
 }
 
 async function stdoutRender(doc: Document): Promise<void> {
