@@ -92,14 +92,13 @@ export function wrapWords(text: string, width: number): string[] {
   for (const para of text.split("\n")) {
     let cur = "";
     for (let word of para.split(" ")) {
-      // A word wider than the row is chopped, so it can never overflow the block.
-      while (displayWidth(word) > width) {
-        if (cur) {
-          out.push(cur);
-          cur = "";
-        }
-        out.push(word.slice(0, width));
-        word = word.slice(width);
+      // A word wider than the row is chopped by display columns, so it can never overflow the block.
+      if (width > 0 && displayWidth(word) > width) {
+        if (cur) out.push(cur);
+        cur = "";
+        const bits = wrapLine(word, width);
+        out.push(...bits.slice(0, -1));
+        word = bits[bits.length - 1] ?? "";
       }
       if (cur && displayWidth(cur) + 1 + displayWidth(word) > width) {
         out.push(cur);

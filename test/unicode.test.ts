@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 import { test, describe } from "node:test";
-import { colWidth, wrapLine, wrapWords } from "../src/core/unicode.ts";
+import { colWidth, displayWidth, wrapLine, wrapWords } from "../src/core/unicode.ts";
 
 describe("unicode", () => {
   describe("colWidth", () => {
@@ -76,6 +76,20 @@ describe("unicode", () => {
     });
     test("empty input is a single empty row", () => {
       assert.deepEqual(wrapWords("", 5), [""]);
+    });
+    test("a wide word is chopped by columns, not code units", () => {
+      const rows = wrapWords("漢字漢", 3);
+      assert.deepEqual(rows, ["漢", "字", "漢"]);
+      assert.ok(rows.every((r) => displayWidth(r) <= 3));
+    });
+    test("a surrogate pair is never split", () => {
+      assert.deepEqual(wrapWords("👍👍", 1), ["👍", "👍"]);
+      const rows = wrapWords("👍👍", 2);
+      assert.deepEqual(rows, ["👍", "👍"]);
+      assert.ok(rows.every((r) => displayWidth(r) <= 2));
+    });
+    test("a short word joins the last piece of a chopped word", () => {
+      assert.deepEqual(wrapWords("漢字漢 a", 5), ["漢字", "漢 a"]);
     });
   });
 });
