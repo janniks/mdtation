@@ -10,7 +10,7 @@ const doc = parseDocument("# Title\n\n## Sub\n\ntext\n");
 describe("comments glue", () => {
   test("anchorFor: heading row -> heading path, other rows -> line", () => {
     assert.deepEqual(anchorFor(doc, 2), { kind: "heading", slug: ["title", "sub"] });
-    assert.deepEqual(anchorFor(doc, 4), { kind: "line", n: 4 });
+    assert.deepEqual(anchorFor(doc, 4), { kind: "line", n: 4, text: "text" });
   });
 
   test("create: id is base36 of now plus two random chars, anchor from the line", () => {

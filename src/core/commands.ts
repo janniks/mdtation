@@ -27,6 +27,7 @@ export interface Command {
  * chords on purpose: they are reached via the menu bar, palette, or help. */
 export const COMMANDS = [
   { id: "save", title: "Save", category: "File", keys: ["ctrl+s"] },
+  { id: "reload", title: "Reload", category: "File", keys: [] },
   { id: "palette", title: "Command palette", category: "File", keys: ["/"], group: "Tools" },
   { id: "settings", title: "Settings", category: "File", keys: [], group: "Tools" },
   { id: "quit", title: "Quit", category: "File", keys: ["q", "ctrl+c"], group: " " },
@@ -122,6 +123,7 @@ export const HANDLERS: { readonly [K in CommandId]: CmdHandler } = {
   bottom: (vp, total) => ({ vp: jumpToLine(vp, Math.max(0, total - 1), total) }),
   quit: () => ({ quit: true }),
   save: () => ({}),
+  reload: () => ({}),
   viewBar: () => ({}),
   viewColor: () => ({}),
   viewEmphasis: () => ({}),

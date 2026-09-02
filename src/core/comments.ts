@@ -4,10 +4,15 @@
 import type { Anchor, Comment, CommentStore } from "./comment.ts";
 import type { Document } from "./document.ts";
 
-/** Heading anchor only when `line` IS a heading row; any other line anchors by number. */
+/** Heading anchor only when `line` IS a heading row; any other line anchors by number,
+ * remembering its text (blank lines remember nothing: every blank line would match). */
 export function anchorFor(doc: Document, line: number): Anchor {
   const h = doc.headings.find((x) => x.startLine === line);
-  return h ? { kind: "heading", slug: h.path } : { kind: "line", n: line };
+  if (h) {
+    return { kind: "heading", slug: h.path };
+  }
+  const text = doc.lines[line]?.trim();
+  return text ? { kind: "line", n: line, text } : { kind: "line", n: line };
 }
 
 export function create(

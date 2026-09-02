@@ -13,7 +13,8 @@ import { crumb } from "./crumb.ts";
 
 export type Anchor =
   | { readonly kind: "heading"; readonly slug: readonly string[] }
-  | { readonly kind: "line"; readonly n: number };
+  /** `text` is the trimmed line at creation, so the comment can follow its line after an edit above it. */
+  | { readonly kind: "line"; readonly n: number; readonly text?: string };
 
 export interface Location {
   /** 0-based first line covered by the anchor. */
@@ -125,7 +126,8 @@ export class CommentStore {
 }
 
 /** Resolve an anchor against a Document. Heading paths re-anchor by slug, so a
- * comment survives the heading moving; line anchors map 1:1. */
+ * comment survives the heading moving. A line anchor stays on `n` while that line
+ * still reads `text`, else moves to the nearest line that does, else stays on `n`. */
 export function resolveAnchor(anchor: Anchor, doc: Document): Location | null {
   if (anchor.kind === "heading") {
     const h = findHeading(doc, anchor.slug);
@@ -134,10 +136,25 @@ export function resolveAnchor(anchor: Anchor, doc: Document): Location | null {
     }
     return { startLine: h.startLine, endLine: h.startLine };
   }
-  if (anchor.n < 0 || anchor.n >= doc.lines.length) {
+  const n = anchor.text ? nearest(doc.lines, anchor.text, anchor.n) : anchor.n;
+  if (n < 0 || n >= doc.lines.length) {
     return null;
   }
-  return { startLine: anchor.n, endLine: anchor.n };
+  return { startLine: n, endLine: n };
+}
+
+/** Index of the line reading `text` closest to `n`, or `n` when no line does. */
+function nearest(lines: readonly string[], text: string, n: number): number {
+  if (lines[n]?.trim() === text) {
+    return n;
+  }
+  let best = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i]!.trim() === text && (best < 0 || Math.abs(i - n) < Math.abs(best - n))) {
+      best = i;
+    }
+  }
+  return best < 0 ? n : best;
 }
 
 /** Human label for a heading anchor, e.g. "## Architecture / The model". */

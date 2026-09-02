@@ -12,7 +12,7 @@ import { createCliRenderer, TextRenderable } from "@opentui/core";
 import type { CliRenderer, KeyEvent, MouseEvent, Selection } from "@opentui/core";
 import { spawnSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile, rename, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { strip } from "../core/sgr.ts";
@@ -91,6 +91,8 @@ export class TuiShell {
   readonly renderer: CliRenderer;
   doc: Document;
   dirty = false;
+  /** The markdown changed on disk while an overlay was open or edits were unsaved; applied on close or `File > Reload`. */
+  private stale = false;
   /** When quit was last refused on a dirty file; a second quit within `AGAIN` ms exits anyway. */
   private guard = 0;
   /** Chord of the key being dispatched (for the status hint). */
@@ -279,7 +281,7 @@ export class TuiShell {
 
   /** Show `o` (replacing any open overlay). It sees keys first until closed. */
   open(o: Overlay): void {
-    this.close();
+    this.drop();
     // A click before the overlay must not pair with one after it.
     this.tap.at = 0;
     o.node.borderStyle = this.prefs.corners === "round" ? "rounded" : "single";
@@ -288,7 +290,15 @@ export class TuiShell {
     this.renderer.requestRender();
   }
 
+  /** Close the overlay, then apply a reload that waited on it. */
   close(): void {
+    this.drop();
+    if (this.stale) {
+      void this.reloadDoc();
+    }
+  }
+
+  private drop(): void {
     const o = this.overlay;
     this.overlay = null;
     this.cur = -1;
@@ -522,12 +532,9 @@ export class TuiShell {
     );
   }
 
-  /** Re-read the markdown unless there are unsaved edits; the cursor keeps its heading, else its line. */
+  /** Re-read the markdown; the cursor keeps its line by its text, else its number.
+   * Waits (badged) while an overlay is open or edits are unsaved. */
   private async reloadDoc(): Promise<void> {
-    if (this.dirty) {
-      return;
-    }
-    this.tap.at = 0;
     let text: string;
     try {
       text = await readFile(this.file, "utf-8");
@@ -535,8 +542,16 @@ export class TuiShell {
       return;
     }
     if (text === this.doc.text) {
+      this.stale = false;
       return;
     }
+    if (this.overlay || this.dirty) {
+      this.stale = true;
+      this.draw("FILE CHANGED ON DISK");
+      return;
+    }
+    this.stale = false;
+    this.tap.at = 0;
     const anchor = anchorFor(this.doc, this.view.cursor);
     this.doc = parseDocument(text);
     const line = this.store.resolve(anchor, this.doc)?.startLine ?? this.view.cursor;
@@ -548,9 +563,12 @@ export class TuiShell {
     this.draw("RELOADED");
   }
 
-  private save(): void {
+  /** Write atomically (tmp + rename) so the watcher never reads a half-written file. */
+  private async save(): Promise<void> {
     if (this.file) {
-      void writeFile(this.file, this.doc.text);
+      const tmp = `${this.file}.${process.pid}.tmp`;
+      await writeFile(tmp, this.doc.text);
+      await rename(tmp, this.file);
     }
     this.dirty = false;
     this.draw("SAVED");
@@ -937,8 +955,12 @@ export class TuiShell {
       case "viewQuote":
         this.step(id, 1);
         return;
+      case "reload":
+        this.dirty = false;
+        void this.reloadDoc().then(() => this.reloadStore());
+        return;
       case "save":
-        this.save();
+        void this.save();
         return;
       case "viewMouse":
         // Off: the terminal keeps the mouse, so its native select-to-copy works; `M` turns it back on.

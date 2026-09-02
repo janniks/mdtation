@@ -1,6 +1,7 @@
 import { strict as assert } from "node:assert";
 import { test, describe } from "node:test";
 import { parseDocument } from "../src/core/document.ts";
+import { anchorFor } from "../src/core/comments.ts";
 import {
   CommentStore,
   changes,
@@ -184,5 +185,24 @@ describe("changes", () => {
   test("identical stores change nothing", () => {
     const s = CommentStore.fromJSON([at(1)]);
     assert.deepEqual(changes(s, CommentStore.fromJSON([at(1)])), []);
+  });
+});
+
+describe("line anchors follow their text", () => {
+  const doc = parseDocument("a\nb\nc\n");
+  test("stay put while the line still reads the same", () => {
+    assert.equal(resolveAnchor({ kind: "line", n: 1, text: "b" }, doc)?.startLine, 1);
+  });
+  test("move to the nearest line that reads the same after an insert above", () => {
+    const next = parseDocument("new\na\nb\nc\nb\n");
+    assert.equal(resolveAnchor({ kind: "line", n: 1, text: "b" }, next)?.startLine, 2);
+  });
+  test("keep their number when the text is gone", () => {
+    assert.equal(resolveAnchor({ kind: "line", n: 1, text: "zzz" }, doc)?.startLine, 1);
+  });
+  test("anchorFor records the trimmed text, nothing for blank lines", () => {
+    const d = parseDocument("  hi  \n\n");
+    assert.deepEqual(anchorFor(d, 0), { kind: "line", n: 0, text: "hi" });
+    assert.deepEqual(anchorFor(d, 1), { kind: "line", n: 1 });
   });
 });

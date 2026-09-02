@@ -231,3 +231,12 @@ Unchecked entries are swept on occasional cleanup passes.
 - [ ] The comment slab is now `#303330` and the cursor-line slab `#252725`, both as background-only palette entries in `ansi.ts`.
   - alternative: only darken the comment slab and leave the cursor line at `#2b2d2b`.
   - why: the ask was less contrast against the page; the cursor line had to stay a step darker than the notes on it, so both moved.
+
+## 2026-09-02 — golden-path.md (reload hardening)
+
+- [ ] A line comment whose text is gone stays on its old number with no visual hint; a relocated one is not written back to the json.
+  - alternative: a `drift` flag on `Location` and a dimmer gutter glyph; or persist the new `n` on relocation.
+  - why: no user has hit it yet, and the store stays untouched by reloads (P02b, spec's "never dropped from the store").
+- [ ] `File > Reload` discards unsaved edits without asking, the badge `FILE CHANGED ON DISK` is the only warning.
+  - alternative: a confirm modal, or a diff view.
+  - why: the menu entry is the explicit "take the disk" path; a second prompt on top of an explicit choice felt like noise.
