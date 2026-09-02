@@ -30,7 +30,8 @@ import { end as last, fit, pin, place, step as walk, type Caret } from "../core/
 import type { Comment } from "../core/comment.ts";
 import { anchorFor, create, markers } from "../core/comments.ts";
 import { lay, notes, type Align, type Layout, type Time } from "../core/inline.ts";
-import { home, load, path as storePath, save } from "../core/store.ts";
+import { append, home, load, path as storePath, save } from "../core/store.ts";
+import type { Change } from "../core/comment.ts";
 import { load as loadPrefs, save as savePrefs } from "../core/prefs.ts";
 import { report } from "../core/report.ts";
 import { end, field, set } from "../core/front.ts";
@@ -164,6 +165,9 @@ export class TuiShell {
     }
     this.view = clampViewport(this.fit(), doc.lines.length);
     this.follow();
+    if (file) {
+      append(file, { event: "open", by: process.env.USER ?? "you" });
+    }
     this.bar = new MenuBar(renderer, this.spec, {
       hover: (i) => this.cur >= 0 && this.cur !== i && this.menuOpen(i),
       toggle: (i) => this.outside() || (this.cur === i ? this.close() : this.menuOpen(i)),
@@ -462,9 +466,13 @@ export class TuiShell {
     this.draw();
   }
 
-  private persist(): void {
+  /** Write the store; with `what` and `id`, log the change for anyone watching. */
+  private persist(what?: Change["what"], id?: string): void {
     if (this.file) {
       void save(this.file, this.store);
+      if (what && id) {
+        append(this.file, { event: "comment", by: process.env.USER ?? "you", id, what });
+      }
     }
   }
 
@@ -723,8 +731,9 @@ export class TuiShell {
         quote: shown.split("\n")[0]! + (shown.includes("\n") ? " …" : ""),
         value: c?.text,
         submit: (text) => {
-          this.store.add(c ? { ...c, text } : create(this.doc, line, text, Date.now(), sel));
-          this.persist();
+          const n = c ? { ...c, text } : create(this.doc, line, text, Date.now(), sel);
+          this.store.add(n);
+          this.persist(c ? "edit" : "new", n.id);
           this.close();
           this.draw("SAVED");
         },
@@ -742,8 +751,9 @@ export class TuiShell {
           title: "Reply",
           quote: `${parent.author ?? "you"}: ${parent.text.split("\n")[0]!}`,
           submit: (text) => {
-            this.store.add({ ...create(this.doc, this.view.cursor, text), re: parent.id });
-            this.persist();
+            const n = { ...create(this.doc, this.view.cursor, text), re: parent.id };
+            this.store.add(n);
+            this.persist("new", n.id);
             this.close();
             this.draw("SAVED");
           },
@@ -850,8 +860,8 @@ export class TuiShell {
     if (this.on.viewArchive) {
       for (const c of list) {
         this.store.archive(c.id);
+        this.persist("archive", c.id);
       }
-      this.persist();
       this.draw(`COPIED ${list.length}  ARCHIVED${note}`);
       return;
     }
@@ -1047,6 +1057,9 @@ export class TuiShell {
 
   dispose(): void {
     for (const stop of this.stops) stop();
+    if (this.file) {
+      append(this.file, { event: "quit", by: process.env.USER ?? "you" });
+    }
     this.renderer.keyInput.off("keypress", this.onKey);
     this.renderer.destroy();
     // OpenTUI's destroy() may not drain the process on its own, so the shell

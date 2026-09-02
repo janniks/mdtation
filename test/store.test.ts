@@ -1,10 +1,21 @@
 import { strict as assert } from "node:assert";
 import { test, describe, before, after } from "node:test";
+import { mkdtempSync } from "node:fs";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { CommentStore, type Comment } from "../src/core/comment.ts";
-import { archive, clear, home, load, path, restore, save } from "../src/core/store.ts";
+import {
+  append,
+  archive,
+  clear,
+  events,
+  home,
+  load,
+  path,
+  restore,
+  save,
+} from "../src/core/store.ts";
 
 function note(id: string, n: number): Comment {
   return { id, anchor: { kind: "line", n }, text: `t${n}`, createdAt: 0 };
@@ -68,5 +79,25 @@ describe("store", () => {
     assert.equal(await clear("/a.md"), 2);
     assert.equal(await clear("/a.md"), 0);
     assert.equal((await load("/a.md")).all().length, 0);
+  });
+});
+
+describe("events log", () => {
+  test("append then events, oldest first, filtered by since", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "mdt-ev-"));
+    process.env.MDTATION_HOME = dir;
+    const file = join(dir, "d.md");
+    append(file, { event: "open", by: "me", at: 10 });
+    append(file, { event: "comment", by: "bot", id: "c1", what: "new", at: 20 });
+    append(file, { event: "quit", by: "me", at: 30 });
+    assert.deepEqual(
+      (await events(file)).map((e) => e.event),
+      ["open", "comment", "quit"],
+    );
+    assert.deepEqual(
+      (await events(file, 20)).map((e) => e.event),
+      ["quit"],
+    );
+    assert.deepEqual(await events(join(dir, "none.md")), []);
   });
 });

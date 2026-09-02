@@ -8,7 +8,7 @@ import { create } from "./core/comments.ts";
 import { parseDocument, type Document } from "./core/document.ts";
 import { json, read } from "./core/read.ts";
 import { report } from "./core/report.ts";
-import { archive, clear, home, load, path, restore, save } from "./core/store.ts";
+import { append, archive, clear, home, load, path, restore, save } from "./core/store.ts";
 import { follow } from "./core/watch.ts";
 
 export const VERBS = [
@@ -72,7 +72,7 @@ export async function run(
     return { err: `cleared ${await clear(file)} comments for ${basename(file)}` };
   }
   if (verb === "archive" || verb === "restore") {
-    const n = await (verb === "archive" ? archive : restore)(file, rest);
+    const n = await (verb === "archive" ? archive : restore)(file, rest, who);
     return { err: `${verb}d ${n} comments` };
   }
   if (verb === "mark") {
@@ -86,6 +86,7 @@ export async function run(
     const store = await load(file);
     const id = verb === "add" ? add(store, doc, rest, a, who) : edit(store, rest);
     await save(file, store);
+    append(file, { event: "comment", by: who, id, what: verb === "add" ? "new" : "edit" });
     return { err: `${verb === "add" ? "added" : "edited"} ${id}` };
   }
   if (verb === "list" || verb === "read") {
@@ -95,6 +96,7 @@ export async function run(
       await archive(
         file,
         list.map((c) => c.id),
+        who,
       );
     }
     if (verb === "read") {
