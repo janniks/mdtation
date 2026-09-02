@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { before, describe, test } from "node:test";
 import { QUIET } from "../src/core/watch.ts";
 import { run, watching } from "../src/verbs.ts";
+import { append } from "../src/core/store.ts";
 
 const dir = mkdtempSync(join(tmpdir(), "mdt-verbs-"));
 const file = join(dir, "doc.md");
@@ -45,13 +46,37 @@ describe("verbs", () => {
 
   test("watch hands over comments by others as they land, in json", async () => {
     const got: string[] = [];
-    const stop = watching(file, "bot", true, (s) => got.push(s));
+    const stop = await watching(file, "bot", { json: true }, (s) => got.push(s));
     await new Promise((r) => setTimeout(r, 50));
     await run(file, "add", ["from a human"], { line: "2", human: true }, "jannik");
     await run(file, "add", ["from the bot"], { line: "2" }, "bot");
     await new Promise((r) => setTimeout(r, QUIET * 3));
     stop();
     assert.equal(got.length, 1);
-    assert.equal(JSON.parse(got[0]!).text, "from a human");
+    const e = JSON.parse(got[0]!);
+    assert.equal(e.event, "comment");
+    assert.equal(e.what, "new");
+    assert.equal(e.text, "from a human");
+  });
+
+  test("watch --until quit stops at that event and prints open/quit lines", async () => {
+    const got: string[] = [];
+    await watching(file, "bot", { until: "quit" }, (s) => got.push(s));
+    await new Promise((r) => setTimeout(r, 50));
+    append(file, { at: Date.now(), event: "open", by: "jannik" });
+    append(file, { at: Date.now() + 1, event: "quit", by: "jannik" });
+    await new Promise((r) => setTimeout(r, QUIET * 3));
+    assert.match(got[0] ?? "", /^open jannik \d{4}-/);
+    assert.match(got[1] ?? "", /^quit jannik /);
+    assert.equal(got.length, 2);
+  });
+
+  test("watch --since last replays what landed after my mark", async () => {
+    const got: string[] = [];
+    const stop = await watching(file, "bot", { since: "last" }, (s) => got.push(s));
+    await new Promise((r) => setTimeout(r, QUIET * 3));
+    stop();
+    assert.match(got.join(""), /from a human/);
+    assert.doesNotMatch(got.join(""), /looks wrong/);
   });
 });

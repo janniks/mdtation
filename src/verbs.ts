@@ -1,14 +1,25 @@
 /** The CLI verbs as plain functions: each takes the file and its arguments and returns what
  * to print, so `bin.ts` is only argument parsing and the tests need no process. */
-import { mkdirSync } from "node:fs";
 import { readFile } from "node:fs/promises";
-import { basename, join } from "node:path";
-import { CommentStore, changes, copyFormat, type Comment } from "./core/comment.ts";
+import { basename, dirname } from "node:path";
+import { copyFormat, type Comment, type CommentStore } from "./core/comment.ts";
 import { create } from "./core/comments.ts";
 import { parseDocument, type Document } from "./core/document.ts";
 import { json, read } from "./core/read.ts";
 import { report } from "./core/report.ts";
-import { append, archive, clear, home, load, path, restore, save } from "./core/store.ts";
+import {
+  append,
+  archive,
+  clear,
+  events,
+  home,
+  load,
+  log,
+  path,
+  restore,
+  save,
+  type Event,
+} from "./core/store.ts";
 import { follow } from "./core/watch.ts";
 
 export const VERBS = [
@@ -28,6 +39,8 @@ export type Verb = (typeof VERBS)[number];
 
 export interface Args {
   readonly json?: boolean;
+  /** watch: exit after this event. */
+  readonly until?: string;
   readonly since?: string;
   readonly archived?: boolean;
   readonly archive?: boolean;
@@ -156,7 +169,7 @@ function edit(store: CommentStore, rest: readonly string[]): string {
   return c.id;
 }
 
-/** Live (or all) comments, optionally only those after `since`: `last` = my latest mark, a mark name, or an ISO time. */
+/** Live (or all) comments, optionally only those after `since`. */
 function pick(
   store: CommentStore,
   all: boolean,
@@ -164,9 +177,11 @@ function pick(
   who: string,
 ): Comment[] {
   const list = [...(all ? store.all() : store.live())];
-  if (!since) {
-    return list;
-  }
+  return since ? list.filter((c) => c.createdAt > from(store, since, who)) : list;
+}
+
+/** `since` as a time: `last` = my latest mark, else a mark name, else an ISO date. */
+function from(store: CommentStore, since: string, who: string): number {
   const at =
     since === "last"
       ? (store.since(who)?.at ?? 0)
@@ -174,40 +189,61 @@ function pick(
   if (Number.isNaN(at)) {
     throw new Error(`--since ${since} is neither last, a mark name, nor a date`);
   }
-  return list.filter((c) => c.createdAt > at);
+  return at;
 }
 
-/** Block and hand `write` every new live comment by someone else as it lands
- * (markdown block or JSON line). Returns a stop function. */
-export function watching(
+/** Tail the events log and hand `write` each event by someone else: comments as the
+ * `list` block (or one json line with an `event` key), `open` and `quit` as one line.
+ * Starts from now, or from `since`; stops itself after the `until` event. Returns a stop function. */
+export async function watching(
   file: string,
   who: string,
-  asJson: boolean,
+  a: Args,
   write: (s: string) => void,
-): () => void {
-  const dir = join(home(), "comments");
-  mkdirSync(dir, { recursive: true });
-  const mine = basename(path(file));
-  let last = new CommentStore();
-  const tick = async (first = false) => {
-    const store = await load(file);
-    // The document is re-read each tick, so `Line N` and the quote follow a rewrite.
-    const doc = parseDocument(await readFile(file, "utf-8").catch(() => ""));
-    const fresh = changes(last, store).filter(
-      (x) => x.what === "new" && (x.c.author ?? "") !== who,
-    );
-    last = store;
-    if (first) {
-      return;
+): Promise<() => void> {
+  let at = a.since ? from(await load(file), a.since, who) : Date.now();
+  let busy = false;
+  const tick = async () => {
+    if (busy) return;
+    busy = true;
+    const fresh = await events(file, at);
+    const store = fresh.some((e) => e.event === "comment") ? await load(file) : undefined;
+    const doc = store ? parseDocument(await readFile(file, "utf-8").catch(() => "")) : undefined;
+    for (const e of fresh) {
+      at = e.at;
+      if (e.by === who) continue;
+      write(line(e, store?.get(e.id ?? ""), doc, a.json === true));
+      if (e.event === a.until) {
+        stop();
+        break;
+      }
     }
-    for (const { c } of fresh) {
-      write(asJson ? JSON.stringify(c) + "\n" : copyFormat(c, doc) + "\n\n");
-    }
+    busy = false;
   };
-  void tick(true);
-  return follow(
-    dir,
-    (name) => name.startsWith(mine),
+  const stop = follow(
+    dirname(log(file)),
+    (name) => name === basename(log(file)),
     () => void tick(),
   );
+  void tick();
+  return stop;
+}
+
+/** One event as text: a comment block, or `open`/`quit` with who and when. */
+function line(
+  e: Event,
+  c: Comment | undefined,
+  doc: Document | undefined,
+  asJson: boolean,
+): string {
+  if (asJson) {
+    return JSON.stringify(c ? { event: e.event, what: e.what, ...c } : e) + "\n";
+  }
+  if (e.event !== "comment") {
+    return `${e.event} ${e.by} ${new Date(e.at).toISOString()}\n`;
+  }
+  if (!c || !doc) {
+    return `${e.what} ${e.id} ${e.by}\n`;
+  }
+  return (e.what === "new" ? "" : `${e.what}\n`) + copyFormat(c, doc) + "\n\n";
 }

@@ -34,6 +34,7 @@ runMain(
       line: { type: "string", description: "add: 1-based line to comment on" },
       re: { type: "string", description: "add: id of the comment to reply to" },
       human: { type: "boolean", description: "add: a person, not an agent" },
+      until: { type: "string", description: "watch: exit after this event (comment, open, quit)" },
     },
     async run({ args }) {
       if (args.file === "skill") {
@@ -47,7 +48,7 @@ runMain(
       }
       const who = args.author ?? me();
       if (verb === "watch") {
-        watching(file, who, args.json === true, (s) => process.stdout.write(s));
+        await watching(file, who, args, (s) => process.stdout.write(s));
         return;
       }
       if (verb && verb !== "print") {

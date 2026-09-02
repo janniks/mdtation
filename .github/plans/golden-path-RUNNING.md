@@ -15,7 +15,7 @@ Each phase leaves the loop working and tests green; dogfood as we go.
 ## Acceptance
 
 - [x] One watcher implementation, both callers, a save from vim reloads every time.
-- [ ] `watch --until quit` returns when the TUI closes; `--since last` replays first.
+- [x] `watch --until quit` returns when the TUI closes; `--since last` replays first.
 - [ ] Agent replies show inline without a keypress; edits and archives badge too.
 - [ ] Skill fits one screen.
 
@@ -26,3 +26,4 @@ Each phase leaves the loop working and tests green; dogfood as we go.
 | 1 | base | `core/watch.ts` `follow()` watches a directory (survives write-then-rename); `changes(prev, next)` in `comment.ts`; TUI badges `COMMENTS UPDATED` on edits and archives; CLI `watch` re-reads the document per tick. Verified: 3 atomic saves reload, `watch` prints across a rewrite. |
 | 2 | verbs | `src/verbs.ts`: `run(file, verb, rest, args)` returns `{out, err}` and throws on misuse; `watching()` takes a write sink. `bin.ts` is citty, printing, exit codes, the TUI fallback. 5 verb tests, no process. |
 | 3 | events | `store.ts`: `Event`, `log()`, `append()`, `events()`; append-only `<doc>.events.jsonl` beside the json. Writers: CLI add/edit/archive/restore, TUI comment/reply/edit/archive, TUI `open`/`quit`. Verified from both processes. |
+| 4 | tail | `watching()` tails `events(file, at)` instead of diffing the store; `--until <event>` stops the watcher (process exits by itself); `--since last|mark|iso` replays via the shared `from()`; `open`/`quit` print as one line, `--json` puts `event` and `what` beside the comment. Dogfood: TUI open, comment, quit; watcher printed all three and exited 0. |
