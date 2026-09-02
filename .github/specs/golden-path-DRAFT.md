@@ -52,11 +52,14 @@ No modes, no flags, the file and the json are the channel.
   - the TUI and the CLI each read-modify-write that file, so a quit written while an agent adds a reply can drop the reply;
   - the json is already the thing we want to keep small.
 - Why the log wins: appends do not race, `watch` tails it instead of diffing the store, and the comments json stays pure data.
+- Storage stays per document: one json and one log per markdown file under `~/.mdtation/comments/`, named after the file's path. No sqlite: native dependency, no fs events on inserts, nothing to `cat`. Revisit past thousands of comments per document.
 - Marks stay as they are. A mark could become an event line later; nothing needs that now.
 
 ### `watch`
 
-- Prints one event per change as it lands, in the `list` markdown format for comments and a one-line `quit` / `open` note; `--json` prints one object per line with an `event` field.
+- Prints one event per change as it lands, in the `list` markdown format for comments and a one-line `quit` / `open` note.
+- `--json`: one object per line, the comment as-is plus a top-level `event` key; `open` and `quit` lines carry only `event`, `at`, `by`.
+- Starts from now. `--since last|<mark>|<iso>` replays what landed after that point first, then streams; same flag `list` has.
 - `--until quit` (or `--until comment`) makes it exit 0 after printing that event, so an agent can block on one command. Default stays: never exit.
 - Re-read the document each tick so `Line N` and quotes are current.
 - Ignores the agent's own writes (`$MDTATION_AUTHOR`), as today.
@@ -78,14 +81,27 @@ No modes, no flags, the file and the json are the channel.
 - Launching the TUI for the human from the agent.
 - Multiple humans on one file at once.
 
+## Implementation shape
+
+The watch, reload and event code lives today in the two untested files, `src/ui/tui.ts` (1063 lines) and `src/bin.ts`, and the watcher is written twice (`TuiShell.follow`, `watching()`).
+Build the base first so every later piece is pure and tested:
+
+1. `src/core/watch.ts`: `follow(dir, hit, fn)`, one watcher for TUI and CLI, one timer per call, content-equality suppression.
+2. `changes(prev, next)` on two stores returning events, tested; both badges and `watch` output come from it.
+3. Events log in `store.ts`: `append(file, event)`, `read(file, from)`, beside `load` and `save`.
+4. CLI verbs out of `bin.ts` into `verbs.ts`, each a function of `(file, args)` returning text; `bin.ts` keeps citty and stdout. `list`, `add`, `mark`, `watch` get plain tests.
+5. `reload(doc, cursor, store, text)` pure, in core; the anchor fingerprint from `watch-DRAFT.md` lands there.
+6. Commit the headless PTY harness as a test helper for open, comment, reload, quit flows.
+
+Don't split `tui.ts` by file for its own sake; pull out only what becomes pure.
+
 ## Order
 
-1. Events log, every writer appends, `watch` tails it and gains `--until`. Ships the loop end to end with today's flaky reload.
-2. Reload hardening from `watch-DRAFT.md`.
-3. README and skill text.
+1. Shape steps 1 to 4.
+2. Events: every writer appends, `watch` tails, `--until`, `--since`.
+3. Reload hardening from `watch-DRAFT.md` (shape step 5).
+4. README and skill text, plus the PTY harness.
 
 ## Open questions
 
-1. `--json` shape: one object per line with `event` plus the comment, or the comment as-is with a top-level `event` key?
-2. Should `watch` print events that landed while no agent was watching, or start from now like today?
-3. Should the log be trimmed ever, or is one small line per event fine forever?
+1. Should the log be trimmed ever, or is one small line per event fine forever?
