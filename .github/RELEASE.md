@@ -6,6 +6,7 @@ Changesets + three small workflows for one package.
 
 1. In your PR: `npm run changeset`, pick the bump, describe the change, commit the `.changeset/*.md` file.
    No user-facing change, no changeset.
+   While we are below 1.0 every changeset is a `patch`: few users, no need to be strict about minor vs major.
 2. Merge to `main`.
 3. `version.yml` opens or refreshes the **`chore: version packages`** PR: bumps `package.json`, writes `CHANGELOG.md`, deletes the consumed changesets.
    It keeps absorbing merged changesets until you merge it.
