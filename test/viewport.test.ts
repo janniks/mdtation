@@ -3,13 +3,10 @@ import { test, describe } from "node:test";
 import {
   createViewport,
   clampViewport,
-  cursorRow,
   jumpToLine,
   moveCursor,
-  pan,
   pageDown,
   pageUp,
-  scroll,
 } from "../src/core/viewport.ts";
 
 const W = 80;
@@ -50,17 +47,6 @@ describe("viewport", () => {
     assert.equal(v.offset, 15);
   });
 
-  test("scroll pans the window without moving the cursor", () => {
-    const v = scroll(vp(0, 3, 10), 5, TOTAL);
-    assert.equal(v.offset, 5);
-    assert.equal(v.cursor, 3); // unchanged (may be off-screen)
-  });
-
-  test("scroll clamps offset at the bottom", () => {
-    const v = scroll(vp(90, 3, 10), 50, TOTAL);
-    assert.equal(v.offset, 90);
-  });
-
   test("pageDown advances window and cursor by a page", () => {
     const v = pageDown(vp(0, 0, 10), TOTAL);
     assert.equal(v.cursor, 9);
@@ -85,11 +71,6 @@ describe("viewport", () => {
     assert.equal(v.offset, 90);
   });
 
-  test("cursorRow maps cursor to window row", () => {
-    assert.equal(cursorRow(vp(0, 3, 10)), 3);
-    assert.equal(cursorRow(vp(5, 3, 10)), -1); // off-screen (above the window)
-  });
-
   test("clampViewport enforces bounds without forcing the cursor visible", () => {
     const v = clampViewport(vp(-5, 5, 10), TOTAL);
     assert.equal(v.offset, 0);
@@ -102,17 +83,6 @@ describe("viewport", () => {
     assert.equal(v.offset, 0);
     assert.equal(v.height, 0);
   });
-});
-
-test("pan drags the cursor along the window", () => {
-  const v = createViewport(0, 0, 80, 10);
-  const down = pan(v, 3, 100);
-  assert.deepEqual([down.offset, down.cursor], [3, 3]);
-  const up = pan({ ...v, offset: 50, cursor: 59 }, -3, 100);
-  assert.deepEqual([up.offset, up.cursor], [47, 56]);
-  const end = pan({ ...v, offset: 85, cursor: 85 }, 10, 100);
-  assert.deepEqual([end.offset, end.cursor], [90, 90]);
-  assert.deepEqual(pan(v, 5, 0), createViewport(0, 0, 80, 0));
 });
 
 test("margin keeps the cursor away from the edges and pads the end", () => {

@@ -99,18 +99,6 @@ export function clampViewport(vp: Viewport, total: number): Viewport {
   return clampBounds(vp, total);
 }
 
-/** Pan the window by `delta` rows; cursor stays put. */
-export function scroll(vp: Viewport, delta: number, total: number): Viewport {
-  return clampBounds({ ...vp, offset: vp.offset + delta }, total);
-}
-
-/** Pan the window by `delta` rows (wheel); the cursor is dragged along so it stays visible. */
-export function pan(vp: Viewport, delta: number, total: number): Viewport {
-  const b = scroll(vp, delta, total);
-  const last = Math.min(b.offset + b.height - 1, total - 1);
-  return { ...b, cursor: Math.max(b.offset, Math.min(b.cursor, last)) };
-}
-
 /** Move the cursor by `delta` rows and scroll it on-screen. */
 export function moveCursor(vp: Viewport, delta: number, total: number): Viewport {
   return withCursorVisible({ ...vp, cursor: vp.cursor + delta }, total);
@@ -135,10 +123,4 @@ export function jumpToLine(vp: Viewport, line: number, total: number): Viewport 
 /** Re-anchor the window on a whole line, so any row offset inside the old top line goes away. */
 function anchor(vp: Viewport, total: number): Viewport {
   return { ...withCursorVisible(vp, total), skip: 0 };
-}
-
-/** 0-based row of the cursor within the window, or -1 if it's off-screen. */
-export function cursorRow(vp: Viewport): number {
-  const row = vp.cursor - vp.offset;
-  return row >= 0 && row < vp.height ? row : -1;
 }

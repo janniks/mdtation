@@ -65,20 +65,27 @@ export function notes(
   return map;
 }
 
+export interface Opts {
+  readonly agent: Align;
+  readonly own: Align;
+  readonly width: Layout;
+  readonly time: Time;
+  readonly now: number;
+  readonly color: boolean;
+}
+
 /** Screen rows for one line's notes: the text, closed by a right-aligned `you, 6m ago`.
- * `width` sets the block's floor and each note takes the side its author sits on. */
-export function rows(
+ * Each note takes the side its author sits on. */
+export function rows(list: readonly Note[], cols: number, opts: Opts): string[] {
+  return lay(list, cols, opts).rows;
+}
+
+/** `rows` plus, for each row, the index into `list` of the note it belongs to. */
+export function lay(
   list: readonly Note[],
   cols: number,
-  opts: {
-    readonly agent: Align;
-    readonly own: Align;
-    readonly width: Layout;
-    readonly time: Time;
-    readonly now: number;
-    readonly color: boolean;
-  },
-): string[] {
+  opts: Opts,
+): { rows: string[]; of: number[] } {
   const b = build(list, cols, opts);
   // One block: the configured share of the pane, or for `fit` just as wide as its text.
   const width =
@@ -87,19 +94,18 @@ export function rows(
       : span(opts.width, cols);
   // Each note takes the side its author is configured to sit on.
   const right = (i: number) => (list[b.of[i]!]!.agent ? opts.agent : opts.own) === "right";
-  if (!opts.color) {
-    return b.meta.map((m, i) => {
-      const flat = " ".repeat(right(i) ? Math.max(0, cols - width) : 2);
-      return (flat + pad(b.body[i]!, width - tail(m)) + (m ? `  ${m}` : "")).trimEnd();
-    });
-  }
-  // A dark slab with a space either side, so the thread reads as one block, not dim text.
+  // In color, a dark slab with a space either side so the thread reads as one block, not dim text.
   // Who and when stay quiet against it; the comment itself carries the contrast.
-  return b.meta.map((m, i) => {
+  const rows = b.meta.map((m, i) => {
+    const text = pad(b.body[i]!, width - tail(m));
+    if (!opts.color) {
+      const lead = " ".repeat(right(i) ? Math.max(0, cols - width) : 2);
+      return (lead + text + (m ? `  ${m}` : "")).trimEnd();
+    }
     const lead = " ".repeat(right(i) ? Math.max(0, cols - width - 2) : 2);
-    const text = SGR.silver + pad(b.body[i]!, width - tail(m));
-    return `${lead}${SGR.bgGray} ${text}${m ? `${SGR.gray}  ${m}` : ""} ${SGR.reset}`;
+    return `${lead}${SGR.bgGray} ${SGR.silver}${text}${m ? `${SGR.gray}  ${m}` : ""} ${SGR.reset}`;
   });
+  return { rows, of: b.of };
 }
 
 /** Columns the meta takes at the end of a row, gap included; zero when the row has none. */
@@ -112,16 +118,6 @@ function tail(meta: string): number {
 function span(width: Layout, cols: number): number {
   const pane = Math.max(0, cols - 2);
   return width === "fit" || width === "full" ? pane : Math.floor((pane * Number(width)) / 100);
-}
-
-/** Which note each screen row from `rows()` belongs to, as indices into `list`.
- * Must be called with the same `cols` and opts as `rows()` so the wraps agree. */
-export function owners(
-  list: readonly Note[],
-  cols: number,
-  opts: { readonly width: Layout; readonly time: Time; readonly now: number },
-): number[] {
-  return build(list, cols, opts).of;
 }
 
 /** Shared layout: wrapped text rows, the `you, 6m ago` meta on each note's last row, and each row's note index. */

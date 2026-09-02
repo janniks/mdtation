@@ -421,6 +421,13 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
   const lines: string[] = [];
   // Rows of the first line's block that have already scrolled off the top.
   let skip = Math.max(0, vp.skip ?? 0);
+  const push = (row: string): void => {
+    if (skip > 0) {
+      skip--;
+    } else if (lines.length < height) {
+      lines.push(row);
+    }
+  };
   for (let i = start; i < end && lines.length < height; i++) {
     if (hidden(doc, i, opts)) {
       continue;
@@ -429,13 +436,9 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
     const hot = opts.highlight === true && opts.color === true && i === vp.cursor;
     const row = tableRow(doc, i, opts);
     if (row !== null) {
-      if (skip > 0) {
-        skip--;
-        continue;
-      }
       // Tables never wrap: a too-wide row is cut so its columns stay aligned.
       const g = gutterFor(i, vp, cursorOn, counts, opts);
-      lines.push(g + lit(styleTable(cut(row, cols), opts), cols, hot));
+      push(g + lit(styleTable(cut(row, cols), opts), cols, hot));
       continue;
     }
     const chunks = flow(doc, i, opts, cols);
@@ -443,27 +446,16 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
     // The caret sits on one row of the cursor line's block; other rows keep the plain gutter.
     const at = i === vp.cursor ? Math.min(opts.seg ?? 0, chunks.length + extras.length - 1) : 0;
     chunks.forEach((chunk, ri) => {
-      if (skip > 0) {
-        skip--;
-        return;
-      }
-      if (lines.length >= height) return;
       const g =
         ri === 0
           ? gutterFor(i, vp, cursorOn && at === 0, counts, opts)
           : i === vp.cursor && ri === at
             ? caret(opts)
             : "  ";
-      lines.push(g + lit(chunk, cols, hot));
+      push(g + lit(chunk, cols, hot));
     });
     extras.forEach((extra, k) => {
-      if (skip > 0) {
-        skip--;
-        return;
-      }
-      if (lines.length >= height) return;
-      const g = i === vp.cursor && chunks.length + k === at ? caret(opts) : "  ";
-      lines.push(g + extra);
+      push((i === vp.cursor && chunks.length + k === at ? caret(opts) : "  ") + extra);
     });
   }
   return lines;
@@ -476,7 +468,7 @@ function lit(row: string, cols: number, on: boolean): string {
   if (!on) {
     return row;
   }
-  const fill = " ".repeat(Math.max(0, cols - displayWidth(strip(row))));
+  const fill = " ".repeat(Math.max(0, cols - bare(row)));
   return SGR.bgLine + row.replaceAll(SGR.reset, SGR.reset + SGR.bgLine) + fill + SGR.reset;
 }
 

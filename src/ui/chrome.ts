@@ -3,11 +3,12 @@
  * sticky breadcrumb row, status bar. Pure models live in core/menu.ts and
  * core/crumb.ts; this file only wires OpenTUI boxes and mouse handlers.
  */
-import { BoxRenderable, TextRenderable } from "@opentui/core";
+import { BoxRenderable, StyledText, TextRenderable, fg } from "@opentui/core";
 import type { CliRenderer, KeyEvent } from "@opentui/core";
 import type { Overlay } from "./overlay.ts";
 import { prefix, step, type Menu, type Spec, width } from "../core/menu.ts";
 import { displayWidth, pad } from "../core/unicode.ts";
+import { chunk } from "./styled.ts";
 
 export const THEME = {
   bar: "#242624",
@@ -130,27 +131,17 @@ export class Dropdown implements Overlay {
         onMouseOver: () => this.focus(i),
         onMouseUp: () => on.run(e.id),
       });
+      // Title, then the hint flush right, as one line of styled text.
       row.add(
         new TextRenderable(renderer, {
-          content: pad(prefix(e) + e.title, inner - displayWidth(e.hint) - 1),
-          fg: THEME.text,
+          content: new StyledText([
+            fg(THEME.text)(chunk(pad(prefix(e) + e.title, inner - displayWidth(e.hint) - 1))),
+            fg(THEME.hint)(chunk(e.hint)),
+          ]),
           selectable: false,
           wrapMode: "none",
         }),
       );
-      if (e.hint) {
-        row.add(
-          new TextRenderable(renderer, {
-            position: "absolute",
-            top: 0,
-            left: inner - displayWidth(e.hint) - 1,
-            content: e.hint,
-            fg: THEME.hint,
-            selectable: false,
-            wrapMode: "none",
-          }),
-        );
-      }
       this.node.add(row);
       this.rows.push(row);
     });

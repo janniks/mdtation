@@ -25,10 +25,10 @@ import { Modal } from "./modal.ts";
 import { All } from "./all.ts";
 import { copy } from "./clipboard.ts";
 import { CommentStore } from "../core/comment.ts";
-import { fit, pin, place, step as walk, type Caret } from "../core/caret.ts";
+import { end as last, fit, pin, place, step as walk, type Caret } from "../core/caret.ts";
 import type { Comment } from "../core/comment.ts";
 import { anchorFor, create, markers } from "../core/comments.ts";
-import { notes, owners, rows, type Align, type Layout, type Time } from "../core/inline.ts";
+import { lay, notes, type Align, type Layout, type Time } from "../core/inline.ts";
 import { home, load, path as storePath, save } from "../core/store.ts";
 import { load as loadPrefs, save as savePrefs } from "../core/prefs.ts";
 import { report } from "../core/report.ts";
@@ -276,6 +276,8 @@ export class TuiShell {
   /** Show `o` (replacing any open overlay). It sees keys first until closed. */
   open(o: Overlay): void {
     this.close();
+    // A click before the overlay must not pair with one after it.
+    this.tap.at = 0;
     o.node.borderStyle = this.prefs.corners === "round" ? "rounded" : "single";
     this.overlay = o;
     this.renderer.root.add(o.node);
@@ -370,8 +372,7 @@ export class TuiShell {
     const opts = this.lay();
     const rows = this.spans(opts);
     // A click below the last rendered row lands on the last row instead of nowhere.
-    const hit =
-      place(this.top(), row, total, rows) ?? pin({ line: total - 1, seg: Infinity }, total, rows);
+    const hit = place(this.top(), row, total, rows) ?? last(total, rows);
     const line = hit.line;
     this.view = { ...this.view, cursor: line };
     this.seg = hit.seg;
@@ -380,7 +381,7 @@ export class TuiShell {
       // Continuation and note rows just take the caret; targets below live on a line's first row.
       // A second click on a wrapped row comments on it; note rows are the comments already.
       if (twice && !this.note(opts)) {
-        this.comment(undefined, this.slice());
+        this.comment(undefined, this.slice(opts));
         return;
       }
       this.draw();
@@ -402,7 +403,7 @@ export class TuiShell {
     }
     // Nothing else was under it: a second click on the same row comments on the line.
     if (twice) {
-      this.comment(undefined, this.slice());
+      this.comment(undefined, this.slice(opts));
       return;
     }
     this.draw();
@@ -514,6 +515,7 @@ export class TuiShell {
     if (this.dirty) {
       return;
     }
+    this.tap.at = 0;
     let text: string;
     try {
       text = await readFile(this.file, "utf-8");
@@ -623,10 +625,11 @@ export class TuiShell {
       own: this.on.viewInlineOwn === true,
       me: process.env.USER,
     })) {
-      inline.set(line, rows(list, cols, laid));
+      const l = lay(list, cols, laid);
+      inline.set(line, l.rows);
       this.ids.set(
         line,
-        owners(list, cols, laid).map((i) => list[i]!.id),
+        l.of.map((i) => list[i]!.id),
       );
     }
     return {
@@ -650,9 +653,9 @@ export class TuiShell {
   }
 
   /** Quote for a new comment: the caret's wrap segment when the line wraps, else nothing. */
-  private slice(): string | undefined {
+  private slice(opts = this.lay()): string | undefined {
     const cols = Math.max(1, this.view.width - GUTTER_WIDTH);
-    const chunks = flow(this.doc, this.view.cursor, { ...this.lay(), inline: undefined }, cols);
+    const chunks = flow(this.doc, this.view.cursor, { ...opts, inline: undefined }, cols);
     if (chunks.length < 2 || this.seg >= chunks.length) {
       return undefined;
     }
