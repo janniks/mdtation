@@ -130,13 +130,16 @@ function build(
     const t = when(n.at, opts.now, opts.time);
     return t ? `${n.who}, ${t}` : n.who;
   });
-  // The text shares the block with the widest meta and the two-space gap before it.
-  const textW = Math.max(8, span(opts.width, cols) - Math.max(...metas.map(displayWidth)) - 2);
+  const w = Math.max(8, span(opts.width, cols));
   const meta: string[] = [];
   const body: string[] = [];
   const of: number[] = [];
   list.forEach((n, i) => {
-    const lines = wrapWords(n.text, textW);
+    // The text takes the whole block; who and when share its last row when they fit, else get one.
+    const lines = wrapWords(n.text, w);
+    if (displayWidth(lines[lines.length - 1]!) + tail(metas[i]!) > w) {
+      lines.push("");
+    }
     lines.forEach((t, j) => {
       body.push(t);
       // Who and when close the note, on its last row.

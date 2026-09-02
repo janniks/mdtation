@@ -78,6 +78,27 @@ test("rows: long text wraps and only the last row carries the meta", () => {
   );
 });
 
+test("rows: text takes the whole block; who and when get their own row only when they must", () => {
+  const o = {
+    now: 0,
+    color: false,
+    agent: "left" as const,
+    own: "left" as const,
+    width: "full" as const,
+  };
+  const fits = rows([{ id: "x", who: "me", text: "ab cd", at: 0, agent: false }], 12, {
+    ...o,
+    time: "hide",
+  });
+  assert.deepEqual(fits, ["  ab cd   me"]);
+  // 10 columns of block: "abcdefghij" fills it, so "me" drops to a row of its own.
+  const spills = rows([{ id: "x", who: "me", text: "abcdefghij", at: 0, agent: false }], 12, {
+    ...o,
+    time: "hide",
+  });
+  assert.deepEqual(spills, ["  abcdefghij", "  " + " ".repeat(6) + "  me"]);
+});
+
 test("rows: a long comment wraps inside the configured width, not the pane", () => {
   const one = [{ id: "x", who: "me", text: "word ".repeat(30).trim(), at: 0, agent: false }];
   const o = {
