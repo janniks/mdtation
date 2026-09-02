@@ -40,20 +40,24 @@ No modes, no flags, the file and the json are the channel.
 
 - `comment`: someone else added, edited, replied to, or archived a comment.
 - `quit`: the human closed the TUI on this file.
-- `open`: the human opened the TUI on this file (cheap, and lets an agent know the review started). (Q1)
+- `open`: the human opened the TUI on this file, so an agent knows the review started.
 - Nothing else. No new concepts, no marks involved.
 
-### Where the TUI writes them
+### Where events live
 
-- The TUI already owns the comments json; `open` and `quit` are written there too, as a small `session` field: `{ open: <iso> | null, quit: <iso> | null }`.
-  - One file, one watcher, no new paths.
-  - Alternative: a sidecar `<file>.events` log. More to clean up, nothing gained yet. (Q2)
-- Comment events need no new data: the watcher diffs the store between ticks (new id, changed text, new reply, archived flag).
+- An append-only log next to the comments json: `<mangled-path>.events.jsonl`, one object per line `{ "at": <iso>, "event": "open" | "quit" | "comment", "id"?: <comment id>, "by": <author> }`.
+- Every writer appends its own line: the TUI on open, quit and comment; the CLI on add, edit, archive, restore.
+- Why not a `session` field in the comments json:
+  - every open and quit would rewrite the whole json and wake both watchers for a non-comment change;
+  - the TUI and the CLI each read-modify-write that file, so a quit written while an agent adds a reply can drop the reply;
+  - the json is already the thing we want to keep small.
+- Why the log wins: appends do not race, `watch` tails it instead of diffing the store, and the comments json stays pure data.
+- Marks stay as they are. A mark could become an event line later; nothing needs that now.
 
 ### `watch`
 
 - Prints one event per change as it lands, in the `list` markdown format for comments and a one-line `quit` / `open` note; `--json` prints one object per line with an `event` field.
-- `--until quit` (or `--until comment`) makes it exit 0 after printing that event, so an agent can block on one command. Default stays: never exit. (Q3)
+- `--until quit` (or `--until comment`) makes it exit 0 after printing that event, so an agent can block on one command. Default stays: never exit.
 - Re-read the document each tick so `Line N` and quotes are current.
 - Ignores the agent's own writes (`$MDTATION_AUTHOR`), as today.
 
@@ -66,7 +70,7 @@ No modes, no flags, the file and the json are the channel.
 ### Docs
 
 - README: replace the "Tell your agent" line with the five-step loop.
-- `skill`: lead with `watch --until quit`, then `list`, `add --re`.
+- `skill`: one screen. The loop in five lines, the verbs, `watch --until` as an option. Not prescriptive: no cadence, no must.
 - Recommend `$MDTATION_AUTHOR=<agent name>` so replies read as a conversation.
 
 ## Not in scope
@@ -76,14 +80,12 @@ No modes, no flags, the file and the json are the channel.
 
 ## Order
 
-1. `open` / `quit` in the json, `watch` diffs the store and gains `--until`. Ships the loop end to end with today's flaky reload.
+1. Events log, every writer appends, `watch` tails it and gains `--until`. Ships the loop end to end with today's flaky reload.
 2. Reload hardening from `watch-DRAFT.md`.
 3. README and skill text.
 
 ## Open questions
 
-1. Is `open` worth having, or only `quit`?
-2. Session field in the comments json, or a separate events file?
-3. Should `watch` keep never-exiting as the default, with `--until <event>` to opt in?
-4. `--json` shape: one object per line with `event` plus the comment, or the comment as-is with a top-level `event` key?
-5. Should `watch` print the initial state (comments that landed while no agent was watching) before streaming, or start from now like today?
+1. `--json` shape: one object per line with `event` plus the comment, or the comment as-is with a top-level `event` key?
+2. Should `watch` print events that landed while no agent was watching, or start from now like today?
+3. Should the log be trimmed ever, or is one small line per event fine forever?
