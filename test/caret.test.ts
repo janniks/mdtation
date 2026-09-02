@@ -66,6 +66,14 @@ describe("caret", () => {
     assert.deepEqual(fit(vp, { line: 4, seg: 1 }, total, rows), { line: 2, seg: 1 });
   });
 
+  test("fit only measures rows near the window", () => {
+    let n = 0;
+    const count = () => (n++, 1);
+    const vp = { offset: 1480, cursor: 1500, width: 80, height: 40, margin: 3 };
+    assert.deepEqual(fit(vp, { line: 1500, seg: 0 }, 2000, count), { line: 1480, seg: 0 });
+    assert.ok(n < 200, `rows called ${n} times`);
+  });
+
   test("fit keeps a short document at the top", () => {
     const vp = { offset: 0, cursor: 0, width: 80, height: 20, margin: 3 };
     assert.deepEqual(fit(vp, { line: 4, seg: 1 }, total, rows), { line: 0, seg: 0 });

@@ -47,14 +47,20 @@ export function place(top: Caret, row: number, total: number, rows: Rows): Caret
   return null;
 }
 
-/** Rendered rows from `a` down to `b`; negative when `b` sits above `a`. */
-export function gap(a: Caret, b: Caret, rows: Rows): number {
+/** Rendered rows from `a` down to `b`; negative when `b` sits above `a`.
+ * With `cap`, stops counting once the magnitude reaches it (callers only ask "at least N"). */
+export function gap(a: Caret, b: Caret, rows: Rows, cap = Infinity): number {
   if (a.line > b.line) {
-    return -gap(b, a, rows);
+    return -gap(b, a, rows, cap);
   }
   let n = b.seg - a.seg;
-  for (let l = a.line; l < b.line; l++) n += rows(l);
+  for (let l = a.line; l < b.line && n < cap; l++) n += rows(l);
   return n;
+}
+
+/** Whether `b` sits strictly below `a`. */
+function after(a: Caret, b: Caret): boolean {
+  return b.line > a.line || (b.line === a.line && b.seg > a.seg);
 }
 
 /** The document's last rendered row. */
@@ -85,19 +91,19 @@ export function fit(vp: Viewport, c: Caret, total: number, rows: Rows): Caret {
   const tail = end(total, rows);
   let top = pin({ line: vp.offset, seg: vp.skip ?? 0 }, total, rows);
   // The caret may have moved above the window; never start below it.
-  if (gap(top, c, rows) < 0) {
+  if (after(c, top)) {
     top = c;
   }
   // Margin above, then caret plus margin below, both measured in rendered rows.
-  while (gap(home, top, rows) > 0 && gap(top, c, rows) < m) {
+  while (after(home, top) && gap(top, c, rows, m) < m) {
     top = step(top, -1, total, rows);
   }
-  const below = Math.min(m, gap(c, tail, rows));
-  while (gap(top, c, rows) + 1 + below > vp.height) {
+  const below = Math.min(m, gap(c, tail, rows, m));
+  while (gap(top, c, rows, vp.height) + 1 + below > vp.height) {
     top = step(top, 1, total, rows);
   }
   // Pull back off the end so the last row sits at the bottom edge, not above it.
-  while (gap(home, top, rows) > 0 && gap(top, tail, rows) + 1 < vp.height) {
+  while (after(home, top) && gap(top, tail, rows, vp.height) + 1 < vp.height) {
     top = step(top, -1, total, rows);
   }
   return top;
