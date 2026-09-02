@@ -1,7 +1,7 @@
 import { defineCommand, runMain } from "citty";
 import { readFile } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
-import { mkdirSync, watch } from "node:fs";
+import { mkdirSync } from "node:fs";
 import { SKILL } from "./core/skill.ts";
 import { parseDocument, type Document } from "./core/document.ts";
 import { render as renderFrame } from "./core/renderer.ts";
@@ -9,7 +9,8 @@ import { createViewport, DEFAULT_WIDTH } from "./core/viewport.ts";
 import { archive, clear, home, load, path, restore, save } from "./core/store.ts";
 import { report } from "./core/report.ts";
 import { json, read } from "./core/read.ts";
-import { copyFormat, type Comment, type CommentStore } from "./core/comment.ts";
+import { CommentStore, changes, copyFormat, type Comment } from "./core/comment.ts";
+import { follow } from "./core/watch.ts";
 import { create } from "./core/comments.ts";
 
 const VERBS = [
@@ -142,7 +143,7 @@ runMain(
         return;
       }
       if (verb === "watch") {
-        watching(file, doc, who, args.json === true);
+        watching(file, who, args.json === true);
         return;
       }
       if (verb === "print" || !process.stdout.isTTY) {
@@ -226,31 +227,32 @@ function pick(
 }
 
 /** Block and print every new live comment by someone else as it lands (markdown block or JSON line). */
-function watching(file: string, doc: Document, who: string, asJson: boolean): void {
+function watching(file: string, who: string, asJson: boolean): void {
   const dir = join(home(), "comments");
   mkdirSync(dir, { recursive: true });
   const mine = basename(path(file));
-  let seen = new Set<string>();
-  let wait: ReturnType<typeof setTimeout> | undefined;
+  let last = new CommentStore();
   const tick = async (first = false) => {
     const store = await load(file);
-    const fresh = store.live().filter((c) => !seen.has(c.id) && (c.author ?? "") !== who);
-    seen = new Set(store.all().map((c) => c.id));
+    // The document is re-read each tick, so `Line N` and the quote follow a rewrite.
+    const doc = parseDocument(await readFile(file, "utf-8").catch(() => ""));
+    const fresh = changes(last, store).filter(
+      (x) => x.what === "new" && (x.c.author ?? "") !== who,
+    );
+    last = store;
     if (first) {
       return;
     }
-    for (const c of fresh) {
+    for (const { c } of fresh) {
       process.stdout.write(asJson ? JSON.stringify(c) + "\n" : copyFormat(c, doc) + "\n\n");
     }
   };
   void tick(true);
-  // Bun may only report the `.tmp` of an atomic write, so match on the prefix.
-  watch(dir, (_e, name) => {
-    if (String(name).startsWith(mine)) {
-      clearTimeout(wait);
-      wait = setTimeout(() => void tick(), 150);
-    }
-  });
+  follow(
+    dir,
+    (name) => name.startsWith(mine),
+    () => void tick(),
+  );
 }
 
 async function stdoutRender(doc: Document): Promise<void> {

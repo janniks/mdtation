@@ -1,7 +1,3 @@
----
-status: draft
----
-
 # Golden path: the review loop
 
 How we tell people to use mdtation with an agent, and what is missing to make that loop tight.
@@ -102,6 +98,6 @@ Don't split `tui.ts` by file for its own sake; pull out only what becomes pure.
 3. Reload hardening from `watch-DRAFT.md` (shape step 5).
 4. README and skill text, plus the PTY harness.
 
-## Open questions
+## Decided
 
-1. Should the log be trimmed ever, or is one small line per event fine forever?
+- The log is never trimmed; one short line per event.

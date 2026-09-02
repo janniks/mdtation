@@ -208,3 +208,26 @@ export function copyFormat(
   const body = src ? src.split("\n").map((l) => `    ${l}`) : [];
   return [head, ...body, note].join("\n");
 }
+
+/** What someone did to a comment between two loads of the same store. */
+export interface Change {
+  readonly c: Comment;
+  readonly what: "new" | "edit" | "archive" | "restore";
+}
+
+/** Comments that differ between `prev` and `next`, oldest first: new ones, edited text,
+ * archived and restored. Removed comments are not reported; nothing writes those. */
+export function changes(prev: CommentStore, next: CommentStore): Change[] {
+  const out: Change[] = [];
+  for (const c of next.all()) {
+    const p = prev.get(c.id);
+    if (!p) {
+      out.push({ c, what: "new" });
+    } else if (p.text !== c.text) {
+      out.push({ c, what: "edit" });
+    } else if (!p.archivedAt !== !c.archivedAt) {
+      out.push({ c, what: c.archivedAt ? "archive" : "restore" });
+    }
+  }
+  return out.toSorted((a, b) => a.c.createdAt - b.c.createdAt);
+}

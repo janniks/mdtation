@@ -11,10 +11,10 @@
 import { createCliRenderer, TextRenderable } from "@opentui/core";
 import type { CliRenderer, KeyEvent, MouseEvent, Selection } from "@opentui/core";
 import { spawnSync } from "node:child_process";
-import { mkdirSync, watch, writeFileSync, type FSWatcher } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { basename, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { strip } from "../core/sgr.ts";
 import { styled } from "./styled.ts";
 import type { Overlay } from "./overlay.ts";
@@ -24,7 +24,8 @@ import { Palette } from "./palette.ts";
 import { Modal } from "./modal.ts";
 import { All } from "./all.ts";
 import { copy } from "./clipboard.ts";
-import { CommentStore } from "../core/comment.ts";
+import { CommentStore, changes } from "../core/comment.ts";
+import { follow } from "../core/watch.ts";
 import { end as last, fit, pin, place, step as walk, type Caret } from "../core/caret.ts";
 import type { Comment } from "../core/comment.ts";
 import { anchorFor, create, markers } from "../core/comments.ts";
@@ -95,9 +96,8 @@ export class TuiShell {
   private chord = "";
   store: CommentStore;
   private readonly file: string;
-  /** Disk watchers (comments json, markdown); see `follow`. */
-  private watchers: FSWatcher[] = [];
-  private wait?: ReturnType<typeof setTimeout>;
+  /** Stops for the disk watchers (comments json, markdown); see `follow`. */
+  private stops: (() => void)[] = [];
   overlay: Overlay | null = null;
   private readonly spec = specs(menus(COMMANDS));
   /** View-menu toggles keyed by command id, seeded from `mdtation.json`; flips are session-only. */
@@ -469,7 +469,8 @@ export class TuiShell {
   }
 
   /** The file is the channel: follow the comments json and the markdown on disk, no mode.
-   * Events are debounced; our own writes come back as no-ops because the content matches. */
+   * Our own writes come back as no-ops because the content matches. The markdown's directory
+   * is watched with no name filter: an editor's save can show up under a temp name only. */
   private follow(): void {
     if (!this.file) {
       return;
@@ -477,35 +478,38 @@ export class TuiShell {
     const dir = join(home(), "comments");
     mkdirSync(dir, { recursive: true });
     const mine = basename(storePath(this.file));
-    const queue = (fn: () => Promise<void>) => {
-      clearTimeout(this.wait);
-      this.wait = setTimeout(() => void fn(), 150);
-    };
     try {
-      this.watchers = [
-        // Bun may only report the `.tmp` of an atomic write, so match on the prefix.
-        watch(dir, (_e, name) => String(name).startsWith(mine) && queue(() => this.reloadStore())),
-        watch(this.file, () => queue(() => this.reloadDoc())),
+      this.stops = [
+        follow(
+          dir,
+          (name) => name.startsWith(mine),
+          () => void this.reloadStore(),
+        ),
+        follow(
+          dirname(this.file),
+          () => true,
+          () => void this.reloadDoc(),
+        ),
       ];
     } catch {
       // Watching is best effort (some mounts refuse); the TUI still works without it.
     }
   }
 
-  /** Re-read comments; badge what arrived from elsewhere, keep an open comment box untouched. */
+  /** Re-read comments; badge what changed elsewhere, keep an open comment box untouched. */
   private async reloadStore(): Promise<void> {
     const fresh = await load(this.file);
-    if (JSON.stringify(fresh.toJSON()) === JSON.stringify(this.store.toJSON())) {
+    const diff = changes(this.store, fresh).filter((x) => x.what !== "new" || !x.c.archivedAt);
+    if (diff.length === 0) {
       return;
     }
-    const seen = new Set(this.store.all().map((c) => c.id));
-    const incoming = fresh.live().filter((c) => !seen.has(c.id));
     this.store = fresh;
-    const replies = incoming.filter((c) => c.re).length;
-    const n = incoming.length;
+    const added = diff.filter((x) => x.what === "new");
+    const n = added.length;
+    const replies = added.filter((x) => x.c.re).length;
     this.draw(
       n === 0
-        ? undefined
+        ? "COMMENTS UPDATED"
         : `${n} NEW ${replies === n ? (n === 1 ? "REPLY" : "REPLIES") : n === 1 ? "COMMENT" : "COMMENTS"}`,
     );
   }
@@ -1042,7 +1046,7 @@ export class TuiShell {
   }
 
   dispose(): void {
-    for (const w of this.watchers) w.close();
+    for (const stop of this.stops) stop();
     this.renderer.keyInput.off("keypress", this.onKey);
     this.renderer.destroy();
     // OpenTUI's destroy() may not drain the process on its own, so the shell

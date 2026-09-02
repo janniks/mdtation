@@ -1,7 +1,13 @@
 import { strict as assert } from "node:assert";
 import { test, describe } from "node:test";
 import { parseDocument } from "../src/core/document.ts";
-import { CommentStore, copyFormat, resolveAnchor, type Comment } from "../src/core/comment.ts";
+import {
+  CommentStore,
+  changes,
+  copyFormat,
+  resolveAnchor,
+  type Comment,
+} from "../src/core/comment.ts";
 
 // 0 "# Title",1 "",2 "## Sub",3 "",4 "text",5 "",6 "### Deep",7 ""
 const md = "# Title\n\n## Sub\n\ntext\n\n### Deep\n";
@@ -147,5 +153,36 @@ describe("copyFormat", () => {
 
   test("unknown anchor: unresolved line, no detail", () => {
     assert.equal(copyFormat(heading(["missing"], "x"), doc(), "detailed"), "Line ?\n> x");
+  });
+});
+
+describe("changes", () => {
+  const at = (n: number) => ({
+    id: `c${n}`,
+    anchor: { kind: "line" as const, n },
+    text: "t",
+    createdAt: n,
+  });
+  test("reports new, edited, archived and restored comments, oldest first", () => {
+    const prev = CommentStore.fromJSON([at(2), { ...at(1), archivedAt: 5 }, at(3)]);
+    const next = CommentStore.fromJSON([
+      { ...at(2), text: "changed" },
+      at(1),
+      { ...at(3), archivedAt: 9 },
+      at(4),
+    ]);
+    assert.deepEqual(
+      changes(prev, next).map((x) => [x.c.id, x.what]),
+      [
+        ["c1", "restore"],
+        ["c2", "edit"],
+        ["c3", "archive"],
+        ["c4", "new"],
+      ],
+    );
+  });
+  test("identical stores change nothing", () => {
+    const s = CommentStore.fromJSON([at(1)]);
+    assert.deepEqual(changes(s, CommentStore.fromJSON([at(1)])), []);
   });
 });
