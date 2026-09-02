@@ -9,11 +9,10 @@ How we tell people to use mdtation with an agent, and what is missing to make th
 ## The loop
 
 1. Agent writes or rewrites a markdown file (plan, spec, draft).
-2. Agent runs `mdtation <file> watch` and blocks.
+2. Agent runs `mdtation <file> watch` and blocks on events.
 3. Human opens `mdtation <file>`, reads, leaves comments, replies to agent comments.
-4. Human says "done" (a key in the TUI).
-5. The agent's `watch` prints every new comment and exits.
-6. Agent answers in threads with `add --re`, edits the file, goes to step 2.
+4. Each comment reaches the agent as an event as it lands; quitting the TUI is an event too.
+5. Agent answers in threads with `add --re`, edits the file, goes to step 2.
 
 While both run, the TUI reloads live: file changed on disk, comments changed, agent replied.
 No modes, no flags, the file and the json are the channel.
@@ -25,40 +24,38 @@ No modes, no flags, the file and the json are the channel.
   - All of that is specced in `watch-DRAFT.md` with 8 open questions, nothing implemented yet.
 - CLI `watch` streams comments by others as they land, never exits.
   - Parses the document once, so its `Line N` output goes stale after a rewrite.
-- `mark [name]` writes a checkpoint; `list --since last` reads from it.
+  - Only knows about new comments: edits, replies, archives and the TUI closing are invisible.
 - Agent `add` shows up inline for the human at once (json watch).
 
 ## What is missing
 
-- A "done" signal from the human to the agent.
-- A way for `watch` to exit on that signal, so an agent can `await` it.
+- Events beyond "new comment": edit, reply, archive, and the TUI quitting.
+- A way for `watch` to return on an event the agent picks, so it can be awaited.
 - The reload hardening from `watch-DRAFT.md`, so the loop does not lie mid-review.
-- The README and the `skill` text telling the story above, in that order.
+- README and `skill` text telling the story above.
 
 ## Proposal
 
-### Done is a mark
+### Events
 
-- A mark is already "a checkpoint in the comment stream", which is what done means.
-- TUI: `d` (and `Comments > Done`) writes a mark named `done` and badges `SENT`.
-  - Question: should `q` also write it? Proposal: no, quitting is not the same as done; but ask once if there are unsent comments? (see Q1)
-- CLI: `mark done` does the same from the shell.
+- `comment`: someone else added, edited, replied to, or archived a comment.
+- `quit`: the human closed the TUI on this file.
+- `open`: the human opened the TUI on this file (cheap, and lets an agent know the review started). (Q1)
+- Nothing else. No new concepts, no marks involved.
 
-### `watch` exits on done
+### Where the TUI writes them
 
-- `watch` prints comments as they land (today), and when a `done` mark arrives it prints any rest and exits 0.
-- `watch --forever` keeps today's behaviour for dashboards and logs.
-  - Question: default to exit-on-done, or keep the never-exit default and add `--until done`? Proposal: exit on done is the default; the loop is the point. (Q2)
-- Output on exit: the same markdown blocks `list` prints, so the agent reads one format everywhere.
-- `--json` prints one line per comment plus a final `{"event":"done"}` line.
+- The TUI already owns the comments json; `open` and `quit` are written there too, as a small `session` field: `{ open: <iso> | null, quit: <iso> | null }`.
+  - One file, one watcher, no new paths.
+  - Alternative: a sidecar `<file>.events` log. More to clean up, nothing gained yet. (Q2)
+- Comment events need no new data: the watcher diffs the store between ticks (new id, changed text, new reply, archived flag).
+
+### `watch`
+
+- Prints one event per change as it lands, in the `list` markdown format for comments and a one-line `quit` / `open` note; `--json` prints one object per line with an `event` field.
+- `--until quit` (or `--until comment`) makes it exit 0 after printing that event, so an agent can block on one command. Default stays: never exit. (Q3)
 - Re-read the document each tick so `Line N` and quotes are current.
-
-### Other events
-
-- Only two events exist: `comment` (someone else wrote, edited, replied) and `done`.
-- Human quit without done: nothing is printed; the agent keeps waiting, or its own timeout fires.
-  - Question: should quit emit a `quit` event so an agent can stop waiting? (Q3)
-- Agent-side timeouts are the agent's problem; `watch --timeout 30m` is cheap if wanted. (Q4)
+- Ignores the agent's own writes (`$MDTATION_AUTHOR`), as today.
 
 ### Live reload in the TUI
 
@@ -68,27 +65,25 @@ No modes, no flags, the file and the json are the channel.
 
 ### Docs
 
-- README: replace the "Tell your agent" line with the six-step loop, then the key table.
-- `skill`: lead with `watch`, then `list`, `add --re`, `mark done`.
+- README: replace the "Tell your agent" line with the five-step loop.
+- `skill`: lead with `watch --until quit`, then `list`, `add --re`.
 - Recommend `$MDTATION_AUTHOR=<agent name>` so replies read as a conversation.
 
 ## Not in scope
 
 - Launching the TUI for the human from the agent.
-- Comments on anything but markdown files.
 - Multiple humans on one file at once.
 
 ## Order
 
-1. `watch` exits on `done`, `d` in the TUI, `mark done`. Small, ships the loop end to end with today's flaky reload.
+1. `open` / `quit` in the json, `watch` diffs the store and gains `--until`. Ships the loop end to end with today's flaky reload.
 2. Reload hardening from `watch-DRAFT.md`.
 3. README and skill text.
 
 ## Open questions
 
-1. Should `q` prompt "send N unsent comments?" when comments were left since the last mark, or stay silent?
-2. Exit-on-done as the `watch` default, with `--forever` to opt out?
-3. Emit a `quit` event when the human closes the TUI without done?
-4. Add `--timeout` to `watch`, or leave timeouts to the caller?
-5. Name of the key and mark: `d` / `done`? Alternatives: `s` / `send`, `enter` on nothing.
-6. Should `done` also archive nothing, or auto-archive comments the agent has already replied to?
+1. Is `open` worth having, or only `quit`?
+2. Session field in the comments json, or a separate events file?
+3. Should `watch` keep never-exiting as the default, with `--until <event>` to opt in?
+4. `--json` shape: one object per line with `event` plus the comment, or the comment as-is with a top-level `event` key?
+5. Should `watch` print the initial state (comments that landed while no agent was watching) before streaming, or start from now like today?
