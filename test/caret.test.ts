@@ -74,6 +74,11 @@ describe("caret", () => {
     assert.ok(n < 200, `rows called ${n} times`);
   });
 
+  test("pin climbs when every line below is hidden", () => {
+    const hid = (l: number) => [0, 1, 0, 0][l] ?? 0;
+    assert.deepEqual(pin({ line: 2, seg: 0 }, 4, hid), { line: 1, seg: 0 });
+  });
+
   test("fit keeps a short document at the top", () => {
     const vp = { offset: 0, cursor: 0, width: 80, height: 20, margin: 3 };
     assert.deepEqual(fit(vp, { line: 4, seg: 1 }, total, rows), { line: 0, seg: 0 });

@@ -49,7 +49,7 @@ export function place(top: Caret, row: number, total: number, rows: Rows): Caret
 
 /** Rendered rows from `a` down to `b`; negative when `b` sits above `a`.
  * With `cap`, stops counting once the magnitude reaches it (callers only ask "at least N"). */
-export function gap(a: Caret, b: Caret, rows: Rows, cap = Infinity): number {
+function gap(a: Caret, b: Caret, rows: Rows, cap = Infinity): number {
   if (a.line > b.line) {
     return -gap(b, a, rows, cap);
   }
@@ -64,7 +64,7 @@ function after(a: Caret, b: Caret): boolean {
 }
 
 /** The document's last rendered row. */
-function end(total: number, rows: Rows): Caret {
+export function end(total: number, rows: Rows): Caret {
   return pin({ line: total - 1, seg: Infinity }, total, rows);
 }
 
@@ -75,7 +75,9 @@ export function pin(c: Caret, total: number, rows: Rows): Caret {
   if (n > 0) {
     return { line, seg: Math.max(0, Math.min(c.seg, n - 1)) };
   }
-  return step({ line, seg: 0 }, line + 1 < total ? 1 : -1, total, rows);
+  // Nothing visible below (say, trailing lines merged into a flowed paragraph): go up instead.
+  const down = step({ line, seg: 0 }, 1, total, rows);
+  return rows(down.line) > 0 ? down : step({ line, seg: 0 }, -1, total, rows);
 }
 
 /** The window's top row: the caret keeps `margin` rows on each side, and the
