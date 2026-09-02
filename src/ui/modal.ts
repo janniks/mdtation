@@ -22,6 +22,8 @@ export class Modal implements Overlay {
   private readonly opts: ModalOpts;
   /** Columns the input has for text; the row count is measured against it. */
   private readonly inner: number;
+  /** Rows the input currently shows. */
+  private rows = 1;
 
   constructor(renderer: CliRenderer, opts: ModalOpts) {
     this.opts = opts;
@@ -93,10 +95,13 @@ export class Modal implements Overlay {
       Math.max(1, this.renderer.height - 6),
       wrapWords(this.input.plainText, this.inner).length,
     );
-    if (rows !== this.input.height) {
+    if (rows !== this.rows) {
+      this.rows = rows;
       this.input.height = rows;
       this.node.height = rows + 4;
-      center(this.node, this.renderer, rows + 4);
+      // Grow downward from a fixed top, so the title never jumps; only slide up at the screen's edge.
+      const top = typeof this.node.top === "number" ? this.node.top : 0;
+      this.node.top = Math.max(0, Math.min(top, this.renderer.height - rows - 4));
     }
   }
 
@@ -118,7 +123,7 @@ export class Modal implements Overlay {
   }
 
   place(): void {
-    center(this.node, this.renderer);
+    center(this.node, this.renderer, this.rows + 4);
   }
 
   key(e: KeyEvent): boolean {
