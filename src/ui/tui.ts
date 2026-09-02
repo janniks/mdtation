@@ -692,7 +692,7 @@ export class TuiShell {
       statusBar(this.doc, this.view, {
         markers: marks,
         note: badge
-          ? `${badge.author ?? "you"}: ${badge.text.split("\n")[0]!}  (r replies)`
+          ? `${badge.author ?? "you"}: ${badge.text.split("\n")[0]!}  (r to reply)`
           : undefined,
       }),
     );
@@ -797,7 +797,7 @@ export class TuiShell {
     if (held) {
       const c = this.store.get(held);
       if (c?.agent) {
-        this.draw("AGENT COMMENT  r replies");
+        this.draw("AGENT COMMENT  r to reply");
         return;
       }
       if (c) {
