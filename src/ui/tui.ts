@@ -476,11 +476,11 @@ export class TuiShell {
     this.draw();
   }
 
-  /** Write the store; with `what` and `id`, log the change for anyone watching. */
-  private persist(what?: Change["what"], id?: string): void {
+  /** Write the store once; with `what` and ids, log each change for anyone watching. */
+  private persist(what?: Change["what"], ...ids: string[]): void {
     if (this.file) {
       void save(this.file, this.store);
-      if (what && id) {
+      for (const id of what ? ids : []) {
         append(this.file, { event: "comment", by: process.env.USER ?? "you", id, what });
       }
     }
@@ -878,8 +878,8 @@ export class TuiShell {
     if (this.on.viewArchive) {
       for (const c of list) {
         this.store.archive(c.id);
-        this.persist("archive", c.id);
       }
+      this.persist("archive", ...list.map((c) => c.id));
       this.draw(`COPIED ${list.length}  ARCHIVED${note}`);
       return;
     }

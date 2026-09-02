@@ -101,3 +101,10 @@ describe("events log", () => {
     assert.deepEqual(await events(join(dir, "none.md")), []);
   });
 });
+
+test("two saves in flight at once both land", async () => {
+  const file = join(mkdtempSync(join(tmpdir(), "mdt-race-")), "doc.md");
+  const s = new CommentStore();
+  await Promise.all([save(file, s), save(file, s), save(file, s)]);
+  assert.equal((await load(file)).all().length, 0);
+});

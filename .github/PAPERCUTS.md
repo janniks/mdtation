@@ -96,3 +96,5 @@ Append-only detours / surprises that cost more than one attempt.
 - 2026-09-02: a full-width styled row bleeds its attribute into the next row under OpenTUI.
   - Its ANSI emitter skips the reset when a run ends on the last column and only ever adds attributes (no `22`/`23`/`24`), so a dim `────` rule made the H1 under it bold+dim after scrolling.
   - Seen on `@opentui/core` 0.5.3 and 0.5.4. Keep full-width rows attribute-free (color only), or one column short.
+- 2026-09-02: `store.save` used one tmp name per process, so two saves in flight (copy-all with archive-on-copy saved once per comment) renamed each other's file away: `ENOENT rename ….tmp`.
+  - tmp names now carry a counter; the loop saves once. Any per-item `persist()` loop is the smell to watch for.
