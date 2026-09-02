@@ -333,12 +333,13 @@ function bodyFor(
 function styleTable(row: string, opts: RenderOptions): string {
   const color = opts.color === true;
   if (opts.pipes !== false) {
-    // The separator becomes a real rule, so the grid reads as lines and not as dashes.
+    // Plain output keeps the source separator, so piped markdown round-trips; on screen it is a rule.
+    if (!color) {
+      return row;
+    }
     return isSep(row)
       ? paint(color, SGR.gray, rule(row))
-      : !color
-        ? row
-        : row.replace(/\|/g, paint(color, SGR.gray, "|"));
+      : row.replace(/\|/g, paint(color, SGR.gray, "|"));
   }
   if (isSep(row)) {
     return paint(color, SGR.dim, "\u2500".repeat(displayWidth(row) - 4));

@@ -131,7 +131,7 @@ describe("hide markup", () => {
     const src = "a|bb\n--|--\n|ccc | d\n| e|f|";
     assert.deepEqual(show(src), [
       "  | a   | bb |",
-      "  ├─────┼────┤",
+      "  | --- | -- |",
       "  | ccc | d  |",
       "  | e   | f  |",
     ]);
