@@ -287,8 +287,10 @@ function bodyFor(
 ): string {
   const color = opts.color === true;
   // Frontmatter: the closing fence is a full-width rule (the opener gets no row, see `hidden`).
+  // Rules are gray, not dim: OpenTUI drops the reset after a run that ends on the last column
+  // and never emits "dim off", so a dim full-width row would bleed dim into the row below.
   if (line === fence(doc.lines)) {
-    return paint(color, SGR.dim, "\u2500".repeat(cols));
+    return paint(color, SGR.gray, "\u2500".repeat(cols));
   }
   const heading = headingAt(doc, line);
   if (heading) {
@@ -303,7 +305,7 @@ function bodyFor(
     return color && opts.syntax !== false ? highlight(raw, block.lang ?? null) : raw;
   }
   if (isRule(raw)) {
-    return paint(color, SGR.dim, "\u2500".repeat(cols));
+    return paint(color, SGR.gray, "\u2500".repeat(cols));
   }
   const q = /^(\s*)((?:>\s?)+)(.*)$/.exec(raw);
   if (q && opts.quote !== ">") {
