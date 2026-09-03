@@ -237,7 +237,7 @@ function line(
   asJson: boolean,
 ): string {
   if (asJson) {
-    return JSON.stringify(c ? { event: e.event, what: e.what, ...c } : e) + "\n";
+    return JSON.stringify(c ? { event: e.event, what: e.what, at: e.at, ...c } : e) + "\n";
   }
   if (e.event !== "comment") {
     return `${e.event} ${e.by} ${new Date(e.at).toISOString()}\n`;
