@@ -30,23 +30,29 @@ Status: bug, confirmed, not fixed.
 - Shipped 2026-09-08, see `delete-comment.md`: `d` archives the thread on the cursor row, `prune` verb.
   Open questions closed: chooser picks one thread; no restore overlay in the TUI; `prune` with no flag uses retention.
 
-## 2. Keyboard-only jumps and faster scrolling
+## 2. Jumps, one key at a time
 
-Vim has these, and the keys are free in mdtation:
+Decided 2026-09-08: keep it simple, ship one binding per step, vim style where vim has one.
 
-| Key | Vim | Proposed |
-| --- | --- | --- |
-| `ctrl+f` / `ctrl+b` | full page | full page down / up |
-| `ctrl+d` / `ctrl+u` | half page | keep as page (today), or make half page like vim |
-| `ctrl+e` / `ctrl+y` | scroll one row, cursor stays | scroll the window one row |
-| `shift+j` / `shift+k` | (join / man) | next / previous heading |
-| `:` then `42` | go to line 42 | one-line prompt: go to line |
-| `42` then `shift+g` | go to line 42 | count prefix, later, only if `:` is not enough |
+### Step 1. Go to heading, with a UI
 
-- `shift+j`/`shift+k` are not vim, but heading jumps are the natural "faster than `j`" step in a markdown viewer.
-  Vim's `]]` needs a two-key chord we do not have.
-- `:` reuses the comment modal shape with a one-row input; enter jumps, esc closes.
-- All new keys show in Help and the palette.
+- Key `@`, free today, Sublime's "goto symbol" muscle memory.
+- Opens the existing palette listing every heading, indented by level, cursor heading marked.
+  Type to filter, enter jumps, esc closes.
+- Later, maybe: typing `@` inside the command palette switches to the same list, like Sublime's goto anything.
+
+### Step 2. Go to line, vim style
+
+- Needs the line number gutter first (section 3), else there is nothing to read the number from.
+- Count then key: `42` then `shift+g`, the same key that goes to the bottom without a count.
+  `g` with a count does the same, vim's `42gg`.
+- A pending count shows in the status corner and esc clears it.
+- `:42` as an ex-style prompt only if the count feels wrong in use.
+
+### Later, only if asked
+
+- `ctrl+f` / `ctrl+b` full page, `ctrl+e` / `ctrl+y` scroll one row.
+- `shift+j` / `shift+k` next and previous heading, superseded by step 1 for most uses.
 
 ## 3. Line numbers
 
@@ -79,4 +85,4 @@ Vim has these, and the keys are free in mdtation:
 2. Archive on `d` (1), spec exists.
 3. Wheel setting (4), one setting and one line.
 4. Line numbers (3), touches renderer and gutter.
-5. Keyboard jumps (2), largest, ships in two commits: paging, then `:` and headings.
+5. Jumps (2), one commit per step: heading palette on `@`, then count + `shift+g` once the gutter exists.
