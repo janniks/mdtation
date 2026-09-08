@@ -100,3 +100,14 @@ Append-only detours / surprises that cost more than one attempt.
   - tmp names now carry a counter; the loop saves once. Any per-item `persist()` loop is the smell to watch for.
   - Sibling class: a `void promise` in the TUI. OpenTUI registers `unhandledRejection` and pops its log console over the page (`openConsoleOnError`), which is what the "console focused" screen was. Every background promise now goes through `safe()`, which badges the error instead.
   - One `atomic(to, text)` in `store.ts` is the only async tmp + rename writer; `prefs.ts` stays sync, which cannot interleave.
+
+- 2026-09-07 — Website takeover on macOS found missing native packages in both dependency trees.
+  - Next could start but Tailwind failed loading Lightning CSS; root oxlint/oxfmt also lacked Darwin bindings.
+  - Reinstall pinned dependencies with npm ci, then restart dev to discard failed module resolution.
+  - Sandbox npm downloads can hang before ENOTFOUND; retry with network approval.
+
+- 2026-09-07 — Procedural SVG coordinates can differ in the last floating-point digit between server and browser.
+  - Round serialized paths and transforms to three decimals; seeded randomness alone does not prevent hydration warnings.
+- 2026-09-08: `node_modules` installed on macOS has only darwin bindings; in the Linux sandbox esbuild, oxlint and oxfmt fail with "Cannot find native binding".
+  - A plain `npm install --no-save <linux binding>` prunes the darwin ones and breaks the host.
+  - Fix: install both platforms at once with `--no-save --force` (esbuild, oxlint, oxfmt bindings, versions from their package.json).

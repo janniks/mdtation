@@ -764,7 +764,7 @@ export class TuiShell {
 
   /** `r`: answer the thread on the cursor row (its first comment is the parent); several threads → pick one. */
   private reply(): void {
-    const tops = this.here().filter((c) => !c.re || !this.store.get(c.re));
+    const tops = this.tops();
     const open = (parent: Comment) =>
       this.open(
         new Modal(this.renderer, {
@@ -782,10 +782,7 @@ export class TuiShell {
       );
     const held = this.note();
     if (held) {
-      let p = this.store.get(held);
-      while (p?.re && this.store.get(p.re)) {
-        p = this.store.get(p.re);
-      }
+      const p = this.root(held);
       if (p) {
         open(p);
         return;
@@ -806,6 +803,65 @@ export class TuiShell {
             hint: "type to filter…",
             items: () =>
               tops.map((x) => ({
+                id: x.id,
+                title: x.text.split("\n")[0]!,
+                category: "",
+                keys: [],
+              })),
+          },
+        ),
+      );
+    }
+  }
+
+  /** The first comment of the thread `id` belongs to (itself when it is no reply). */
+  private root(id: string): Comment | undefined {
+    let p = this.store.get(id);
+    while (p?.re && this.store.get(p.re)) {
+      p = this.store.get(p.re);
+    }
+    return p;
+  }
+
+  /** Threads whose first comment sits on the cursor row. */
+  private tops(): readonly Comment[] {
+    return this.here().filter((c) => !c.re || !this.store.get(c.re));
+  }
+
+  /** `d`: archive the thread on the cursor row, replies included; several threads → pick one.
+   * Archive is the TUI's delete: gone from the screen at once, back with `restore`, purged by retention. */
+  private archive(): void {
+    const done = (top: Comment) => {
+      const ids = [top.id];
+      for (const c of this.store.live()) {
+        if (c.re && ids.includes(c.re)) ids.push(c.id);
+      }
+      for (const id of ids) this.store.archive(id);
+      this.persist("archive", ...ids);
+      this.draw(`ARCHIVED ${ids.length}  restore via cli`);
+    };
+    const held = this.note();
+    const top = held ? this.root(held) : undefined;
+    if (top) {
+      done(top);
+      return;
+    }
+    const list = this.tops();
+    if (list.length === 0) {
+      this.draw("NO COMMENT HERE");
+    } else if (list.length === 1) {
+      done(list[0]!);
+    } else {
+      this.open(
+        new Palette(
+          this.renderer,
+          (id) => done(this.store.get(id)!),
+          () => this.close(),
+          {
+            title: "Archive which thread",
+            hint: "type to filter…",
+            items: () =>
+              list.map((x) => ({
                 id: x.id,
                 title: x.text.split("\n")[0]!,
                 category: "",
@@ -912,6 +968,9 @@ export class TuiShell {
         return;
       case "edit":
         this.amend();
+        return;
+      case "archive":
+        this.archive();
         return;
       case "copy":
         this.copy();

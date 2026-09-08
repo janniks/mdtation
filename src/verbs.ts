@@ -16,11 +16,14 @@ import {
   load,
   log,
   path,
+  purge,
   restore,
   save,
   type Event,
 } from "./core/store.ts";
 import { follow } from "./core/watch.ts";
+import { load as loadPrefs } from "./core/prefs.ts";
+import { DEFAULTS, TTL } from "./core/settings.ts";
 
 export const VERBS = [
   "list",
@@ -33,6 +36,7 @@ export const VERBS = [
   "archive",
   "restore",
   "clear",
+  "purge",
   "watch",
 ] as const;
 export type Verb = (typeof VERBS)[number];
@@ -41,6 +45,8 @@ export interface Args {
   readonly json?: boolean;
   /** watch: exit after this event. */
   readonly until?: string;
+  /** purge: archived longer than this (1d, 7d, 30d, 1y); default the retention setting. */
+  readonly older?: string;
   readonly since?: string;
   readonly archived?: boolean;
   readonly archive?: boolean;
@@ -83,6 +89,12 @@ export async function run(
   }
   if (verb === "clear") {
     return { err: `cleared ${await clear(file)} comments for ${basename(file)}` };
+  }
+  if (verb === "purge") {
+    const key = a.older ?? loadPrefs().values.purge ?? DEFAULTS.purge;
+    const ttl = TTL[key];
+    if (ttl === undefined) throw new Error(`--older must be one of ${Object.keys(TTL).join(", ")}`);
+    return { err: `purged ${await purge(file, ttl)} archived comments (older than ${key})` };
   }
   if (verb === "archive" || verb === "restore") {
     const n = await (verb === "archive" ? archive : restore)(file, rest, who);

@@ -27,9 +27,8 @@ Status: bug, confirmed, not fixed.
 
 ## 1. Archive comment on `d`
 
-- Already specified in `delete-comment-DRAFT.md`; the friends' ask matches it.
-- Proposal: promote that draft as is, answer its three open questions:
-  chooser picks one thread; no restore overlay in the TUI; `purge` with no flag uses retention.
+- Shipped 2026-09-08, see `delete-comment.md`: `d` archives the thread on the cursor row, `purge` verb.
+  Open questions closed: chooser picks one thread; no restore overlay in the TUI; `purge` with no flag uses retention.
 
 ## 2. Keyboard-only jumps and faster scrolling
 

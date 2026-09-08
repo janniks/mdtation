@@ -35,6 +35,10 @@ runMain(
       re: { type: "string", description: "add: id of the comment to reply to" },
       human: { type: "boolean", description: "add: a person, not an agent" },
       until: { type: "string", description: "watch: exit after this event (comment, open, quit)" },
+      older: {
+        type: "string",
+        description: "purge: 1d, 7d, 30d, 1y (default: the retention setting)",
+      },
     },
     async run({ args }) {
       if (args.file === "skill") {

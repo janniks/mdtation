@@ -92,6 +92,14 @@ export async function clear(file: string): Promise<number> {
   return n;
 }
 
+/** Remove comments of `file` archived longer than `ttl` ms ago for good; returns how many went. */
+export async function purge(file: string, ttl: number): Promise<number> {
+  const store = await load(file);
+  const n = store.sweep(ttl);
+  if (n) await save(file, store);
+  return n;
+}
+
 /** Archive `ids` for `file` as `by`; returns how many matched. */
 export async function archive(file: string, ids: readonly string[], by = ""): Promise<number> {
   return flip(file, ids, by, "archive");

@@ -13,6 +13,7 @@ import {
   home,
   load,
   path,
+  purge,
   restore,
   save,
 } from "../src/core/store.ts";
@@ -73,6 +74,15 @@ describe("store", () => {
     assert.ok(got.get("1")?.archivedAt);
     assert.equal(await restore("/a.md", ["1"]), 1);
     assert.equal((await load("/a.md")).live().length, 2);
+  });
+
+  test("purge removes only what was archived longer than ttl", async () => {
+    await archive("/a.md", ["1"]);
+    assert.equal(await purge("/a.md", 60_000), 0);
+    await new Promise((r) => setTimeout(r, 5));
+    assert.equal(await purge("/a.md", 0), 1);
+    assert.equal((await load("/a.md")).all().length, 1);
+    await save("/a.md", store(note("1", 1), note("2", 2)));
   });
 
   test("clear returns the count and removes", async () => {

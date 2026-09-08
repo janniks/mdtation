@@ -43,8 +43,9 @@ the retention sweep stays the automatic path, `purge` is the manual one.
 
 `commands.ts` (archive verb + menu entry), `tui.ts` (`d` handler), `bin.ts` (`purge` verb), tests per piece.
 
-## Open questions
+## Closed questions (shipped 2026-09-08)
 
-1. Chooser on a multi-thread row: pick one thread (current plan) or `d` twice = archive all on the row?
-2. Should `restore` also exist in the TUI later (an "Archived" overlay), or stay CLI-only for now?
-3. `purge` with no args: retention-based (proposed) or refuse without `--older`?
+1. Chooser on a multi-thread row picks one thread.
+2. `restore` stays CLI-only.
+3. `purge` with no flag uses the retention setting; `--older 1d|7d|30d|1y` overrides.
+4. Badge reads `ARCHIVED n  restore via cli`.

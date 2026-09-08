@@ -70,6 +70,7 @@ export const COMMANDS = [
   { id: "comment", title: "New comment", category: "Comments", keys: ["c"] },
   { id: "edit", title: "Edit comment", category: "Comments", keys: ["e"] },
   { id: "reply", title: "Reply", category: "Comments", keys: ["r"] },
+  { id: "archive", title: "Archive comment", category: "Comments", keys: ["d"] },
   {
     id: "prevComment",
     title: "Previous comment",
@@ -152,6 +153,7 @@ export const HANDLERS: { readonly [K in CommandId]: CmdHandler } = {
   comment: () => ({}),
   edit: () => ({}),
   reply: () => ({}),
+  archive: () => ({}),
   prevAgent: () => ({}),
   nextAgent: () => ({}),
   viewInlineAgent: () => ({}),

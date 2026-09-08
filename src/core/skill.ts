@@ -21,6 +21,7 @@ mdtation <file> add "text" --re <id>     # reply in a thread
 mdtation <file> edit <id> "text"
 mdtation <file> mark [name]              # checkpoint: list --since last starts here next time
 mdtation <file> archive|restore <id…>
+mdtation <file> purge [--older 1d|7d|30d|1y]  # remove archived comments for good (default: retention setting)
 mdtation <file> watch [--json] [--until comment|open|quit] [--since last|<mark>|<iso>]
                                          # block; print comments by others as they land (open/quit as one line each)
 mdtation <file> status

@@ -25,3 +25,23 @@ test("open, comment, quit: the events log tells the story", { skip: !usable }, (
     "hello",
   );
 });
+
+test("d archives the thread under the cursor", { skip: !usable }, () => {
+  const file = join(mkdtempSync(join(tmpdir(), "mdt-tui-")), "doc.md");
+  writeFileSync(file, "# T\n\none\ntwo\n");
+  const { home } = tui(file, [
+    [1500, "jjc"],
+    [400, "bye\\r"],
+    [600, "d"],
+    [800, "q"],
+  ]);
+  const store = JSON.parse(readFileSync(join(home, "comments", basename(path(file))), "utf-8"));
+  assert.ok(store.comments[0].archivedAt, "comment archived");
+  const events = readFileSync(join(home, "comments", basename(log(file))), "utf-8")
+    .trim()
+    .split("\n")
+    .map((l) => JSON.parse(l))
+    .filter((e) => e.event === "comment")
+    .map((e) => e.what);
+  assert.deepEqual(events, ["new", "archive"]);
+});
