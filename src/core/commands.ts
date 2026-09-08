@@ -67,6 +67,8 @@ export const COMMANDS = [
   { id: "pageUp", title: "Page up", category: "Navigate", keys: ["ctrl+u", "pageup"], menu: false },
   { id: "top", title: "Top", category: "Navigate", keys: ["g"], menu: false },
   { id: "bottom", title: "Bottom", category: "Navigate", keys: ["shift+g"], menu: false },
+  // Digit prefixes stay reserved for future VIEW counts.
+  { id: "goto", title: "Go to line", category: "Cursor", keys: [":"], menu: false },
   { id: "comment", title: "New comment", category: "Comments", keys: ["c"] },
   { id: "edit", title: "Edit comment", category: "Comments", keys: ["e"] },
   { id: "reply", title: "Reply", category: "Comments", keys: ["r"] },
@@ -122,6 +124,7 @@ export const HANDLERS: { readonly [K in CommandId]: CmdHandler } = {
   pageUp: (vp, total) => ({ vp: pageUp(vp, total) }),
   top: (vp, total) => ({ vp: jumpToLine(vp, 0, total) }),
   bottom: (vp, total) => ({ vp: jumpToLine(vp, Math.max(0, total - 1), total) }),
+  goto: () => ({}),
   quit: () => ({ quit: true }),
   save: () => ({}),
   reload: () => ({}),

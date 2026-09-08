@@ -41,13 +41,12 @@ Decided 2026-09-08: keep it simple, ship one binding per step, vim style where v
   Type to filter, enter jumps, esc closes.
 - Later, maybe: typing `@` inside the command palette switches to the same list, like Sublime's goto anything.
 
-### Step 2. Go to line, vim style
+### Step 2. Go to line
 
-- Needs the line number gutter first (section 3), else there is nothing to read the number from.
-- Count then key: `42` then `shift+g`, the same key that goes to the bottom without a count.
-  `g` with a count does the same, vim's `42gg`.
-- A pending count shows in the status corner and esc clears it.
-- `:42` as an ex-style prompt only if the count feels wrong in use.
+- Shipped 2026-09-08 as `:`, see `goto-line.md`.
+- Digits typed first are reserved for vim-style counts, no feature may bind them.
+- Later, planned, not built: `42` then `shift+g`, and `42` then `gg`.
+  A pending count shows in the status corner and esc clears it.
 
 ### Later, only if asked
 

@@ -111,3 +111,7 @@ Append-only detours / surprises that cost more than one attempt.
 - 2026-09-08: `node_modules` installed on macOS has only darwin bindings; in the Linux sandbox esbuild, oxlint and oxfmt fail with "Cannot find native binding".
   - A plain `npm install --no-save <linux binding>` prunes the darwin ones and breaks the host.
   - Fix: install both platforms at once with `--no-save --force` (esbuild, oxlint, oxfmt bindings, versions from their package.json).
+- 2026-09-08: under `npm test` the PTY tests skip silently in the Linux sandbox.
+  - `node_modules/.bin/bun` is the `bun` npm package's shim, installed on macOS without its postinstall, and it fails to start.
+  - `test/pty.ts` marks the harness unusable when `bun --version` fails.
+  - Run `node --import tsx --test test/tui.test.ts` to see them pass, or check `ℹ skipped` in the summary.

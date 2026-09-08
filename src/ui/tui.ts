@@ -22,6 +22,7 @@ import { Crumb, Dropdown, MenuBar, StatusBar } from "./chrome.ts";
 import { Help } from "./help.ts";
 import { Palette } from "./palette.ts";
 import { Modal } from "./modal.ts";
+import { Prompt } from "./prompt.ts";
 import { All } from "./all.ts";
 import { copy } from "./clipboard.ts";
 import { CommentStore, changes } from "../core/comment.ts";
@@ -37,6 +38,7 @@ import { report } from "../core/report.ts";
 import { end, field, set } from "../core/front.ts";
 import { cycle, DEFAULTS, rows as settings, TTL, type Values } from "../core/settings.ts";
 import { nextComment, prevComment } from "../core/nav.ts";
+import { parse } from "../core/line.ts";
 import { parseDocument, type Document } from "../core/document.ts";
 import { box, toggle } from "../core/edit.ts";
 import { align, cell } from "../core/table.ts";
@@ -948,6 +950,26 @@ export class TuiShell {
   private run(id: CommandId): void {
     const total = this.doc.lines.length;
     switch (id) {
+      case "goto":
+        this.open(
+          new Prompt(this.renderer, {
+            title: "Go to line",
+            submit: (text) => {
+              if (!text.trim() || !this.doc.lines.length) {
+                return;
+              }
+              const line = parse(text, this.doc.lines.length);
+              if (line === undefined) {
+                this.draw("INVALID LINE");
+                return;
+              }
+              this.seg = 0;
+              this.setCursor(line);
+            },
+            close: () => this.close(),
+          }),
+        );
+        return;
       case "help":
         this.open(new Help(this.renderer, () => this.close()));
         return;
