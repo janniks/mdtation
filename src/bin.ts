@@ -37,7 +37,7 @@ runMain(
       until: { type: "string", description: "watch: exit after this event (comment, open, quit)" },
       older: {
         type: "string",
-        description: "expire: 1d, 7d, 30d, 1y (default: the retention setting)",
+        description: "prune: 1d, 7d, 30d, 1y (default: the retention setting)",
       },
     },
     async run({ args }) {

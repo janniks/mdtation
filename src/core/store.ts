@@ -93,7 +93,7 @@ export async function clear(file: string): Promise<number> {
 }
 
 /** Remove comments of `file` archived longer than `ttl` ms ago for good; returns how many went. */
-export async function expire(file: string, ttl: number): Promise<number> {
+export async function prune(file: string, ttl: number): Promise<number> {
   const store = await load(file);
   const n = store.sweep(ttl);
   if (n) await save(file, store);

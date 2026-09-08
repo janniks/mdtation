@@ -16,7 +16,7 @@ import {
   load,
   log,
   path,
-  expire,
+  prune,
   restore,
   save,
   type Event,
@@ -36,7 +36,7 @@ export const VERBS = [
   "archive",
   "restore",
   "clear",
-  "expire",
+  "prune",
   "watch",
 ] as const;
 export type Verb = (typeof VERBS)[number];
@@ -45,7 +45,7 @@ export interface Args {
   readonly json?: boolean;
   /** watch: exit after this event. */
   readonly until?: string;
-  /** expire: archived longer than this (1d, 7d, 30d, 1y); default the retention setting. */
+  /** prune: archived longer than this (1d, 7d, 30d, 1y); default the retention setting. */
   readonly older?: string;
   readonly since?: string;
   readonly archived?: boolean;
@@ -90,11 +90,11 @@ export async function run(
   if (verb === "clear") {
     return { err: `cleared ${await clear(file)} comments for ${basename(file)}` };
   }
-  if (verb === "expire") {
+  if (verb === "prune") {
     const key = a.older ?? loadPrefs().values.purge ?? DEFAULTS.purge;
     const ttl = TTL[key];
     if (ttl === undefined) throw new Error(`--older must be one of ${Object.keys(TTL).join(", ")}`);
-    return { err: `expired ${await expire(file, ttl)} archived comments (older than ${key})` };
+    return { err: `pruned ${await prune(file, ttl)} archived comments (older than ${key})` };
   }
   if (verb === "archive" || verb === "restore") {
     const n = await (verb === "archive" ? archive : restore)(file, rest, who);

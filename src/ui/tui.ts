@@ -829,7 +829,7 @@ export class TuiShell {
   }
 
   /** `d`: archive the thread on the cursor row, replies included; several threads → pick one.
-   * Archive is the TUI's delete: gone from the screen at once, back with `restore`, expired by retention. */
+   * Archive is the TUI's delete: gone from the screen at once, back with `restore`, pruned by retention. */
   private archive(): void {
     const done = (top: Comment) => {
       const ids = [top.id];
