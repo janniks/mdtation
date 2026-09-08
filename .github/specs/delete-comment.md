@@ -33,19 +33,19 @@ Nothing is lost to a slipped keypress; permanence comes only from the retention 
 Most of this already exists; only true removal is new.
 
 - Have: `mdtation <file> list --archived` (inspect), `restore <id>` (undo), `archive <id>`, `clear` (wipe all).
-- Add: `mdtation <file> purge [--older <dur>]` — permanent removal of archived comments; no flag = the retention setting.
+- Add: `mdtation <file> expire [--older <dur>]` — permanent removal of archived comments; no flag = the retention setting.
 
 Reasoning: recovery and true deletion are rare, deliberate acts that suit a typed command better than a modal;
-the retention sweep stays the automatic path, `purge` is the manual one.
+the retention sweep stays the automatic path, `expire` is the manual one.
 `clear` today deletes everything live; consider fencing it to archived-only later.
 
 ## Touches
 
-`commands.ts` (archive verb + menu entry), `tui.ts` (`d` handler), `bin.ts` (`purge` verb), tests per piece.
+`commands.ts` (archive verb + menu entry), `tui.ts` (`d` handler), `bin.ts` (`expire` verb), tests per piece.
 
 ## Closed questions (shipped 2026-09-08)
 
 1. Chooser on a multi-thread row picks one thread.
 2. `restore` stays CLI-only.
-3. `purge` with no flag uses the retention setting; `--older 1d|7d|30d|1y` overrides.
+3. `expire` with no flag uses the retention setting; `--older 1d|7d|30d|1y` overrides.
 4. Badge reads `ARCHIVED n  restore via cli`.

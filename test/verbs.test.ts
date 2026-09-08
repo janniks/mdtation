@@ -24,14 +24,14 @@ describe("verbs", () => {
     assert.match(list.out ?? "", /looks wrong/);
   });
 
-  test("purge takes --older and rejects an unknown duration", async () => {
+  test("expire takes --older and rejects an unknown duration", async () => {
     await run(file, "add", ["gone"], { line: "4" }, "bot");
     const id = JSON.parse(
       (await run(file, "list", [], { json: true }, "bot")).out!.trim().split("\n").at(-1)!,
     ).id;
     await run(file, "archive", [id], {}, "bot");
-    assert.match((await run(file, "purge", [], { older: "1d" }, "bot")).err ?? "", /^purged 0 /);
-    await assert.rejects(run(file, "purge", [], { older: "2w" }, "bot"), /--older/);
+    assert.match((await run(file, "expire", [], { older: "1d" }, "bot")).err ?? "", /^expired 0 /);
+    await assert.rejects(run(file, "expire", [], { older: "2w" }, "bot"), /--older/);
     const list = await run(file, "list", [], { archived: true }, "bot");
     assert.match(list.out ?? "", /gone/);
   });

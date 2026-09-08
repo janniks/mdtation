@@ -76,7 +76,7 @@ mdtation plan.md list                 # print live comments as markdown (--since
 mdtation plan.md add "text" --re <id> # reply in a thread, shows inline in the viewer at once
 mdtation plan.md mark                 # checkpoint for --since last
 mdtation plan.md archive a1 b2        # done with these (restore to undo); d in the viewer does the same
-mdtation plan.md purge --older 7d     # remove archived comments for good
+mdtation plan.md expire --older 7d     # remove archived comments for good
 mdtation plan.md print                # render to stdout and exit
 mdtation plan.md status               # print the data dir
 mdtation skill                        # print the agent skill
