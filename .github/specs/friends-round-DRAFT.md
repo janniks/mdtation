@@ -60,7 +60,7 @@ Vim has these, and the keys are free in mdtation:
 
 ## 4. Mouse wheel speed
 
-- Setting `Scroll > Wheel lines`, values `1 2 3 5 10`, default `3`.
+- Setting `Scroll > Wheel lines`, values `1 2 3 5 10`, default `1`.
   Settings popup only, not in the menu bar.
 - Applies to `wheel()` only; keyboard moves stay one line.
 - Moves the cursor n lines per wheel event, same walk as today.
