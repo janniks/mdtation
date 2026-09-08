@@ -7,7 +7,166 @@ import { stripVTControlCharacters } from "node:util";
 import { CommentStore } from "../src/core/comment.ts";
 import { parseDocument } from "../src/core/document.ts";
 import { log, path } from "../src/core/store.ts";
-import { tui, usable } from "./pty.ts";
+import { tui, usable, type Key } from "./pty.ts";
+
+test("count three source lines, comment, quit", { skip: !usable }, () => {
+  const file = join(mkdtempSync(join(tmpdir(), "mdt-tui-")), "doc.md");
+  writeFileSync(file, "First\nSecond\nThird\nDistinct fourth line\nLast");
+  const { home } = tui(file, [
+    [1500, "3j"],
+    [400, "c"],
+    [400, "line four\\r"],
+    [1000, "q"],
+  ]);
+  const store = CommentStore.fromJSON(
+    JSON.parse(readFileSync(join(home, "comments", basename(path(file))), "utf-8")),
+  );
+  assert.equal(store.live().length, 1);
+  assert.equal(store.live()[0]!.text, "line four");
+  assert.equal(
+    store.resolve(store.live()[0]!.anchor, parseDocument(readFileSync(file, "utf-8")))?.startLine,
+    3,
+  );
+});
+
+test(
+  "counts cross wraps and notes; arrows, zero, cancellation, and input digits",
+  { skip: !usable },
+  () => {
+    const file = join(mkdtempSync(join(tmpdir(), "mdt-tui-")), "doc.md");
+    writeFileSync(file, `${"Wrapped words ".repeat(12)}\nSecond\nThird\nFourth\nLast`);
+    const { home } = tui(
+      file,
+      [
+        [1500, "c"],
+        [300, "seed\\r"],
+        [400, "/"],
+        [300, "show own comments inline\\r"],
+        [400, "j2\\033[Bc"],
+        [300, "down 123\\r"],
+        [400, "1\\033[Ac"],
+        [300, "up\\r"],
+        [400, "01kc"],
+        [300, "leading zero\\r"],
+        [400, "j0jc"],
+        [300, "zero on wrap\\r"],
+        [400, "2xjc"],
+        [300, "unbound clears\\r"],
+        [400, "G2\\033"],
+        [300, "kc"],
+        [300, "escape clears\\r"],
+        [400, "2gc"],
+        [300, "top\\r"],
+        [400, "2Gc"],
+        [300, "bottom\\r"],
+        [400, "99999kc"],
+        [300, "clamped\\r"],
+        [600, "q"],
+      ],
+      24,
+      50,
+    );
+    const store = CommentStore.fromJSON(
+      JSON.parse(readFileSync(join(home, "comments", basename(path(file))), "utf-8")),
+    );
+    const doc = parseDocument(readFileSync(file, "utf-8"));
+    assert.deepEqual(
+      store.live().map((c) => [c.text, store.resolve(c.anchor, doc)?.startLine]),
+      [
+        ["seed", 0],
+        ["down 123", 2],
+        ["up", 1],
+        ["leading zero", 0],
+        ["zero on wrap", 0],
+        ["unbound clears", 0],
+        ["escape clears", 3],
+        ["top", 0],
+        ["bottom", 4],
+        ["clamped", 0],
+      ],
+    );
+    assert.ok(store.live().find((c) => c.text === "zero on wrap")?.quote);
+  },
+);
+
+for (const [mode, index] of [
+  ["off", 0],
+  ["absolute", 1],
+  ["relative", 2],
+] as const) {
+  test(`selection and checkbox/table clicks with ${mode} numbers`, { skip: !usable }, () => {
+    const file = join(mkdtempSync(join(tmpdir(), "mdt-tui-")), "doc.md");
+    writeFileSync(
+      file,
+      "# Header\nAlpha beta\nGamma delta\n- [ ] task\n| A | B |\n| - | - |\n| a | b |",
+    );
+    const keys: Key[] = [[1500, ""]];
+    // Complete the cycle for off, so all three modes exercise persistence.
+    for (let i = 0; i < (index || 3); i++) {
+      keys.push([300, "/"], [300, "line numbers\\r"]);
+    }
+    const width = index ? 4 : 2;
+    keys.push(
+      [400, "\\033[<0;2;4M"],
+      [200, `\\033[<32;${width + 6};5M`],
+      [200, `\\033[<0;${width + 6};5m`],
+      [400, "selected 123\\r"],
+      [400, `\\033[<0;${width + 11};4M`],
+      [200, `\\033[<32;${width + 7};4M`],
+      [200, `\\033[<0;${width + 7};4m`],
+      [400, "reverse\\r"],
+      [400, `\\033[<0;${width + 4};6M\\033[<0;${width + 4};6m`],
+      [400, `\\033[<0;${width + 3};8M\\033[<0;${width + 3};8m`],
+      [400, "\\023"],
+      [600, "q"],
+    );
+    const { home } = tui(file, keys);
+    const store = CommentStore.fromJSON(
+      JSON.parse(readFileSync(join(home, "comments", basename(path(file))), "utf-8")),
+    );
+    assert.equal(store.live().length, 2);
+    assert.equal(store.live()[0]!.text, "selected 123");
+    assert.equal(store.live()[0]!.quote, "Alpha beta\nGamma");
+    // Selecting through the line end includes its newline; keep it with the selected text.
+    assert.equal(store.live()[1]!.quote, "beta\n");
+    assert.match(readFileSync(file, "utf-8"), /- \[x\] task/);
+    assert.notEqual(readFileSync(file, "utf-8").split("\n")[5], "| - | - |");
+    assert.equal(
+      JSON.parse(readFileSync(join(home, "settings.json"), "utf-8")).picks.viewNumbers,
+      index,
+    );
+  });
+}
+
+test(
+  "counted hidden tail lands on the first wrapped row of the preceding line",
+  { skip: !usable },
+  () => {
+    const file = join(mkdtempSync(join(tmpdir(), "mdt-tui-")), "doc.md");
+    writeFileSync(file, `First row ${"word ".repeat(25)}\nHidden tail`);
+    const { home } = tui(
+      file,
+      [
+        [1500, "/"],
+        [300, "flow paragraphs\\r"],
+        [400, "1jc"],
+        [300, "first segment\\r"],
+        [600, "q"],
+      ],
+      24,
+      50,
+    );
+    const store = CommentStore.fromJSON(
+      JSON.parse(readFileSync(join(home, "comments", basename(path(file))), "utf-8")),
+    );
+    assert.equal(store.live().length, 1);
+    assert.match(store.live()[0]!.quote!, /^First row /);
+    assert.equal(
+      store.resolve(store.live()[0]!.anchor, parseDocument(readFileSync(file, "utf-8")))?.startLine,
+      0,
+    );
+  },
+);
 
 test("go to source line 3, comment, quit", { skip: !usable }, () => {
   const file = join(mkdtempSync(join(tmpdir(), "mdt-tui-")), "doc.md");

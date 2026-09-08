@@ -115,3 +115,5 @@ Append-only detours / surprises that cost more than one attempt.
   - `node_modules/.bin/bun` is the `bun` npm package's shim, installed on macOS without its postinstall, and it fails to start.
   - `test/pty.ts` marks the harness unusable when `bun --version` fails.
   - Run `node --import tsx --test test/tui.test.ts` to see them pass, or check `ℹ skipped` in the summary.
+- 2026-09-08: the PTY suite in `test/tui.test.ts` takes about 67 s for 11 tests, each one a full viewer start plus sleeps.
+  - Fine for now, but new PTY tests should cover a flow, not one assertion; prefer renderer or core unit tests where possible.

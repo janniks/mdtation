@@ -18,6 +18,8 @@ import { isRow, isSep, laid, rule } from "./table.ts";
 import { colWidth, displayWidth } from "./unicode.ts";
 
 export interface RenderOptions {
+  /** Source line labels beside the marks. Default `off`. */
+  readonly numbers?: "off" | "absolute" | "relative";
   /** 0-based line indices that carry a comment. */
   readonly markers?: readonly number[];
   /** Pre-laid inline comment rows per line (see `inline.rows`); drawn after the line's own rows. */
@@ -60,6 +62,14 @@ export interface RenderOptions {
 
 /** Width (in columns) of the gutter prepended to every rendered line. */
 export const GUTTER_WIDTH = 2;
+
+/** Total columns before text, including optional source line numbers. */
+export function gutter(doc: Document, opts: RenderOptions = {}): number {
+  return (
+    GUTTER_WIDTH +
+    (!opts.numbers || opts.numbers === "off" ? 0 : String(Math.max(1, doc.lines.length)).length + 1)
+  );
+}
 
 /** Task-box styles, `[open, done]`, cycled by `View › Next checkbox style`. */
 export const CHECKS = [
@@ -420,7 +430,9 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
   const height = Math.max(0, vp.height);
   // Hidden lines take no row, so look past `height` lines to fill the screen.
   const end = Math.min(doc.lines.length, start + 2 * height);
-  const cols = Math.max(1, vp.width - GUTTER_WIDTH);
+  const width = gutter(doc, opts);
+  const blank = " ".repeat(width - GUTTER_WIDTH);
+  const cols = Math.max(1, vp.width - width);
   const lines: string[] = [];
   // Rows of the first line's block that have already scrolled off the top.
   let skip = Math.max(0, vp.skip ?? 0);
@@ -438,13 +450,17 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
     // The cursor line's own rows sit on a slab; its inline notes keep theirs.
     const hot = opts.highlight === true && opts.color === true && i === vp.cursor;
     const row = tableRow(doc, i, opts);
-    if (row !== null) {
-      // Tables never wrap: a too-wide row is cut so its columns stay aligned.
-      const g = gutterFor(i, vp, cursorOn, counts, opts);
-      push(g + lit(styleTable(cut(row, cols), opts), cols, hot));
-      continue;
-    }
-    const chunks = flow(doc, i, opts, cols);
+    const number = blank.length
+      ? paint(
+          opts.color === true,
+          SGR.dim,
+          String(
+            opts.numbers === "relative" && i !== vp.cursor ? Math.abs(i - vp.cursor) : i + 1,
+          ).padStart(blank.length - 1) + " ",
+        )
+      : "";
+    // Tables never wrap: a too-wide row is cut so its columns stay aligned.
+    const chunks = row === null ? flow(doc, i, opts, cols) : [styleTable(cut(row, cols), opts)];
     const extras = opts.inline?.get(i) ?? [];
     // The caret sits on one row of the cursor line's block; other rows keep the plain gutter.
     const at = i === vp.cursor ? Math.min(opts.seg ?? 0, chunks.length + extras.length - 1) : 0;
@@ -455,10 +471,10 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
           : i === vp.cursor && ri === at
             ? caret(opts)
             : "  ";
-      push(g + lit(chunk, cols, hot));
+      push((ri === 0 ? number : blank) + g + lit(chunk, cols, hot));
     });
     extras.forEach((extra, k) => {
-      push((i === vp.cursor && chunks.length + k === at ? caret(opts) : "  ") + extra);
+      push(blank + (i === vp.cursor && chunks.length + k === at ? caret(opts) : "  ") + extra);
     });
   }
   return lines;
@@ -506,8 +522,7 @@ export function span(doc: Document, line: number, vp: Viewport, opts: RenderOpti
   if (tableRow(doc, line, opts) !== null) {
     return 1 + extra;
   }
-  const cols = Math.max(1, vp.width - GUTTER_WIDTH);
-  return flow(doc, line, opts, cols).length + extra;
+  return flow(doc, line, opts, Math.max(1, vp.width - gutter(doc, opts))).length + extra;
 }
 
 /** Status line: cursor position, comment count, an edit hint when the cursor row has comments, mode. */

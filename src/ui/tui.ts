@@ -49,7 +49,7 @@ import { hint, menus, specs, step } from "../core/menu.ts";
 import {
   flow,
   CHECKS,
-  GUTTER_WIDTH,
+  gutter,
   hidden,
   render as renderFrame,
   span,
@@ -86,6 +86,7 @@ const CYCLES = {
   viewCheck: CHECKS.map((c) => c[1]),
   viewCopy: ["simple", "detailed"],
   viewQuote: ["bar", ">", "hide"],
+  viewNumbers: ["off", "absolute", "relative"],
 } as const;
 type Cycle = keyof typeof CYCLES;
 
@@ -99,6 +100,7 @@ export class TuiShell {
   private guard = 0;
   /** Chord of the key being dispatched (for the status hint). */
   private chord = "";
+  private count: number | null = null;
   store: CommentStore;
   private readonly file: string;
   /** Stops for the disk watchers (comments json, markdown); see `follow`. */
@@ -116,6 +118,7 @@ export class TuiShell {
     viewCheck: 0,
     viewCopy: 0,
     viewQuote: 0,
+    viewNumbers: 0,
   };
   private timer: ReturnType<typeof setTimeout> | null = null;
   /** Clears a transient status badge after `AGAIN` ms. */
@@ -197,17 +200,17 @@ export class TuiShell {
     // Drag-select in the body opens a comment on the selection (stored verbatim, see `Comment.quote`);
     // with `Comments › Select to comment` off it copies the text instead (OSC-52, like hunk).
     renderer.on("selection", (s: Selection) => {
-      // Rows after the first start at column 0, so drop their 2-col gutter (overlays have none).
+      // Order endpoints by screen position, including reverse drags on one row.
+      const start = [s.anchor, s.focus].sort((a, b) => a.y - b.y || a.x - b.x)[0]!;
+      const width = gutter(this.doc, this.style());
       const raw = s.isDragging ? "" : s.getSelectedText();
-      const text = (
-        this.overlay
-          ? raw
-          : raw
-              .split("\n")
-              .map((l, i) => (i ? l.slice(GUTTER_WIDTH) : l))
-              .join("\n")
-      ).trim();
-      if (!text) {
+      const text = this.overlay
+        ? raw.trim()
+        : raw
+            .split("\n")
+            .map((l, i) => l.slice(i ? width : Math.max(0, width - (start.x - this.text.x))))
+            .join("\n");
+      if (!text.trim()) {
         return;
       }
       renderer.clearSelection();
@@ -216,7 +219,7 @@ export class TuiShell {
         copy(text, renderer);
         this.draw("COPIED SELECTION");
       } else {
-        const row = Math.min(s.anchor.y, s.focus.y) - this.text.y;
+        const row = start.y - this.text.y;
         const hit = place(this.top(), row, this.doc.lines.length, this.spans(this.lay()));
         this.view = {
           ...this.view,
@@ -283,6 +286,10 @@ export class TuiShell {
 
   /** Show `o` (replacing any open overlay). It sees keys first until closed. */
   open(o: Overlay): void {
+    if (this.count !== null) {
+      this.count = null;
+      this.draw();
+    }
     this.drop();
     // A click before the overlay must not pair with one after it.
     this.tap.at = 0;
@@ -404,7 +411,7 @@ export class TuiShell {
       return;
     }
     const b = box(this.doc.lines[line] ?? "");
-    const col = e.x - this.text.x - GUTTER_WIDTH;
+    const col = e.x - this.text.x - gutter(this.doc, opts);
     const left = b ? displayWidth(this.doc.lines[line]!.slice(0, b.at)) : -1;
     const f = this.prefs.front === "on" ? field(this.doc.lines, line) : null;
     if ((b && col >= left && col <= left + 2) || (f && col > f.key.length)) {
@@ -605,6 +612,7 @@ export class TuiShell {
   private style() {
     return {
       fences: this.value("viewFences"),
+      numbers: this.value("viewNumbers"),
       quote: this.value("viewQuote"),
       flow: this.on.viewFlow,
       indent: this.on.viewIndent,
@@ -653,7 +661,7 @@ export class TuiShell {
       now: Date.now(),
       color: this.on.viewColor === true,
     };
-    const cols = Math.max(1, this.view.width - GUTTER_WIDTH);
+    const cols = Math.max(1, this.view.width - gutter(this.doc, this.style()));
     for (const [line, list] of notes(this.store, this.doc, {
       agent: this.on.viewInlineAgent === true,
       own: this.on.viewInlineOwn === true,
@@ -688,8 +696,12 @@ export class TuiShell {
 
   /** Quote for a new comment: the caret's wrap segment when the line wraps, else nothing. */
   private slice(opts = this.lay()): string | undefined {
-    const cols = Math.max(1, this.view.width - GUTTER_WIDTH);
-    const chunks = flow(this.doc, this.view.cursor, { ...opts, inline: undefined }, cols);
+    const chunks = flow(
+      this.doc,
+      this.view.cursor,
+      { ...opts, inline: undefined },
+      Math.max(1, this.view.width - gutter(this.doc, opts)),
+    );
     if (chunks.length < 2 || this.seg >= chunks.length) {
       return undefined;
     }
@@ -706,6 +718,9 @@ export class TuiShell {
   }
 
   draw(mode = this.dirty ? "UNSAVED" : "VIEW"): void {
+    if (this.count !== null) {
+      mode = String(this.count);
+    }
     const marks = markers(this.store, this.doc);
     this.crumb.node.visible = this.on.viewCrumb === true;
     this.bar.node.visible = this.on.viewBar === true;
@@ -739,7 +754,10 @@ export class TuiShell {
     if (this.fade) {
       clearTimeout(this.fade);
     }
-    this.fade = mode === "VIEW" || mode === "UNSAVED" ? null : setTimeout(() => this.draw(), AGAIN);
+    this.fade =
+      this.count !== null || mode === "VIEW" || mode === "UNSAVED"
+        ? null
+        : setTimeout(() => this.draw(), AGAIN);
   }
 
   /** Open the comment box on the cursor row; `c` (existing comment) turns it into an edit,
@@ -947,7 +965,7 @@ export class TuiShell {
   }
 
   /** Run a command by id. */
-  private run(id: CommandId): void {
+  private run(id: CommandId, n: number | null = null): void {
     const total = this.doc.lines.length;
     switch (id) {
       case "goto":
@@ -1036,6 +1054,7 @@ export class TuiShell {
       case "viewCheck":
       case "viewCopy":
       case "viewQuote":
+      case "viewNumbers":
         this.step(id, 1);
         return;
       case "reload":
@@ -1107,6 +1126,20 @@ export class TuiShell {
         return;
     }
     if (id === "cursorDown" || id === "cursorUp") {
+      if (n !== null) {
+        if (n === 0) {
+          return;
+        }
+        this.view = moveCursor(this.view, id === "cursorDown" ? n : -n, total);
+        // A hidden tail falls back to the previous line's last row; counts land on its first.
+        this.view = {
+          ...this.view,
+          cursor: pin({ line: this.view.cursor, seg: 0 }, total, this.spans(this.lay())).line,
+        };
+        this.seg = 0;
+        this.draw();
+        return;
+      }
       const c = walk(
         { line: this.view.cursor, seg: this.seg },
         id === "cursorDown" ? 1 : -1,
@@ -1131,6 +1164,18 @@ export class TuiShell {
   }
 
   private onKey = (e: KeyEvent): void => {
+    this.chord = toChord(e);
+    if (!this.overlay && /^[0-9]$/.test(this.chord)) {
+      e.preventDefault();
+      this.count = Math.min(9999, (this.count ?? 0) * 10 + Number(this.chord));
+      this.draw();
+      return;
+    }
+    const n = this.count;
+    this.count = null;
+    if (n !== null) {
+      this.draw();
+    }
     if (this.overlay?.key(e)) {
       return;
     }
@@ -1138,7 +1183,6 @@ export class TuiShell {
       this.menuOpen(0);
       return;
     }
-    this.chord = toChord(e);
     const id = matchKey(this.chord)?.id as CommandId | undefined;
     if (id !== "quit") {
       this.guard = 0;
@@ -1147,7 +1191,7 @@ export class TuiShell {
       e.preventDefault(); // keep the opening key out of an overlay's input
       const menu = this.cur;
       const row = this.overlay instanceof Dropdown ? this.overlay.index : 0;
-      this.run(id);
+      this.run(id, id === "cursorDown" || id === "cursorUp" ? n : null);
       if (menu >= 0 && this.cur === menu) {
         this.menuOpen(menu, row); // rebuild so toggles flipped by key show their new state
       }

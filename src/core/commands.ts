@@ -36,6 +36,7 @@ export const COMMANDS = [
   { id: "viewBar", title: "Show menu bar", category: "View", keys: ["m"] },
   { id: "viewCrumb", title: "Show section crumb", category: "View", keys: [] },
   { id: "viewCaret", title: "Line caret", category: "View", keys: [] },
+  { id: "viewNumbers", title: "Line numbers", category: "View", keys: [] },
   { id: "viewDeco", title: "Show text decoration", category: "View", keys: [], group: "Text" },
   { id: "viewEmphasis", title: "Color text decoration", category: "View", keys: [], group: "Text" },
   { id: "viewMarks", title: "Show inline marks", category: "View", keys: [], group: "Text" },
@@ -67,7 +68,7 @@ export const COMMANDS = [
   { id: "pageUp", title: "Page up", category: "Navigate", keys: ["ctrl+u", "pageup"], menu: false },
   { id: "top", title: "Top", category: "Navigate", keys: ["g"], menu: false },
   { id: "bottom", title: "Bottom", category: "Navigate", keys: ["shift+g"], menu: false },
-  // Digit prefixes stay reserved for future VIEW counts.
+  // Digit counts for vertical movement are owned by the shell.
   { id: "goto", title: "Go to line", category: "Cursor", keys: [":"], menu: false },
   { id: "comment", title: "New comment", category: "Comments", keys: ["c"] },
   { id: "edit", title: "Edit comment", category: "Comments", keys: ["e"] },
@@ -140,6 +141,7 @@ export const HANDLERS: { readonly [K in CommandId]: CmdHandler } = {
   viewPipes: () => ({}),
   viewFront: () => ({}),
   viewCaret: () => ({}),
+  viewNumbers: () => ({}),
   viewCheck: () => ({}),
   viewQuote: () => ({}),
   viewFlow: () => ({}),

@@ -55,12 +55,8 @@ Decided 2026-09-08: keep it simple, ship one binding per step, vim style where v
 
 ## 3. Line numbers
 
-- New gutter column, default off.
-- Boolean that changes rendering, so per the rule it lives in `View > Line numbers`, key `[]`.
-  The config file seeds it like the other view toggles (session-only otherwise).
-- Numbers count source lines (what a comment anchors to), wrapped rows show blank.
-- Hidden frontmatter keeps its numbers, so `:` and comments agree with the file.
-- Open: width fixed to the digit count of the last line; gutter grows by that plus one space.
+- Shipped 2026-09-08, see `numbers.md`: `View > Line numbers` cycles off, absolute, relative.
+- Digit counts before `j`, `k`, up, and down shipped with it; `shift+g` and `gg` with a count stay planned.
 
 ## 4. Mouse wheel speed
 
@@ -83,5 +79,4 @@ Decided 2026-09-08: keep it simple, ship one binding per step, vim style where v
 1. Wrap slack (0), small and isolated.
 2. Archive on `d` (1), spec exists.
 3. Wheel setting (4), one setting and one line.
-4. Line numbers (3), touches renderer and gutter.
 5. Jumps (2), one commit per step: heading palette on `@`, then count + `shift+g` once the gutter exists.

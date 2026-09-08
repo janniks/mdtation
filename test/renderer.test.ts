@@ -2,10 +2,111 @@ import { strict as assert } from "node:assert";
 import { test, describe } from "node:test";
 import { createViewport } from "../src/core/viewport.ts";
 import { parseDocument } from "../src/core/document.ts";
-import { hidden, render, span } from "../src/core/renderer.ts";
+import { gutter, hidden, render, span } from "../src/core/renderer.ts";
+import { SGR, strip } from "../src/core/sgr.ts";
 
 // No trailing newline -> 8 clean lines, easy to assert exactly.
 const md = "# A\n## B\n### C\nhello\n```ts\nconst x = 1\n```\n# D";
+
+describe("line numbers", () => {
+  test("absolute labels and relative distances use source lines", () => {
+    const doc = parseDocument("one\ntwo\nthree\nfour\nfive");
+    const vp = createViewport(0, 3, 80, 5);
+    assert.deepEqual(render(doc, vp, { numbers: "absolute", markers: [1] }), [
+      "1   one",
+      "2 ▶ two",
+      "3   three",
+      "4 > four",
+      "5   five",
+    ]);
+    assert.deepEqual(render(doc, vp, { numbers: "relative" }), [
+      "3   one",
+      "2   two",
+      "1   three",
+      "4 > four",
+      "1   five",
+    ]);
+    assert.deepEqual(render(doc, vp, { numbers: "off" }), render(doc, vp));
+    assert.equal(gutter(doc), 2);
+  });
+
+  test("width and right alignment follow the last source number in both modes", () => {
+    for (const [total, width] of [
+      [9, 4],
+      [10, 5],
+      [100, 6],
+    ] as const) {
+      const doc = parseDocument(Array.from({ length: total }, () => "x").join("\n"));
+      for (const numbers of ["absolute", "relative"] as const) {
+        assert.equal(gutter(doc, { numbers }), width);
+        for (const cursor of [0, total - 1]) {
+          const out = render(doc, createViewport(0, cursor, 80, total), { numbers });
+          assert.equal(out[0]!.length, width + 1);
+          assert.equal(out[cursor], `${String(cursor + 1).padStart(width - 3)} > x`);
+        }
+      }
+    }
+    assert.equal(gutter(parseDocument(""), { numbers: "absolute" }), 4);
+  });
+
+  test("wrapped and inline rows have blank labels, even under the caret or after scrolling", () => {
+    const doc = parseDocument("aaaa bbbb\nz");
+    const vp = createViewport(0, 0, 9, 9);
+    for (const numbers of ["absolute", "relative"] as const) {
+      const opts = { numbers, inline: new Map([[0, ["note"]]]) };
+      assert.deepEqual(render(doc, vp, { ...opts, seg: 1 }), [
+        "1   aaaa",
+        "  > bbbb",
+        "    note",
+        `${numbers === "absolute" ? 2 : 1}   z`,
+      ]);
+      assert.deepEqual(render(doc, { ...vp, skip: 1 }, { ...opts, seg: 2 }), [
+        "    bbbb",
+        "  > note",
+        `${numbers === "absolute" ? 2 : 1}   z`,
+      ]);
+      assert.deepEqual(render(doc, { ...vp, skip: 2 }, { ...opts, seg: 2 })[0], "  > note");
+      assert.equal(span(doc, 0, vp, opts), 3);
+      assert.equal(render(doc, vp, opts).length, span(doc, 0, vp, opts) + span(doc, 1, vp, opts));
+    }
+  });
+
+  test("number styling is dim and outside the text highlight and comment mark", () => {
+    const out = render(parseDocument("x"), createViewport(0, 0, 8, 1), {
+      numbers: "absolute",
+      color: true,
+      highlight: true,
+      markers: [0],
+    });
+    assert.equal(
+      out[0],
+      `${SGR.dim}1 ${SGR.reset}${SGR.bgYellow}${SGR.black}>${SGR.reset} ${SGR.bgLine}x   ${SGR.reset}`,
+    );
+    assert.equal(strip(out[0]!), "1 > x   ");
+  });
+
+  test("hidden frontmatter and flowed lines retain source numbers", () => {
+    const doc = parseDocument("---\ntitle: T\n---\n\n# H\nOne.\nTwo.\n\nEnd.");
+    assert.deepEqual(
+      render(doc, createViewport(0, 4, 20, 9), { numbers: "absolute", flow: true }),
+      ["2   title: T", `3   ${"─".repeat(16)}`, "5 > # H", "6   One. Two.", "8   ", "9   End."],
+    );
+    assert.equal(render(doc, createViewport(4, 4, 20, 2), { numbers: "absolute" })[0], "5 > # H");
+  });
+
+  test("tables use the reduced width and leave inline labels blank", () => {
+    const doc = parseDocument("| a | b |\n| - | - |\n| c | d |");
+    const vp = createViewport(0, 0, 12, 9);
+    const opts = { numbers: "absolute", inline: new Map([[0, ["note"]]]), seg: 1 } as const;
+    assert.deepEqual(render(doc, vp, opts), [
+      "1   | a | b…",
+      "  > note",
+      "2   | - | -…",
+      "3   | c | d…",
+    ]);
+    assert.equal(span(doc, 0, vp, opts), 2);
+  });
+});
 
 describe("renderer", () => {
   test("renders the visible window with a cursor gutter", () => {
