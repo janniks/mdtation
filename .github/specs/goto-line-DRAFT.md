@@ -56,8 +56,8 @@ Use the same line numbers as the CLI and comments.
 - Do not reuse `Modal` directly: it adds a quote, a footer, and a growing textarea.
 - The comment `Modal` can share prompt code later; do not refactor it now.
 - Add pure `parse(text, total)` in `src/core/line.ts`.
-- Return a clamped zero-based index, `null` for empty input, or `undefined` for invalid input.
-- Return `null` for valid digits when `total` is 0.
+- Return a clamped zero-based index, or `undefined` for invalid input.
+- The caller closes on empty text and on an empty document before it calls `parse`.
 - Validate all text before number conversion; do not use partial integer parsing.
 - In `tui.ts`, pass `doc.lines.length` to `parse` and use the current document on submit.
 - Reset `seg`, then use `setCursor` and its `jumpToLine` and `draw` path.
@@ -72,7 +72,7 @@ Use the same line numbers as the CLI and comments.
 
 - Add unit tests in `test/line.test.ts` for the core parser.
 - Cover empty text, spaces, `1`, `3`, `003`, `0`, the last line, and `999`.
-- Cover very large digits, invalid text, signs, fractions, exponents, and an empty document.
+- Cover very large digits, invalid text, signs, fractions, and exponents.
 - Add a headless PTY test in `test/tui.test.ts` with `test/pty.ts` and its `usable` guard.
 - Use a temporary document with distinct text on line 3 and the existing timed input pattern.
 - Type `:3`, Enter, then `c`, a comment, Enter, and `q`.
