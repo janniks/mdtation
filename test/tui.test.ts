@@ -40,8 +40,6 @@ test(
       [
         [1500, "c"],
         [300, "seed\\r"],
-        [400, "/"],
-        [300, "show own comments inline\\r"],
         [400, "j2\\033[Bc"],
         [300, "down 123\\r"],
         [400, "1\\033[Ac"],
@@ -109,6 +107,9 @@ for (const [mode, index] of [
       keys.push([300, "/"], [300, "hide line numbers\\r"]);
     }
     const width = index ? 4 : 2;
+    // Column clicks need the pipes on screen; inline notes would shift the rows below.
+    keys.push([300, "/"], [300, "show table pipes\\r"]);
+    keys.push([300, "/"], [300, "hide own comments inline\\r"]);
     keys.push(
       [400, "\\033[<0;2;4M"],
       [200, `\\033[<32;${width + 6};5M`],
@@ -130,8 +131,8 @@ for (const [mode, index] of [
     assert.equal(store.live().length, 2);
     assert.equal(store.live()[0]!.text, "selected 123");
     assert.equal(store.live()[0]!.quote, "Alpha beta\nGamma");
-    // Selecting through the line end includes its newline; keep it with the selected text.
-    assert.equal(store.live()[1]!.quote, "beta\n");
+    // The cursor slab pads the row, so a drag past the line end stops inside the padding.
+    assert.equal(store.live()[1]!.quote, "beta");
     assert.match(readFileSync(file, "utf-8"), /- \[x\] task/);
     assert.notEqual(readFileSync(file, "utf-8").split("\n")[5], "| - | - |");
     assert.equal(

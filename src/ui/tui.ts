@@ -151,7 +151,7 @@ export class TuiShell {
       this.persist();
     }
     for (const k of Object.keys(this.pick) as Cycle[]) {
-      this.pick[k] = (saved.picks[k] ?? 0) % CYCLES[k].length;
+      this.pick[k] = (saved.picks[k] ?? this.pick[k]) % CYCLES[k].length;
     }
     this.view = clampViewport(this.fit(), doc.lines.length);
     this.follow();
@@ -191,7 +191,10 @@ export class TuiShell {
         ? raw.trim()
         : raw
             .split("\n")
-            .map((l, i) => l.slice(i ? width : Math.max(0, width - (start.x - this.text.x))))
+            // The cursor slab pads its row to the pane; the padding is not text.
+            .map((l, i) =>
+              l.slice(i ? width : Math.max(0, width - (start.x - this.text.x))).trimEnd(),
+            )
             .join("\n");
       if (!text.trim()) {
         return;
