@@ -19,15 +19,15 @@ Toggles and cyclers are session-only; the palette persists picks and settings in
 
 - Show text decoration: on
 - Color text decoration: on
-- Show inline marks: on
+- Show inline marks: off
 - Show links: on
 
 ### Blocks
 
 - Show heading marks: on
-- Syntax highlight: on
-- Show table pipes: on
+- Show table pipes: off
 - Show frontmatter: off
+- Syntax highlight: on
 - Code fences: ticks (also fence, hide)
 - Blockquote: bar (also `>`, hide)
 - Checkbox: `[x]` (also `✓`, `●`, `☑`)
@@ -39,23 +39,23 @@ Toggles and cyclers are session-only; the palette persists picks and settings in
 
 ## Comments menu
 
-- Copy format: simple (also detailed)
+- Copy format: detailed (also simple)
 
 ### Options
 
 - Select to comment: on (off means select to copy)
 - Archive on copy: off
 - Show agent comments inline: on
-- Show own comments inline: off
+- Show own comments inline: on
 
 ## Settings popup
 
 ### View
 
-- Scroll margin: 3 (0 to 10)
+- Scroll margin: 8 (0 to 64)
 - Crumb depth: all (or 1 to 6)
-- Inline width: 60 (fit, 50 to 90, full)
-- Highlight line: off
+- Inline width: 70 (fit, 50 to 90, full)
+- Highlight line: on
 - Popup corners: pointy (or round)
 - Badge corner: bottom (or top)
 

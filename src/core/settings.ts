@@ -6,7 +6,7 @@ export const SETTINGS = [
     id: "margin",
     title: "Scroll margin",
     category: "View",
-    values: ["0", "1", "2", "3", "4", "5", "6", "8", "10"],
+    values: ["0", "1", "2", "3", "4", "5", "6", "8", "10", "16", "32", "64"],
   },
   {
     id: "crumb",
@@ -49,15 +49,15 @@ export type Id = (typeof SETTINGS)[number]["id"];
 export type Values = Record<Id, string>;
 
 export const DEFAULTS: Values = {
-  margin: "3",
+  margin: "8",
   crumb: "all",
   front: "on",
   purge: "30d",
-  width: "60",
+  width: "70",
   agent: "left",
   own: "right",
   time: "relative",
-  line: "off",
+  line: "on",
   corners: "pointy",
   status: "bottom",
 };

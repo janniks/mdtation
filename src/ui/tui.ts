@@ -99,7 +99,7 @@ export class TuiShell {
     viewFences: 0,
     viewCaret: 0,
     viewCheck: 0,
-    viewCopy: 0,
+    viewCopy: 1,
     viewQuote: 0,
     viewNumbers: 0,
   };
@@ -125,10 +125,10 @@ export class TuiShell {
       viewEmphasis: cfg.emphasis,
       viewSyntax: cfg.syntax,
       viewHashes: true,
-      viewMarks: true,
+      viewMarks: false,
       viewDeco: true,
       viewLinks: true,
-      viewPipes: true,
+      viewPipes: false,
       viewFront: false,
       viewCrumb: true,
       viewBar: true,
@@ -137,7 +137,7 @@ export class TuiShell {
       viewArchive: false,
       viewSelect: true,
       viewInlineAgent: true,
-      viewInlineOwn: false,
+      viewInlineOwn: true,
       viewMouse: true,
     };
     const saved = loadPrefs();

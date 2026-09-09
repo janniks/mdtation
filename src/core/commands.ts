@@ -67,6 +67,8 @@ export const COMMANDS = [
   { id: "viewMarks", title: "Show inline marks", category: "View", keys: [], group: "Text" },
   { id: "viewLinks", title: "Show links", category: "View", keys: [], group: "Text" },
   { id: "viewHashes", title: "Show heading marks", category: "View", keys: [], group: "Blocks" },
+  { id: "viewPipes", title: "Show table pipes", category: "View", keys: [], group: "Blocks" },
+  { id: "viewFront", title: "Show frontmatter", category: "View", keys: [], group: "Blocks" },
   {
     id: "viewSyntax",
     title: "Syntax highlight",
@@ -76,8 +78,6 @@ export const COMMANDS = [
     keys: [],
     group: "Blocks",
   },
-  { id: "viewPipes", title: "Show table pipes", category: "View", keys: [], group: "Blocks" },
-  { id: "viewFront", title: "Show frontmatter", category: "View", keys: [], group: "Blocks" },
   { id: "viewFences", title: "Code fences", category: "View", keys: [], group: "Blocks" },
   { id: "viewQuote", title: "Blockquote", category: "View", keys: [], group: "Blocks" },
   { id: "viewCheck", title: "Checkbox", category: "View", keys: [], group: "Blocks" },

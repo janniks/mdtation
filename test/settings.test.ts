@@ -6,10 +6,10 @@ import { filter } from "../src/core/palette.ts";
 
 test("cycle wraps through the value list and ignores unknown ids", () => {
   let v = DEFAULTS;
-  assert.equal(v.margin, "3");
+  assert.equal(v.margin, "8");
   v = cycle(v, "margin");
-  assert.equal(v.margin, "4");
-  assert.equal(cycle(v, "margin", -1).margin, "3");
+  assert.equal(v.margin, "10");
+  assert.equal(cycle(v, "margin", -1).margin, "8");
   assert.equal(cycle(DEFAULTS, "crumb", -1).crumb, "6");
   assert.equal(cycle(v, "nope"), v);
 });
