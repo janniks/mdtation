@@ -65,6 +65,34 @@ Enum settings with few values read well as actions; listed for a second step, no
 - status: Show the badge at the top, Show the badge at the bottom.
 - purge: Remove archived comments after 7 days, and so on.
 
+## More view settings
+
+Settings that render the page belong to View, even when the menu does not show them.
+The View menu gets one button at its end that opens the Settings popup filtered to View.
+
+- Add command `viewMore`, title `More view settings…`, category `View`, keys empty.
+- It is a plain action, not a toggle and not a cycler, so it shows no `[x]` and no `[value]`.
+- It sits alone in a last unnamed section of the View menu, below a separator.
+- Enter or click opens the Settings popup with the filter text `View >` already typed.
+- The user can clear the filter to see every setting.
+- The palette lists the row as `More view settings…` too.
+
+### Settings rows get a category
+
+- Every row in `SETTINGS` gets a `category` field that names a menu: `View`, `Comments`, `File`.
+- The row title drops its own prefix: `Scroll margin`, not `Scroll > Margin lines`.
+- One place composes the popup title as `<category> > <title>`, the same shape the cyclers use today.
+- Proposed split: View gets margin, crumb depth, inline width, highlight line, popup corners, badge corner.
+  Comments gets agent side, your side, time, remove after.
+  File gets frontmatter editing.
+- Cyclers keep their command category, so `View > Line numbers` and `Comments > Copy format` fall in place.
+- Later, other menus can get the same button with the same mechanism: `More comment settings…`.
+
+### Palette needs one option
+
+- `Palette` gets an optional `query` in its options, the initial filter text.
+- The Settings popup passes `View >` when opened from the button, nothing when opened from File.
+
 ## Design
 
 - Move `CYCLES` from `src/ui/tui.ts` to `src/core/commands.ts` next to `COMMANDS`, values unchanged.
@@ -76,15 +104,17 @@ Enum settings with few values read well as actions; listed for a second step, no
 - In the shell, `run()` recognises `<cycler>=<index>`, sets `pick` to that index, persists, redraws.
 - `step()` stays for the menu bar and the Settings popup.
 - The menu bar and help keep using `title`; only the palette uses `verbs()`.
-- Single-word identifiers for anything new: `off`, `LABELS`, `pick`, `at`.
+- Menu sections: an entry whose `group` is the empty string starts a separator without a title.
+- Single-word identifiers for anything new: `off`, `LABELS`, `pick`, `at`, `query`.
 
 ## Tests
 
 - `test/commands.test.ts`: `verbs()` on a toggle off and on, a cycler at each value, the split row ids.
-- `test/menu.test.ts`: the menu bar still shows neutral titles and `[value]` hints.
+- `test/menu.test.ts`: the menu bar still shows neutral titles and `[value]` hints, and the View menu ends with a separator and `More view settings…`.
+- `test/settings.test.ts`: every row composes to `<category> > <title>`.
 - A PTY test is not needed; the palette path is already covered.
 
 ## Touches
 
-- `src/core/commands.ts`, `src/ui/tui.ts`, `src/ui/palette.ts` if the hint column needs care.
-- `test/commands.test.ts`, `test/menu.test.ts`.
+- `src/core/commands.ts`, `src/core/settings.ts`, `src/core/menu.ts`, `src/ui/tui.ts`, `src/ui/palette.ts`.
+- `test/commands.test.ts`, `test/menu.test.ts`, `test/settings.test.ts`.
