@@ -9,10 +9,15 @@
  */
 import { jumpToLine, moveCursor, pageDown, pageUp } from "./viewport.ts";
 import type { KeyAction, Viewport } from "./viewport.ts";
+import { CHECKS } from "./renderer.ts";
 
 export interface Command {
   readonly id: string;
   readonly title: string;
+  /** Palette action title when the neutral title has no verb. */
+  readonly verb?: string;
+  /** Palette action when a toggle is on. */
+  readonly off?: string;
   readonly category: string;
   readonly keys: readonly string[];
   /** Optional section inside the menu; a separator is drawn when it changes. */
@@ -31,25 +36,68 @@ export const COMMANDS = [
   { id: "palette", title: "Command palette", category: "File", keys: ["/"], group: "Tools" },
   { id: "settings", title: "Settings", category: "File", keys: [], group: "Tools" },
   { id: "quit", title: "Quit", category: "File", keys: ["q", "ctrl+c"], group: " " },
-  { id: "viewColor", title: "Color", category: "View", keys: [] },
-  { id: "viewMouse", title: "Capture mouse", category: "View", keys: ["shift+m"] },
+  {
+    id: "viewColor",
+    title: "Color",
+    verb: "Enable color",
+    off: "Disable color",
+    category: "View",
+    keys: [],
+  },
+  {
+    id: "viewMouse",
+    title: "Capture mouse",
+    off: "Release mouse",
+    category: "View",
+    keys: ["shift+m"],
+  },
   { id: "viewBar", title: "Show menu bar", category: "View", keys: ["m"] },
   { id: "viewCrumb", title: "Show section crumb", category: "View", keys: [] },
   { id: "viewCaret", title: "Line caret", category: "View", keys: [] },
   { id: "viewNumbers", title: "Line numbers", category: "View", keys: [] },
   { id: "viewDeco", title: "Show text decoration", category: "View", keys: [], group: "Text" },
-  { id: "viewEmphasis", title: "Color text decoration", category: "View", keys: [], group: "Text" },
+  {
+    id: "viewEmphasis",
+    title: "Color text decoration",
+    off: "Gray text decoration",
+    category: "View",
+    keys: [],
+    group: "Text",
+  },
   { id: "viewMarks", title: "Show inline marks", category: "View", keys: [], group: "Text" },
   { id: "viewLinks", title: "Show links", category: "View", keys: [], group: "Text" },
   { id: "viewHashes", title: "Show heading marks", category: "View", keys: [], group: "Blocks" },
-  { id: "viewSyntax", title: "Syntax highlight", category: "View", keys: [], group: "Blocks" },
+  {
+    id: "viewSyntax",
+    title: "Syntax highlight",
+    verb: "Highlight code syntax",
+    off: "Plain code",
+    category: "View",
+    keys: [],
+    group: "Blocks",
+  },
   { id: "viewFences", title: "Code fences", category: "View", keys: [], group: "Blocks" },
   { id: "viewPipes", title: "Show table pipes", category: "View", keys: [], group: "Blocks" },
   { id: "viewQuote", title: "Blockquote", category: "View", keys: [], group: "Blocks" },
   { id: "viewCheck", title: "Checkbox", category: "View", keys: [], group: "Blocks" },
   { id: "viewFront", title: "Show frontmatter", category: "View", keys: [], group: "Blocks" },
-  { id: "viewFlow", title: "Flow paragraphs", category: "View", keys: [], group: "Prose" },
-  { id: "viewIndent", title: "Indent paragraphs", category: "View", keys: [], group: "Prose" },
+  {
+    id: "viewFlow",
+    title: "Flow paragraphs",
+    off: "Unflow paragraphs",
+    category: "View",
+    keys: [],
+    group: "Prose",
+  },
+  {
+    id: "viewIndent",
+    title: "Indent paragraphs",
+    off: "Unindent paragraphs",
+    category: "View",
+    keys: [],
+    group: "Prose",
+  },
+  { id: "viewMore", title: "More view settings…", category: "View", keys: [], group: " " },
   {
     id: "cursorDown",
     title: "Cursor Down",
@@ -91,11 +139,19 @@ export const COMMANDS = [
   {
     id: "viewSelect",
     title: "Select to comment",
+    off: "Select to copy",
     category: "Comments",
     keys: [],
     group: "Options",
   },
-  { id: "viewArchive", title: "Archive on copy", category: "Comments", keys: [], group: "Options" },
+  {
+    id: "viewArchive",
+    title: "Archive on copy",
+    off: "Keep on copy",
+    category: "Comments",
+    keys: [],
+    group: "Options",
+  },
   {
     id: "viewInlineAgent",
     title: "Show agent comments inline",
@@ -114,6 +170,27 @@ export const COMMANDS = [
 ] as const satisfies readonly Command[];
 
 export type CommandId = (typeof COMMANDS)[number]["id"];
+
+/** Cycler values in persisted index order. */
+export const CYCLES = {
+  viewFences: ["ticks", "fence", "hide"],
+  viewCaret: [">", "+", "●"],
+  viewCheck: CHECKS.map((c) => c[1]),
+  viewCopy: ["simple", "detailed"],
+  viewQuote: ["bar", ">", "hide"],
+  viewNumbers: ["off", "absolute", "relative"],
+} as const;
+export type Cycle = keyof typeof CYCLES;
+
+/** Palette actions in the same order as each cycler's values. */
+export const LABELS = {
+  viewFences: ["Show code fences as ticks", "Show code fences as lines", "Hide code fences"],
+  viewCaret: ["Use > caret", "Use + caret", "Use ● caret"],
+  viewCheck: CHECKS.map((c) => `Use ${c[1]} checkboxes`),
+  viewCopy: ["Copy in simple format", "Copy in detailed format"],
+  viewQuote: ["Show blockquotes with a bar", "Show blockquotes with >", "Hide blockquote marks"],
+  viewNumbers: ["Hide line numbers", "Show absolute line numbers", "Show relative line numbers"],
+} as const satisfies Record<Cycle, readonly string[]>;
 
 /** Effect of each command on the viewport. The mapped type enforces parity:
  * dropping a command id here is a type error. */
@@ -147,6 +224,7 @@ export const HANDLERS: { readonly [K in CommandId]: CmdHandler } = {
   viewFlow: () => ({}),
   viewIndent: () => ({}),
   viewCrumb: () => ({}),
+  viewMore: () => ({}),
   viewArchive: () => ({}),
   viewCopy: () => ({}),
   viewSelect: () => ({}),
@@ -169,14 +247,25 @@ export const HANDLERS: { readonly [K in CommandId]: CmdHandler } = {
   help: () => ({}),
 };
 
-/** Palette wording: a `Show …` toggle that is already on reads `Hide …`. */
+/** Palette actions: flip toggles or choose any cycler value except the current one. */
 export function verbs(
   commands: readonly Command[],
   on: Readonly<Record<string, boolean>>,
+  pick: Readonly<Record<string, number>>,
 ): readonly Command[] {
-  return commands.map((c) =>
-    on[c.id] && c.title.startsWith("Show ") ? { ...c, title: "Hide" + c.title.slice(4) } : c,
-  );
+  return commands.flatMap<Command>((c) => {
+    if (c.id in CYCLES) {
+      return LABELS[c.id as Cycle].flatMap((title, at) =>
+        at === pick[c.id] ? [] : [{ id: `${c.id}=${at}`, title, category: c.category, keys: [] }],
+      );
+    }
+    return [
+      {
+        ...c,
+        title: on[c.id] ? (c.off ?? c.title.replace(/^Show /, "Hide ")) : (c.verb ?? c.title),
+      },
+    ];
+  });
 }
 
 /** Raw key event shape (what OpenTUI's KeyEvent exposes minimally). */

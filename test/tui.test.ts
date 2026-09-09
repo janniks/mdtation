@@ -100,10 +100,13 @@ for (const [mode, index] of [
       file,
       "# Header\nAlpha beta\nGamma delta\n- [ ] task\n| A | B |\n| - | - |\n| a | b |",
     );
-    const keys: Key[] = [[1500, ""]];
-    // Complete the cycle for off, so all three modes exercise persistence.
-    for (let i = 0; i < (index || 3); i++) {
-      keys.push([300, "/"], [300, "line numbers\\r"]);
+    const keys: Key[] = [
+      [1500, "/"],
+      [300, `show ${mode === "off" ? "relative" : mode} line numbers\\r`],
+    ];
+    // Set a visible mode before hiding, so off also exercises persistence.
+    if (!index) {
+      keys.push([300, "/"], [300, "hide line numbers\\r"]);
     }
     const width = index ? 4 : 2;
     keys.push(

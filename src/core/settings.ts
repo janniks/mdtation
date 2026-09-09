@@ -4,19 +4,35 @@ import type { Command } from "./commands.ts";
 export const SETTINGS = [
   {
     id: "margin",
-    title: "Scroll > Margin lines",
+    title: "Scroll margin",
+    category: "View",
     values: ["0", "1", "2", "3", "4", "5", "6", "8", "10"],
   },
-  { id: "crumb", title: "Section > Crumb depth", values: ["all", "1", "2", "3", "4", "5", "6"] },
-  { id: "front", title: "Beta > Frontmatter editing", values: ["on", "off"] },
-  { id: "purge", title: "Archive > Remove after", values: ["1d", "7d", "30d", "1y", "never"] },
-  { id: "width", title: "Inline > Width", values: ["fit", "50", "60", "70", "80", "90", "full"] },
-  { id: "agent", title: "Inline > Agent side", values: ["left", "right"] },
-  { id: "own", title: "Inline > Your side", values: ["right", "left"] },
-  { id: "time", title: "Inline > Time", values: ["relative", "absolute", "hide"] },
-  { id: "line", title: "Cursor > Highlight line", values: ["off", "on"] },
-  { id: "corners", title: "Popup > Corners", values: ["pointy", "round"] },
-  { id: "status", title: "Status > Badge corner", values: ["bottom", "top"] },
+  {
+    id: "crumb",
+    title: "Crumb depth",
+    category: "View",
+    values: ["all", "1", "2", "3", "4", "5", "6"],
+  },
+  { id: "front", title: "Frontmatter editing", category: "Advanced", values: ["on", "off"] },
+  {
+    id: "purge",
+    title: "Remove after",
+    category: "Comments",
+    values: ["1d", "7d", "30d", "1y", "never"],
+  },
+  {
+    id: "width",
+    title: "Inline width",
+    category: "View",
+    values: ["fit", "50", "60", "70", "80", "90", "full"],
+  },
+  { id: "agent", title: "Agent side", category: "Comments", values: ["left", "right"] },
+  { id: "own", title: "Your side", category: "Comments", values: ["right", "left"] },
+  { id: "time", title: "Time", category: "Comments", values: ["relative", "absolute", "hide"] },
+  { id: "line", title: "Highlight line", category: "View", values: ["off", "on"] },
+  { id: "corners", title: "Popup corners", category: "View", values: ["pointy", "round"] },
+  { id: "status", title: "Badge corner", category: "View", values: ["bottom", "top"] },
 ] as const;
 
 const DAY = 86_400_000;
@@ -58,11 +74,14 @@ export function cycle(v: Values, id: string, dir = 1): Values {
 }
 
 /** Palette rows: one pseudo-command per setting, the current value shown as its hint. */
-export function rows(v: Values): Command[] {
-  return SETTINGS.map((s) => ({
-    id: `set:${s.id}`,
-    title: s.title,
-    category: "Settings",
-    keys: [v[s.id]],
-  }));
+export function rows(v: Values, cyclers: readonly Command[] = []): Command[] {
+  return [
+    ...SETTINGS.map((s) => ({
+      id: `set:${s.id}`,
+      title: s.title,
+      category: s.category,
+      keys: [v[s.id]],
+    })),
+    ...cyclers,
+  ].map((c) => ({ ...c, title: `${c.category} > ${c.title}` }));
 }

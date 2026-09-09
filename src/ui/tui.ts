@@ -46,15 +46,7 @@ import { displayWidth } from "../core/unicode.ts";
 import { crumb } from "../core/crumb.ts";
 import { loadConfig } from "../core/config.ts";
 import { hint, menus, specs, step } from "../core/menu.ts";
-import {
-  flow,
-  CHECKS,
-  gutter,
-  hidden,
-  render as renderFrame,
-  span,
-  statusBar,
-} from "../core/renderer.ts";
+import { flow, gutter, hidden, render as renderFrame, span, statusBar } from "../core/renderer.ts";
 import {
   clampViewport,
   createViewport,
@@ -64,11 +56,13 @@ import {
 } from "../core/viewport.ts";
 import {
   COMMANDS,
+  CYCLES,
   matchKey,
   reduceCommand,
   toChord,
   type Command,
   type CommandId,
+  type Cycle,
   verbs,
 } from "../core/commands.ts";
 
@@ -78,17 +72,6 @@ const FOOTER = 1;
 const AGAIN = 2000;
 /** Window for a double click, macOS's default. */
 const DOUBLE = 500;
-
-/** View › Style cyclers: each pick moves to the next value; the menu shows the current one. */
-const CYCLES = {
-  viewFences: ["ticks", "fence", "hide"],
-  viewCaret: [">", "+", "●"],
-  viewCheck: CHECKS.map((c) => c[1]),
-  viewCopy: ["simple", "detailed"],
-  viewQuote: ["bar", ">", "hide"],
-  viewNumbers: ["off", "absolute", "relative"],
-} as const;
-type Cycle = keyof typeof CYCLES;
 
 export class TuiShell {
   readonly renderer: CliRenderer;
@@ -585,13 +568,12 @@ export class TuiShell {
     this.draw("SAVED");
   }
 
-  /** Current value of a cycler. */
-  /** The menu cyclers as settings rows: `View › Code fences  [hide]` etc. */
+  /** The menu cyclers as settings rows with their current values. */
   private cyclers(): Command[] {
     return COMMANDS.filter((c) => c.id in CYCLES).map((c) => ({
       id: c.id,
-      title: `${c.category} > ${c.title}`,
-      category: "Settings",
+      title: c.title,
+      category: c.category,
       keys: [this.value(c.id as Cycle)],
     }));
   }
@@ -965,7 +947,15 @@ export class TuiShell {
   }
 
   /** Run a command by id. */
-  private run(id: CommandId, n: number | null = null): void {
+  private run(id: string, n: number | null = null): void {
+    // A split palette row `<cycler>=<index>` sets that value directly.
+    if (id.includes("=")) {
+      const [cycler, at] = id.split("=");
+      this.pick[cycler as Cycle] = Number(at);
+      this.remember();
+      this.draw();
+      return;
+    }
     const total = this.doc.lines.length;
     switch (id) {
       case "goto":
@@ -995,10 +985,10 @@ export class TuiShell {
         this.open(
           new Palette(
             this.renderer,
-            (x) => this.run(x as CommandId),
+            (x) => this.run(x),
             () => this.close(),
             {
-              items: () => verbs(COMMANDS, this.on),
+              items: () => verbs(COMMANDS, this.on, this.pick),
             },
           ),
         );
@@ -1028,6 +1018,7 @@ export class TuiShell {
         );
         return;
       case "settings":
+      case "viewMore":
         this.open(
           new Palette(
             this.renderer,
@@ -1043,7 +1034,8 @@ export class TuiShell {
             () => this.close(),
             {
               title: "Settings",
-              items: () => [...settings(this.prefs), ...this.cyclers()],
+              query: id === "viewMore" ? "View >" : undefined,
+              items: () => settings(this.prefs, this.cyclers()),
               stay: true,
             },
           ),

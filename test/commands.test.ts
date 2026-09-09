@@ -1,7 +1,9 @@
 import { strict as assert } from "node:assert";
 import { test, describe } from "node:test";
 import type { Command } from "../src/core/commands.ts";
-import { COMMANDS, matchKey, reduceCommand, toChord, verbs } from "../src/core/commands.ts";
+import { COMMANDS, CYCLES, matchKey, reduceCommand, toChord, verbs } from "../src/core/commands.ts";
+import { CHECKS } from "../src/core/renderer.ts";
+import { rows } from "../src/core/palette.ts";
 import { createViewport, jumpToLine, moveCursor } from "../src/core/viewport.ts";
 
 const V = () => createViewport(0, 0, 80, 10);
@@ -125,8 +127,91 @@ describe("commands", () => {
 });
 
 test("verbs flips Show to Hide for toggles that are on", () => {
-  const out = verbs(COMMANDS, { viewLinks: true, viewColor: true });
+  const out = verbs(COMMANDS, { viewLinks: true, viewColor: true }, {});
   assert.equal(out.find((c) => c.id === "viewLinks")?.title, "Hide links");
   assert.equal(out.find((c) => c.id === "viewMarks")?.title, "Show inline marks");
-  assert.equal(out.find((c) => c.id === "viewColor")?.title, "Color");
+  assert.equal(out.find((c) => c.id === "viewColor")?.title, "Disable color");
+});
+
+test("verbs uses the specified actions for both toggle states", () => {
+  for (const [id, title, off] of [
+    ["viewColor", "Enable color", "Disable color"],
+    ["viewMouse", "Capture mouse", "Release mouse"],
+    ["viewEmphasis", "Color text decoration", "Gray text decoration"],
+    ["viewSyntax", "Highlight code syntax", "Plain code"],
+    ["viewFlow", "Flow paragraphs", "Unflow paragraphs"],
+    ["viewIndent", "Indent paragraphs", "Unindent paragraphs"],
+    ["viewArchive", "Archive on copy", "Keep on copy"],
+    ["viewSelect", "Select to comment", "Select to copy"],
+    ["viewBar", "Show menu bar", "Hide menu bar"],
+  ] as const) {
+    assert.equal(verbs(COMMANDS, { [id]: false }, {}).find((c) => c.id === id)?.title, title);
+    assert.equal(verbs(COMMANDS, { [id]: true }, {}).find((c) => c.id === id)?.title, off);
+  }
+});
+
+test("verbs expands every cycler and excludes its current value at every index", () => {
+  for (const [id, titles] of [
+    [
+      "viewNumbers",
+      ["Hide line numbers", "Show absolute line numbers", "Show relative line numbers"],
+    ],
+    ["viewFences", ["Show code fences as ticks", "Show code fences as lines", "Hide code fences"]],
+    [
+      "viewQuote",
+      ["Show blockquotes with a bar", "Show blockquotes with >", "Hide blockquote marks"],
+    ],
+    ["viewCaret", ["Use > caret", "Use + caret", "Use ● caret"]],
+    ["viewCheck", CHECKS.map((c) => `Use ${c[1]} checkboxes`)],
+    ["viewCopy", ["Copy in simple format", "Copy in detailed format"]],
+  ] as const) {
+    assert.equal(titles.length, CYCLES[id].length);
+    for (let at = 0; at < titles.length; at++) {
+      assert.deepEqual(
+        verbs(
+          COMMANDS.filter((c) => c.id === id),
+          {},
+          { [id]: at },
+        ),
+        titles.flatMap((title, i) =>
+          i === at
+            ? []
+            : [
+                {
+                  id: `${id}=${i}`,
+                  title,
+                  category: id === "viewCopy" ? "Comments" : "View",
+                  keys: [],
+                },
+              ],
+        ),
+      );
+    }
+  }
+});
+
+test("palette expansion preserves plain actions and neutral help titles without duplicates", () => {
+  const before = rows(COMMANDS);
+  const out = verbs(COMMANDS, { viewMouse: true }, { viewNumbers: 2 });
+  assert.deepEqual(
+    out.find((c) => c.id === "viewMore"),
+    {
+      id: "viewMore",
+      title: "More view settings…",
+      category: "View",
+      keys: [],
+      group: " ",
+    },
+  );
+  assert.equal(new Set(out.map((c) => c.id)).size, out.length);
+  assert.ok(out.every((c) => !c.id.startsWith("set:")));
+  assert.deepEqual(rows(COMMANDS), before);
+  assert.equal(COMMANDS.find((c) => c.id === "viewColor")?.title, "Color");
+  assert.equal(COMMANDS.find((c) => c.id === "viewSyntax")?.title, "Syntax highlight");
+  assert.deepEqual(
+    rows(COMMANDS)
+      .flatMap((c) => c.items)
+      .filter((c) => c.title === "Capture mouse"),
+    [{ title: "Capture mouse", hint: "M" }],
+  );
 });

@@ -69,3 +69,57 @@ test("menus: the first entry of a group carries its section title", () => {
     [undefined, undefined, "y"],
   );
 });
+
+test("menus keep neutral toggle titles and cycler value hints", () => {
+  const entries = menus(
+    COMMANDS,
+    (id) =>
+      ({
+        viewColor: true,
+        viewSyntax: false,
+        viewNumbers: "relative",
+        viewCopy: "detailed",
+      })[id as "viewColor" | "viewSyntax" | "viewNumbers" | "viewCopy"],
+  ).flatMap((m) => m.entries);
+  assert.deepEqual(
+    entries.find((c) => c.id === "viewColor"),
+    {
+      id: "viewColor",
+      title: "Color",
+      checked: true,
+      hint: "",
+    },
+  );
+  assert.equal(entries.find((c) => c.id === "viewSyntax")?.title, "Syntax highlight");
+  assert.equal(entries.find((c) => c.id === "viewSyntax")?.checked, false);
+  assert.deepEqual(
+    entries.find((c) => c.id === "viewNumbers"),
+    {
+      id: "viewNumbers",
+      title: "Line numbers",
+      hint: "[relative]",
+    },
+  );
+  assert.deepEqual(
+    entries.find((c) => c.id === "viewCopy"),
+    {
+      id: "viewCopy",
+      title: "Copy format",
+      hint: "[detailed]",
+    },
+  );
+});
+
+test("View ends with More view settings in an unnamed section without a value or mark", () => {
+  assert.deepEqual(
+    menus(COMMANDS)
+      .find((m) => m.label === "View")
+      ?.entries.at(-1),
+    {
+      id: "viewMore",
+      title: "More view settings…",
+      hint: "",
+      group: " ",
+    },
+  );
+});

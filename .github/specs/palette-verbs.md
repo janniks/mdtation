@@ -73,6 +73,7 @@ The View menu gets one button at its end that opens the Settings popup filtered 
 - Add command `viewMore`, title `More view settings…`, category `View`, keys empty.
 - It is a plain action, not a toggle and not a cycler, so it shows no `[x]` and no `[value]`.
 - It sits alone in a last unnamed section of the View menu, below a separator.
+- Toggles whose neutral title has no verb carry `verb` for the off state, like `Enable color`.
 - Enter or click opens the Settings popup with the filter text `View >` already typed.
 - The user can clear the filter to see every setting.
 - The palette lists the row as `More view settings…` too.
@@ -104,7 +105,7 @@ The View menu gets one button at its end that opens the Settings popup filtered 
 - In the shell, `run()` recognises `<cycler>=<index>`, sets `pick` to that index, persists, redraws.
 - `step()` stays for the menu bar and the Settings popup.
 - The menu bar and help keep using `title`; only the palette uses `verbs()`.
-- Menu sections: an entry whose `group` is the empty string starts a separator without a title.
+- Menu sections: an entry with `group: " "` starts a separator without a title, the convention Quit already uses.
 - Single-word identifiers for anything new: `off`, `LABELS`, `pick`, `at`, `query`.
 
 ## Tests
