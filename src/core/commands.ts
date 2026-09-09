@@ -76,11 +76,11 @@ export const COMMANDS = [
     keys: [],
     group: "Blocks",
   },
-  { id: "viewFences", title: "Code fences", category: "View", keys: [], group: "Blocks" },
   { id: "viewPipes", title: "Show table pipes", category: "View", keys: [], group: "Blocks" },
+  { id: "viewFront", title: "Show frontmatter", category: "View", keys: [], group: "Blocks" },
+  { id: "viewFences", title: "Code fences", category: "View", keys: [], group: "Blocks" },
   { id: "viewQuote", title: "Blockquote", category: "View", keys: [], group: "Blocks" },
   { id: "viewCheck", title: "Checkbox", category: "View", keys: [], group: "Blocks" },
-  { id: "viewFront", title: "Show frontmatter", category: "View", keys: [], group: "Blocks" },
   {
     id: "viewFlow",
     title: "Flow paragraphs",
