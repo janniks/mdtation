@@ -79,12 +79,12 @@ The View menu gets one button at its end that opens the Settings popup filtered 
 
 ### Settings rows get a category
 
-- Every row in `SETTINGS` gets a `category` field that names a menu: `View`, `Comments`, `File`.
+- Every row in `SETTINGS` gets a `category` field: a menu name, or `Advanced` for rows that fit no menu.
 - The row title drops its own prefix: `Scroll margin`, not `Scroll > Margin lines`.
 - One place composes the popup title as `<category> > <title>`, the same shape the cyclers use today.
 - Proposed split: View gets margin, crumb depth, inline width, highlight line, popup corners, badge corner.
   Comments gets agent side, your side, time, remove after.
-  File gets frontmatter editing.
+  Advanced gets frontmatter editing and any future row without a menu.
 - Cyclers keep their command category, so `View > Line numbers` and `Comments > Copy format` fall in place.
 - Later, other menus can get the same button with the same mechanism: `More comment settings…`.
 
