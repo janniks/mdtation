@@ -117,3 +117,7 @@ Append-only detours / surprises that cost more than one attempt.
   - Run `node --import tsx --test test/tui.test.ts` to see them pass, or check `ℹ skipped` in the summary.
 - 2026-09-08: the PTY suite in `test/tui.test.ts` takes about 67 s for 11 tests, each one a full viewer start plus sleeps.
   - Fine for now, but new PTY tests should cover a flow, not one assertion; prefer renderer or core unit tests where possible.
+- 2026-09-09: `npm install --no-save --force <linux binding>` in the sandbox also dropped `@opentui/core-darwin-arm64` and `@oven/bun-darwin-aarch64`, so on the Mac the TUI import failed and the viewer fell back to print mode.
+  - npm resolves optional platform packages for the current platform only; `--force` is not reliable for the other platform.
+  - Fix that works: `npm pack <name>@<version>` and untar into `node_modules/<name>`, for each package the other platform needs.
+  - Better: do not share one `node_modules` between macOS and the Linux sandbox.
