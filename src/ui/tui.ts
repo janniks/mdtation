@@ -479,10 +479,14 @@ export class TuiShell {
   /** Write the store once; with `what` and ids, log each change for anyone watching. */
   private persist(what?: Change["what"], ...ids: string[]): void {
     if (this.file) {
-      this.safe(save(this.file, this.store));
-      for (const id of what ? ids : []) {
-        append(this.file, { event: "comment", by: process.env.USER ?? "you", id, what });
-      }
+      // Events follow the write, so a watcher never wakes for a comment that is not on disk yet.
+      this.safe(
+        save(this.file, this.store).then(() => {
+          for (const id of what ? ids : []) {
+            append(this.file, { event: "comment", by: process.env.USER ?? "you", id, what });
+          }
+        }),
+      );
     }
   }
 
@@ -518,10 +522,12 @@ export class TuiShell {
   private async reloadStore(): Promise<void> {
     const fresh = await load(this.file);
     const diff = changes(this.store, fresh).filter((x) => x.what !== "new" || !x.c.archivedAt);
+    // Adopt disk every time: a CLI clear, prune or mark shows up as no diff, yet must not be written back.
+    this.store = fresh;
     if (diff.length === 0) {
+      this.draw();
       return;
     }
-    this.store = fresh;
     const added = diff.filter((x) => x.what === "new");
     const n = added.length;
     const replies = added.filter((x) => x.c.re).length;
@@ -564,10 +570,12 @@ export class TuiShell {
   }
 
   private async save(): Promise<void> {
+    const text = this.doc.text;
     if (this.file) {
-      await atomic(this.file, this.doc.text);
+      await atomic(this.file, text);
     }
-    this.dirty = false;
+    // An edit that landed during the write is still unsaved.
+    this.dirty = this.doc.text !== text;
     this.draw("SAVED");
   }
 
