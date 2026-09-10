@@ -121,3 +121,4 @@ Append-only detours / surprises that cost more than one attempt.
   - npm resolves optional platform packages for the current platform only; `--force` is not reliable for the other platform.
   - Fix that works: `npm pack <name>@<version>` and untar into `node_modules/<name>`, for each package the other platform needs.
   - Better: do not share one `node_modules` between macOS and the Linux sandbox.
+- 2026-09-09: changing first-run defaults broke 4 PTY tests in ways the unit suite never saw: own notes inline shifted click rows, pipes off disabled column clicks, the cursor slab padded drag quotes with spaces, and saved picks fell back to 0 not the default. Run the PTY suite before committing a defaults change; unit tests use explicit options.
