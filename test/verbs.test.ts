@@ -71,6 +71,17 @@ describe("verbs", () => {
     assert.equal(e.text, "from a human");
   });
 
+  test("watch on a fresh home creates the comments dir instead of failing", async () => {
+    const home = process.env.MDTATION_HOME;
+    process.env.MDTATION_HOME = join(mkdtempSync(join(tmpdir(), "mdt-fresh-")), "home");
+    try {
+      const stop = await watching(file, "bot", {}, () => {});
+      stop();
+    } finally {
+      process.env.MDTATION_HOME = home;
+    }
+  });
+
   test("watch --until quit stops at that event and prints open/quit lines", async () => {
     const got: string[] = [];
     await watching(file, "bot", { until: "quit" }, (s) => got.push(s));

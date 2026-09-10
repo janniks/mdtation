@@ -1,5 +1,6 @@
 /** The CLI verbs as plain functions: each takes the file and its arguments and returns what
  * to print, so `bin.ts` is only argument parsing and the tests need no process. */
+import { mkdirSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { basename, dirname } from "node:path";
 import { copyFormat, type Comment, type CommentStore } from "./core/comment.ts";
@@ -232,6 +233,7 @@ export async function watching(
     }
     busy = false;
   };
+  mkdirSync(dirname(log(file)), { recursive: true });
   const stop = follow(
     dirname(log(file)),
     (name) => name === basename(log(file)),
@@ -242,13 +244,8 @@ export async function watching(
 }
 
 /** One event as text: a comment block, or `open`/`quit` with who and when. */
-function line(
-  e: Event,
-  c: Comment | undefined,
-  doc: Document | undefined,
-  asJson: boolean,
-): string {
-  if (asJson) {
+function line(e: Event, c: Comment | undefined, doc: Document | undefined, json: boolean): string {
+  if (json) {
     return JSON.stringify(c ? { event: e.event, what: e.what, at: e.at, ...c } : e) + "\n";
   }
   if (e.event !== "comment") {
