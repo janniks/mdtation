@@ -1,6 +1,14 @@
 import { strict as assert } from "node:assert";
 import { test, describe, before, after } from "node:test";
-import { mkdtempSync } from "node:fs";
+import {
+  appendFileSync,
+  chmodSync,
+  lstatSync,
+  mkdtempSync,
+  statSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -8,10 +16,12 @@ import { CommentStore, type Comment } from "../src/core/comment.ts";
 import {
   append,
   archive,
+  atomic,
   clear,
   events,
   home,
   load,
+  log,
   path,
   prune,
   restore,
@@ -109,6 +119,34 @@ describe("events log", () => {
       ["quit"],
     );
     assert.deepEqual(await events(join(dir, "none.md")), []);
+  });
+
+  test("a torn line is skipped, the events around it survive", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "mdt-ev-"));
+    process.env.MDTATION_HOME = dir;
+    const file = join(dir, "d.md");
+    append(file, { event: "open", by: "me", at: 10 });
+    appendFileSync(log(file), '{"event":"comment","by":"bot","id":"c1","w\n');
+    append(file, { event: "quit", by: "me", at: 30 });
+    assert.deepEqual(
+      (await events(file)).map((e) => e.event),
+      ["open", "quit"],
+    );
+  });
+});
+
+describe("atomic", () => {
+  test("writes through a symlink and keeps the target's mode", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "mdt-at-"));
+    const real = join(dir, "AGENTS.md");
+    const link = join(dir, "CLAUDE.md");
+    writeFileSync(real, "old");
+    chmodSync(real, 0o600);
+    symlinkSync(real, link);
+    await atomic(link, "new");
+    assert.ok(lstatSync(link).isSymbolicLink(), "link survives");
+    assert.equal(await readFile(real, "utf-8"), "new");
+    assert.equal(statSync(real).mode & 0o777, 0o600);
   });
 });
 

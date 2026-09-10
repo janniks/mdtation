@@ -3,7 +3,7 @@
  * holding `{ comments, marks }`. The file is the channel between the TUI and the CLI.
  */
 import { appendFileSync, mkdirSync } from "node:fs";
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { mkdir, readFile, realpath, rename, stat, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { CommentStore, type Change } from "./comment.ts";
@@ -47,17 +47,20 @@ export function append(file: string, e: Omit<Event, "at"> & { at?: number }): vo
   appendFileSync(log(file), JSON.stringify({ at: Date.now(), ...e }) + "\n");
 }
 
-/** Events for `file` after `since` (ms), oldest first; a missing log is no events. */
+/** Events for `file` after `since` (ms), oldest first; a missing log is no events.
+ * A torn line (an append cut short) is skipped, the rest of the log still counts. */
 export async function events(file: string, since = 0): Promise<Event[]> {
-  try {
-    return (await readFile(log(file), "utf-8"))
-      .split("\n")
-      .filter(Boolean)
-      .map((l) => JSON.parse(l) as Event)
-      .filter((e) => e.at > since);
-  } catch {
-    return [];
-  }
+  const text = await readFile(log(file), "utf-8").catch(() => "");
+  return text
+    .split("\n")
+    .flatMap((l) => {
+      try {
+        return l ? [JSON.parse(l) as Event] : [];
+      } catch {
+        return [];
+      }
+    })
+    .filter((e) => e.at > since);
 }
 
 /** Comments saved for `file` (absolute path); missing or malformed data yields an empty store. */
@@ -74,9 +77,14 @@ let seq = 0;
 /** Write `text` to `to` atomically (tmp + rename), so a reader never sees half a file.
  * Each call gets its own tmp name: two writes in flight at once must not rename each other's file away. */
 export async function atomic(to: string, text: string): Promise<void> {
-  const tmp = `${to}.${process.pid}.${seq++}.tmp`;
-  await writeFile(tmp, text, "utf-8");
-  await rename(tmp, to);
+  // Write through a symlink to its target, and keep the target's mode; a rename would replace the link.
+  const real = await realpath(to).catch(() => to);
+  const mode = await stat(real)
+    .then((s) => s.mode)
+    .catch(() => undefined);
+  const tmp = `${real}.${process.pid}.${seq++}.tmp`;
+  await writeFile(tmp, text, { encoding: "utf-8", mode });
+  await rename(tmp, real);
 }
 
 /** Persist `store`. */
