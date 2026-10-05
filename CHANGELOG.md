@@ -1,5 +1,11 @@
 # mdtation
 
+## 0.2.2
+
+### Patch Changes
+
+- 6d984a2: Scrolling stays fast with many long comments: text is measured once per word, not once per character of the row so far.
+
 ## 0.2.1
 
 ### Patch Changes
