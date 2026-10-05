@@ -30,6 +30,10 @@ function isWide(cp: number): boolean {
  * 2 for wide (CJK, emoji surrogate pairs); 1 otherwise. */
 export function colWidth(ch: string): number {
   const cp = ch.codePointAt(0) ?? 0;
+  // Nothing below the combining marks is wide or zero-width; this is nearly every character.
+  if (cp < 0x300) {
+    return 1;
+  }
   if (cp === 0x200d) {
     return 0; // zero-width joiner
   }
@@ -91,19 +95,26 @@ export function wrapWords(text: string, width: number): string[] {
   const out: string[] = [];
   for (const para of text.split("\n")) {
     let cur = "";
+    // Columns in `cur`, kept as it grows so a long row is not measured again per word.
+    let cols = 0;
     for (let word of para.split(" ")) {
+      let w = displayWidth(word);
       // A word wider than the row is chopped by display columns, so it can never overflow the block.
-      if (width > 0 && displayWidth(word) > width) {
+      if (width > 0 && w > width) {
         if (cur) out.push(cur);
         cur = "";
+        cols = 0;
         const bits = wrapLine(word, width);
         out.push(...bits.slice(0, -1));
         word = bits[bits.length - 1] ?? "";
+        w = displayWidth(word);
       }
-      if (cur && displayWidth(cur) + 1 + displayWidth(word) > width) {
+      if (cur && cols + 1 + w > width) {
         out.push(cur);
         cur = word;
+        cols = w;
       } else {
+        cols = cur ? cols + 1 + w : w;
         cur = cur ? `${cur} ${word}` : word;
       }
     }

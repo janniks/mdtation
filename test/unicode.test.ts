@@ -91,5 +91,8 @@ describe("unicode", () => {
     test("a short word joins the last piece of a chopped word", () => {
       assert.deepEqual(wrapWords("漢字漢 a", 5), ["漢字", "漢 a"]);
     });
+    test("a row of several wide words breaks by columns", () => {
+      assert.deepEqual(wrapWords("漢字 漢字 漢字 ab", 9), ["漢字 漢字", "漢字 ab"]);
+    });
   });
 });

@@ -122,3 +122,8 @@ Append-only detours / surprises that cost more than one attempt.
   - Fix that works: `npm pack <name>@<version>` and untar into `node_modules/<name>`, for each package the other platform needs.
   - Better: do not share one `node_modules` between macOS and the Linux sandbox.
 - 2026-09-09: changing first-run defaults broke 4 PTY tests in ways the unit suite never saw: own notes inline shifted click rows, pipes off disabled column clicks, the cursor slab padded drag quotes with spaces, and saved picks fell back to 0 not the default. Run the PTY suite before committing a defaults change; unit tests use explicit options.
+- 2026-10-05: a 470-line page with 130 comments took 90 ms per key or wheel tick; the terminal paint was 0.5 ms.
+  - 95% was `lay()`: every comment is wrapped again on each draw, and `wrapWords` measured the whole row again for each word, with `colWidth` scanning the wide ranges for each ASCII character.
+  - Fix: `colWidth` returns 1 below U+0300, `wrapWords` keeps a running width. 90 ms became 6 ms.
+  - Class to watch: a helper that measures "the text so far" inside a loop. Profile with `bun --cpu-prof` and OpenTUI's `createTestRenderer` before guessing.
+  - Still open: `lay()` runs twice per input and lays out comments that are off screen; `laid()` lays out the whole table for each row.
