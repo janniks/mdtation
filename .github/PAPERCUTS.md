@@ -127,3 +127,8 @@ Append-only detours / surprises that cost more than one attempt.
   - Fix: `colWidth` returns 1 below U+0300, `wrapWords` keeps a running width. 90 ms became 6 ms.
   - Class to watch: a helper that measures "the text so far" inside a loop. Profile with `bun --cpu-prof` and OpenTUI's `createTestRenderer` before guessing.
   - Still open: `lay()` runs twice per input and lays out comments that are off screen; `laid()` lays out the whole table for each row.
+- 2026-10-19: blank rows at the bottom came back on a short page (`changeview/chat.md`, 34 lines, 120x40).
+  - `clampBounds` cut `vp.height` to the line count, but `height` counts screen rows; wraps and notes need more rows than lines, so `fit` scrolled inside a too-short window.
+  - Earlier fixes (#24 clamp pushes, #25 row-granular `fit`) left this line-space clamp alone.
+  - Class to watch: a line count compared with, or stored into, a row count.
+  - Repro: `createTestRenderer` at a size where the whole page fits in rows but has fewer lines than rows; count blank rows above the status bar.

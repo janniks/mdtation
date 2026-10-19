@@ -97,7 +97,8 @@ test("margin keeps the cursor away from the edges and pads the end", () => {
   assert.deepEqual([v.offset, v.cursor], [92, 95]);
   assert.deepEqual(jumpToLine(v, 0, 100).offset, 0);
   const small = moveCursor(createViewport(0, 0, 80, 10, 3), 4, 5);
-  assert.deepEqual([small.offset, small.cursor, small.height], [0, 4, 5]);
+  // The height stays in screen rows: wrapped lines may need all of it.
+  assert.deepEqual([small.offset, small.cursor, small.height], [0, 4, 10]);
 });
 
 test("first: lines before it are unreachable and never shown", () => {

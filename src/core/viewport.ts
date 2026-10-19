@@ -68,11 +68,11 @@ function clampBounds(vp: Viewport, total: number): Viewport {
   if (total <= 0) {
     return { ...vp, offset: 0, cursor: 0, height: 0 };
   }
+  // Clamp in lines here only: `vp.height` counts screen rows, and wrapped lines and notes take several.
   const height = Math.min(vp.height, total - first);
   const maxOffset = Math.max(first, total - height + (total - first > height ? gap(vp) : 0));
   return {
     ...vp,
-    height,
     offset: Math.max(first, Math.min(vp.offset, maxOffset)),
     cursor: Math.max(first, Math.min(vp.cursor, total - 1)),
   };
@@ -84,14 +84,15 @@ function withCursorVisible(vp: Viewport, total: number): Viewport {
     return b;
   }
   const first = b.first ?? 0;
-  const m = total - first > b.height ? gap(b) : 0;
+  const height = Math.min(b.height, total - first);
+  const m = total - first > height ? gap(b) : 0;
   let offset = b.offset;
   if (b.cursor < offset + m) {
     offset = b.cursor - m;
-  } else if (b.cursor > offset + b.height - 1 - m) {
-    offset = b.cursor - b.height + 1 + m;
+  } else if (b.cursor > offset + height - 1 - m) {
+    offset = b.cursor - height + 1 + m;
   }
-  return { ...b, offset: Math.max(first, Math.min(offset, total - b.height + m)) };
+  return { ...b, offset: Math.max(first, Math.min(offset, total - height + m)) };
 }
 
 /** Clamp to document bounds. The cursor is *not* forced on-screen. */
