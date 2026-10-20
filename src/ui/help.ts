@@ -6,6 +6,7 @@ import { rows } from "../core/palette.ts";
 import { center } from "./overlay.ts";
 import type { Overlay } from "./overlay.ts";
 import { chunk } from "./styled.ts";
+import { THEME } from "../core/theme.ts";
 
 export class Help implements Overlay {
   readonly node: BoxRenderable;
@@ -27,8 +28,8 @@ export class Help implements Overlay {
       width: inner + 2,
       height,
       border: true,
-      borderColor: "#9ec5e8",
-      backgroundColor: "#1f211f",
+      borderColor: THEME.accent,
+      backgroundColor: THEME.panel,
       title: " Help ",
       titleAlignment: "center",
       flexDirection: "column",
@@ -37,20 +38,27 @@ export class Help implements Overlay {
     this.place();
     for (const s of sections) {
       this.node.add(
-        new TextRenderable(renderer, { content: new StyledText([bold(chunk(s.category))]) }),
+        new TextRenderable(renderer, {
+          fg: THEME.text,
+          content: new StyledText([bold(chunk(s.category))]),
+        }),
       );
       for (const i of s.items) {
         const gap = Math.max(1, inner - i.title.length - i.hint.length);
         this.node.add(
           new TextRenderable(renderer, {
+            fg: THEME.text,
             content: new StyledText([chunk(i.title + " ".repeat(gap)), dim(chunk(i.hint))]),
           }),
         );
       }
-      this.node.add(new TextRenderable(renderer, { content: "" }));
+      this.node.add(new TextRenderable(renderer, { fg: THEME.text, content: "" }));
     }
     this.node.add(
-      new TextRenderable(renderer, { content: new StyledText([dim(chunk("esc / ? to close"))]) }),
+      new TextRenderable(renderer, {
+        fg: THEME.text,
+        content: new StyledText([dim(chunk("esc / ? to close"))]),
+      }),
     );
     this.close = close;
   }

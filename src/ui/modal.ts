@@ -5,6 +5,7 @@ import type { CliRenderer, KeyEvent } from "@opentui/core";
 import { wrapWords } from "../core/unicode.ts";
 import { center } from "./overlay.ts";
 import type { Overlay } from "./overlay.ts";
+import { THEME } from "../core/theme.ts";
 
 export interface ModalOpts {
   readonly title: string;
@@ -39,23 +40,26 @@ export class Modal implements Overlay {
       border: true,
       title: ` ${opts.title} `,
       titleAlignment: "center",
-      borderColor: "#9ec5e8",
-      backgroundColor: "#1f211f",
+      borderColor: THEME.accent,
+      backgroundColor: THEME.panel,
       paddingLeft: 1,
       paddingRight: 1,
     });
     this.place();
     const inner = (this.inner = width - 4);
     const quote = opts.quote.length > inner ? opts.quote.slice(0, inner - 1) + "…" : opts.quote;
-    this.node.add(new TextRenderable(renderer, { content: quote, fg: "#808080", width: inner }));
+    this.node.add(new TextRenderable(renderer, { content: quote, fg: THEME.muted, width: inner }));
     this.input = new TextareaRenderable(renderer, {
+      textColor: THEME.text,
+      focusedTextColor: THEME.text,
+      placeholderColor: THEME.muted,
       width: inner,
       height: 1,
       wrapMode: "word",
       placeholder: "your comment",
       initialValue: opts.value ?? "",
-      backgroundColor: "#2a2d2a",
-      focusedBackgroundColor: "#2a2d2a",
+      backgroundColor: THEME.input,
+      focusedBackgroundColor: THEME.input,
     });
     this.input.onContentChange = () => this.grow();
     this.node.add(this.input);
@@ -68,14 +72,14 @@ export class Modal implements Overlay {
     foot.add(
       new TextRenderable(renderer, {
         content: "esc cancel",
-        fg: "#808080",
+        fg: THEME.muted,
         onMouseUp: () => this.cancel(),
       }),
     );
     foot.add(
       new TextRenderable(renderer, {
         content: "  ↵ save",
-        fg: "#808080",
+        fg: THEME.muted,
         onMouseUp: () => this.save(),
       }),
     );

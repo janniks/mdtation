@@ -35,6 +35,7 @@ export class All implements Overlay {
     });
     this.text = new TextRenderable(renderer, {
       content: "",
+      fg: THEME.text,
       width: width - 4,
       height: this.rows,
       selectable: true,

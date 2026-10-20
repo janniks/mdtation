@@ -9,6 +9,7 @@ import { filter } from "../core/palette.ts";
 import { center } from "./overlay.ts";
 import type { Overlay } from "./overlay.ts";
 import { chunk } from "./styled.ts";
+import { THEME } from "../core/theme.ts";
 
 export class Palette implements Overlay {
   readonly node: BoxRenderable;
@@ -47,19 +48,22 @@ export class Palette implements Overlay {
       width: this.inner + 2,
       height,
       border: true,
-      borderColor: "#7aa2f7",
-      backgroundColor: "#1a1b26",
+      borderColor: THEME.accent,
+      backgroundColor: THEME.panel,
       title: ` ${opts.title ?? "Command"} `,
       titleAlignment: "center",
       flexDirection: "column",
     });
     this.place();
     this.input = new InputRenderable(renderer, {
+      textColor: THEME.text,
+      focusedTextColor: THEME.text,
+      placeholderColor: THEME.muted,
       width: "100%",
       value: opts.query ?? "",
       placeholder: opts.hint ?? (this.stay ? "↵ cycles the value" : "type a command…"),
-      backgroundColor: "#1a1b26",
-      focusedBackgroundColor: "#1a1b26",
+      backgroundColor: THEME.panel,
+      focusedBackgroundColor: THEME.panel,
     });
     this.input.on("input", () => {
       this.hits = filter(this.items(), this.input.value);
@@ -67,6 +71,7 @@ export class Palette implements Overlay {
       this.draw();
     });
     this.list = new TextRenderable(renderer, {
+      fg: THEME.text,
       width: "100%",
       height: this.max,
       selectable: false,
@@ -76,6 +81,7 @@ export class Palette implements Overlay {
     this.node.add(this.input);
     this.node.add(
       new TextRenderable(renderer, {
+        fg: THEME.text,
         content: new StyledText([dim(chunk("─".repeat(this.inner)))]),
       }),
     );
@@ -83,6 +89,7 @@ export class Palette implements Overlay {
     if (this.stay) {
       this.node.add(
         new TextRenderable(renderer, {
+          fg: THEME.text,
           content: new StyledText([dim(chunk("esc close  ← → or ↵ change".padStart(this.inner)))]),
         }),
       );
@@ -99,7 +106,7 @@ export class Palette implements Overlay {
       // Settings rows carry their value, not a chord: show it verbatim, like the menu does.
       const h = this.stay ? `[${c.keys[0] ?? ""}]` : hint(c.keys[0]);
       const text = `  ${c.title}${" ".repeat(Math.max(1, this.inner - c.title.length - h.length - 4))}${h}  `;
-      const row = from + i === this.sel ? bg("#364a82")(chunk(text)) : chunk(text);
+      const row = from + i === this.sel ? bg(THEME.active)(chunk(text)) : chunk(text);
       out.push(row, chunk("\n"));
     });
     this.list.content = new StyledText(

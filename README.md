@@ -44,6 +44,13 @@ mdtation plans/auth.md
 
 The full-screen TUI runs under Bun. Under Node, mdtation renders to stdout instead.
 
+Choose light or dark terminal colors with `"theme": "light"` or `"theme": "dark"` in `mdtation.json`.
+Dark is the default; `MDTATION_THEME` overrides the file for a single session.
+
+```sh
+MDTATION_THEME=light mdtation plans/auth.md
+```
+
 ## See it
 
 | Comment on a line | Comment on a selection | Menus and palette |

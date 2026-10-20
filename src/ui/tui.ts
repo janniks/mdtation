@@ -8,6 +8,7 @@
  * The body is a single `TextRenderable` with `wrapMode: "none"`: the frame is
  * pre-wrapped by `render()` and must never be re-wrapped by OpenTUI.
  */
+import { THEME } from "../core/theme.ts";
 import { createCliRenderer, TextRenderable } from "@opentui/core";
 import type { CliRenderer, KeyEvent, MouseEvent, Selection } from "@opentui/core";
 import { spawnSync } from "node:child_process";
@@ -116,6 +117,7 @@ export class TuiShell {
 
   constructor(renderer: CliRenderer, doc: Document, file = "", store = new CommentStore()) {
     this.renderer = renderer;
+    renderer.setBackgroundColor(THEME.page);
     this.doc = doc;
     this.file = file;
     this.store = store;
@@ -165,6 +167,7 @@ export class TuiShell {
     this.crumb = new Crumb(renderer);
     this.text = new TextRenderable(renderer, {
       id: "body",
+      fg: THEME.text,
       content: "",
       width: "100%",
       flexGrow: 1,

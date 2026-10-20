@@ -3,6 +3,7 @@ import { BoxRenderable, InputRenderable } from "@opentui/core";
 import type { CliRenderer, KeyEvent } from "@opentui/core";
 import { center } from "./overlay.ts";
 import type { Overlay } from "./overlay.ts";
+import { THEME } from "../core/theme.ts";
 
 export class Prompt implements Overlay {
   readonly node: BoxRenderable;
@@ -26,16 +27,19 @@ export class Prompt implements Overlay {
       border: true,
       title: ` ${opts.title} `,
       titleAlignment: "center",
-      borderColor: "#9ec5e8",
-      backgroundColor: "#1f211f",
+      borderColor: THEME.accent,
+      backgroundColor: THEME.panel,
       paddingLeft: 1,
       paddingRight: 1,
     });
     this.place();
     this.input = new InputRenderable(renderer, {
+      textColor: THEME.text,
+      focusedTextColor: THEME.text,
+      placeholderColor: THEME.muted,
       width: width - 4,
-      backgroundColor: "#2a2d2a",
-      focusedBackgroundColor: "#2a2d2a",
+      backgroundColor: THEME.input,
+      focusedBackgroundColor: THEME.input,
     });
     this.node.add(this.input);
     this.input.focus();

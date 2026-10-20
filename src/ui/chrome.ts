@@ -10,18 +10,8 @@ import { prefix, step, type Menu, type Spec, width } from "../core/menu.ts";
 import { displayWidth, pad } from "../core/unicode.ts";
 import { chunk } from "./styled.ts";
 
-export const THEME = {
-  bar: "#242624",
-  panel: "#1f211f",
-  active: "#34402f",
-  border: "#5c615c",
-  text: "#e8e6df",
-  // Key hints sit a step below the label they belong to, so the title reads first.
-  hint: "#b3b7b1",
-  muted: "#8a8f8a",
-  badge: "#6f9e68",
-  warn: "#e9d28a",
-} as const;
+import { THEME } from "../core/theme.ts";
+export { THEME } from "../core/theme.ts";
 
 export class MenuBar {
   readonly node: BoxRenderable;

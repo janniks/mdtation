@@ -132,3 +132,9 @@ Append-only detours / surprises that cost more than one attempt.
   - Earlier fixes (#24 clamp pushes, #25 row-granular `fit`) left this line-space clamp alone.
   - Class to watch: a line count compared with, or stored into, a row count.
   - Repro: `createTestRenderer` at a size where the whole page fits in rows but has fewer lines than rows; count blank rows above the status bar.
+
+- 2026-10-20 — OptMem notes are capped at 280 UTF-8 bytes.
+  - Keep individual notes short; a 281-byte note is rejected rather than truncated.
+- 2026-10-20 — In this sandbox, Node24 default test isolation reported only 35 file-level successes.
+  - `node --import tsx --test --test-isolation=none test/*.test.ts` exercised 297 actual tests, including PTY flows, with zero skips.
+  - Check the assertion count, not just a green exit code.
