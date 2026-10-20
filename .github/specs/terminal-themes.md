@@ -14,5 +14,5 @@
 - [x] Readable root, chrome, inputs, help and palettes.
 - [x] Existing config and environment override.
 - [x] Matched real recordings and posters from current main source.
-- [ ] Full suite, focused theme assertions, typecheck and formatting.
-- [ ] Commit source and website captures separately.
+- [x] Full suite: 297 tests, zero skips; focused theme assertions, typecheck and formatting.
+- [x] Commit source and website captures separately.
