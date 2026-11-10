@@ -173,6 +173,8 @@ export class TuiShell {
       flexGrow: 1,
       flexShrink: 1,
       selectable: true,
+      selectionBg: THEME.active,
+      selectionFg: THEME.text,
       wrapMode: "none",
       onMouseScroll: (e) => this.wheel(e),
       onMouseDown: (e) => this.click(e),

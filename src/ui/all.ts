@@ -39,6 +39,8 @@ export class All implements Overlay {
       width: width - 4,
       height: this.rows,
       selectable: true,
+      selectionBg: THEME.active,
+      selectionFg: THEME.text,
       wrapMode: "none",
       onMouseScroll: (e) => this.scroll(e.scroll?.direction === "down" ? 1 : -1),
     });
