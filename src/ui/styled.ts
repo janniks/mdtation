@@ -20,6 +20,6 @@ function style(s: Span): TextChunk {
   return c;
 }
 
-export function styled(text: string): StyledText {
-  return new StyledText(spans(text).map(style));
+export function styled(text: string, palette?: Parameters<typeof spans>[1]): StyledText {
+  return new StyledText(spans(text, palette).map(style));
 }

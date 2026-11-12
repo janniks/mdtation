@@ -30,10 +30,17 @@ Spec: `.github/specs/stable.md`.
 - [x] CLI `add`, `edit`, `list`, `read`, `watch` and the TUI (open, both reloads, own edits) rebase.
 - [ ] Not built: a gutter mark for lost comments, a `~` for reworded lines, a palette verb to re-anchor.
 
+## Phase 5: show what changed
+
+- [x] Lines that no old line still reads, and new or edited comments from elsewhere, sit on a slab that eases in, stays and fades (200, 500, 1300 ms).
+- [x] `View > Show changes` (`viewGlow`), on by default; needs color.
+- [x] Only the body is repainted per frame (50 ms); the status badge and the viewport are not touched.
+
 ## Log
 
 | date | phase | commit | note |
 |---|---|---|---|
 | 2026-11-12 | 1 | 63e1bfd | defaults taken for open questions 1-3: accept empty rows above, empty rows at the end, kept until scrolled out |
 | 2026-11-12 | 2, 3 | ee9aa44 | one commit: both touch `reloadDoc` and `draw`; `join` left out until phase 4 needs it |
-| 2026-11-12 | 4 | (this) | rebase at load instead of a resolver per call site: no call site changed, and a live session chains save by save |
+| 2026-11-12 | 4 | a00becb | rebase at load instead of a resolver per call site: no call site changed, and a live session chains save by save |
+| 2026-11-12 | 5 | (this) | the fade mixes the slab color in the palette per frame, so the renderer stays pure |

@@ -391,3 +391,15 @@ test("a negative skip shows blank rows above the first line", () => {
   assert.deepEqual(out.slice(0, 2), ["", ""]);
   assert.match(out[2]!, /a/);
 });
+
+test("fresh lines sit on the change slab, the cursor line keeps its own", () => {
+  const doc = parseDocument("a\nb\nc");
+  const opts = { color: true, highlight: true, fresh: new Set([0, 1]) };
+  const out = render(doc, createViewport(0, 0, 10, 3), opts);
+  assert.ok(out[0]!.includes(SGR.bgLine) && !out[0]!.includes(SGR.bgNew));
+  assert.ok(out[1]!.includes(SGR.bgNew));
+  assert.ok(!out[2]!.includes(SGR.bgNew));
+  assert.ok(
+    !render(doc, createViewport(0, 0, 10, 3), { fresh: new Set([1]) })[1]!.includes("\x1b"),
+  );
+});

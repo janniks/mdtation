@@ -8,7 +8,7 @@
  * The body is a single `TextRenderable` with `wrapMode: "none"`: the frame is
  * pre-wrapped by `render()` and must never be re-wrapped by OpenTUI.
  */
-import { THEME } from "../core/theme.ts";
+import { THEME, mix } from "../core/theme.ts";
 import { createCliRenderer, TextRenderable } from "@opentui/core";
 import type { CliRenderer, KeyEvent, MouseEvent, Selection } from "@opentui/core";
 import { spawnSync } from "node:child_process";
@@ -16,7 +16,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
-import { strip } from "../core/sgr.ts";
+import { SGR, strip } from "../core/sgr.ts";
 import { styled } from "./styled.ts";
 import type { Overlay } from "./overlay.ts";
 import { Crumb, Dropdown, MenuBar, StatusBar } from "./chrome.ts";
@@ -81,6 +81,9 @@ import {
 const FOOTER = 1;
 /** Window for the second quit on unsaved changes (Claude Code uses the same 2 s). */
 const AGAIN = 2000;
+/** A change on disk glows: these ms to come up, to stay, and to fade, redrawn every `FRAME`. */
+const GLOW = [200, 500, 1300] as const;
+const FRAME = 50;
 /** Window for a double click, macOS's default. */
 const DOUBLE = 500;
 
@@ -145,6 +148,7 @@ export class TuiShell {
       viewCrumb: true,
       viewBar: true,
       viewFlow: false,
+      viewGlow: true,
       viewIndent: false,
       viewArchive: false,
       viewSelect: true,
@@ -240,6 +244,9 @@ export class TuiShell {
   private seg = 0;
   /** Screen row the caret was drawn on; unset after a jump, so the next draw fits strictly. */
   private row?: number;
+  /** What just changed on disk (lines, comment ids) and when; it glows, then fades. */
+  private glow?: { lines: ReadonlySet<number>; ids: ReadonlySet<string>; at: number };
+  private pulse?: ReturnType<typeof setTimeout>;
   /** Comment id per rendered inline note row, keyed by line; refreshed by `lay()`. */
   private ids = new Map<number, string[]>();
   /** Where and when the body was last clicked, for `again()`. */
@@ -476,6 +483,7 @@ export class TuiShell {
     }
     this.doc = parseDocument(text);
     this.store.rebase(this.doc);
+    this.glow = undefined;
     this.dirty = true;
     this.draw(undefined, true);
   }
@@ -546,6 +554,10 @@ export class TuiShell {
     const diff = changes(this.store, fresh).filter((x) => x.what !== "new" || !x.c.archivedAt);
     // Adopt disk every time: a CLI clear, prune or mark shows up as no diff, yet must not be written back.
     this.store = fresh.rebase(this.doc);
+    const ids = diff.filter((x) => x.what === "new" || x.what === "edit").map((x) => x.c.id);
+    if (ids.length) {
+      this.glow = { lines: this.glow?.lines ?? new Set(), ids: new Set(ids), at: Date.now() };
+    }
     if (diff.length === 0) {
       this.draw(undefined, true);
       return;
@@ -583,7 +595,15 @@ export class TuiShell {
     this.stale = false;
     this.tap.at = 0;
     const next = parseDocument(text);
-    const line = track(this.doc.lines, next.lines)[this.view.cursor]?.to ?? 0;
+    const map = track(this.doc.lines, next.lines);
+    const line = map[this.view.cursor]?.to ?? 0;
+    // Text that no old line still reads is new or reworded.
+    const same = new Set(map.filter((s) => s.sure === 1).map((s) => s.to));
+    this.glow = {
+      lines: new Set(next.lines.flatMap((l, i) => (l.trim() && !same.has(i) ? [i] : []))),
+      ids: this.glow?.ids ?? new Set(),
+      at: Date.now(),
+    };
     this.doc = next;
     this.store.rebase(next);
     this.view = { ...this.fit(), cursor: line };
@@ -682,7 +702,14 @@ export class TuiShell {
       me: process.env.USER,
     })) {
       const l = lay(list, cols, laid);
-      inline.set(line, l.rows);
+      inline.set(
+        line,
+        l.rows.map((r, k) =>
+          this.on.viewGlow && this.glow?.ids.has(list[l.of[k]!]!.id)
+            ? r.replace(SGR.bgGray, SGR.bgNote)
+            : r,
+        ),
+      );
       this.ids.set(
         line,
         l.of.map((i) => list[i]!.id),
@@ -754,9 +781,7 @@ export class TuiShell {
     this.seg = c.seg;
     this.view = { ...this.view, cursor: c.line, offset: t.line, skip: t.seg };
     this.row = gap(t, c, rows);
-    this.text.content = styled(
-      renderFrame(this.doc, this.view, { ...opts, markers: marks, seg: this.seg }).join("\n"),
-    );
+    this.paint(opts);
     const held = this.note(opts);
     const badge = held && this.store.get(held);
     this.status.update(
@@ -780,6 +805,40 @@ export class TuiShell {
       this.count !== null || mode === "VIEW" || mode === "UNSAVED"
         ? null
         : setTimeout(() => this.draw(), AGAIN);
+  }
+
+  /** Paint the body. While a change glows, its slabs sit between their color and what lies under
+   * them, and the body alone is repainted every `FRAME` until the glow is gone. */
+  private paint(opts = this.lay()): void {
+    clearTimeout(this.pulse);
+    const ms = Date.now() - (this.glow?.at ?? 0);
+    if (!this.on.viewGlow || ms >= GLOW[0] + GLOW[1] + GLOW[2]) {
+      this.glow = undefined;
+    }
+    const x =
+      ms < GLOW[0] ? 1 - ms / GLOW[0] : Math.min(1, Math.max(0, ms - GLOW[0] - GLOW[1]) / GLOW[2]);
+    // Smoothstep, so the glow eases at both ends.
+    const t = x * x * (3 - 2 * x);
+    const bg = {
+      ...THEME.bg,
+      41: mix(THEME.bg[41]!, THEME.page, t),
+      42: mix(THEME.bg[42]!, THEME.bg[40]!, t),
+    };
+    this.text.content = styled(
+      renderFrame(this.doc, this.view, {
+        ...opts,
+        fresh: this.glow?.lines,
+        markers: markers(this.store, this.doc),
+        seg: this.seg,
+      }).join("\n"),
+      { ...THEME, bg },
+    );
+    if (this.glow) {
+      this.pulse = setTimeout(() => {
+        this.paint();
+        this.renderer.requestRender();
+      }, FRAME);
+    }
   }
 
   /** Open the comment box on the cursor row; `c` (existing comment) turns it into an edit,
@@ -1118,6 +1177,7 @@ export class TuiShell {
       case "viewCrumb":
       case "viewBar":
       case "viewFlow":
+      case "viewGlow":
       case "viewIndent":
       case "viewArchive":
       case "viewSelect":

@@ -37,6 +37,9 @@ const dark = {
     40: "#303330",
     // Cursor-line slab: a shade under the comment slab, so the two never blur together.
     100: "#252725",
+    // Fresh text and fresh notes: a soft green that fades back to the page and the comment slab.
+    41: "#27332a",
+    42: "#3b4a38",
   } as Record<number, string>,
 };
 
@@ -71,8 +74,23 @@ const light: typeof dark = {
     96: "#28736a",
     97: "#182216",
   },
-  bg: { 40: "#e5ebdf", 43: "#e9d28a", 100: "#edf0e8" },
+  bg: { 40: "#e5ebdf", 41: "#e3efd9", 42: "#cfe2c3", 43: "#e9d28a", 100: "#edf0e8" },
 };
+
+/** The hex color `t` of the way from `a` to `b` (0 = `a`, 1 = `b`). */
+export function mix(a: string, b: string, t: number): string {
+  const at = (s: string, i: number) => parseInt(s.slice(i, i + 2), 16);
+  return (
+    "#" +
+    [1, 3, 5]
+      .map((i) =>
+        Math.round(at(a, i) + (at(b, i) - at(a, i)) * t)
+          .toString(16)
+          .padStart(2, "0"),
+      )
+      .join("")
+  );
+}
 
 /** Unknown values keep the existing dark default. */
 export function theme(mode?: string): typeof dark {

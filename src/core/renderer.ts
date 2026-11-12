@@ -58,6 +58,8 @@ export interface RenderOptions {
   readonly indent?: boolean;
   /** Lay the cursor line's rows on a slab, for readers who lose the caret (needs `color`). */
   readonly highlight?: boolean;
+  /** Lines that just changed on disk; their rows sit on the fading `bgNew` slab (needs `color`). */
+  readonly fresh?: ReadonlySet<number>;
 }
 
 /** Width (in columns) of the gutter prepended to every rendered line. */
@@ -450,6 +452,7 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
     }
     // The cursor line's own rows sit on a slab; its inline notes keep theirs.
     const hot = opts.highlight === true && opts.color === true && i === vp.cursor;
+    const slab = hot ? SGR.bgLine : opts.color === true && opts.fresh?.has(i) ? SGR.bgNew : "";
     const row = tableRow(doc, i, opts);
     const number = blank.length
       ? paint(
@@ -472,7 +475,7 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
           : i === vp.cursor && ri === at
             ? caret(opts)
             : "  ";
-      push((ri === 0 ? number : blank) + g + lit(chunk, cols, hot));
+      push((ri === 0 ? number : blank) + g + lit(chunk, cols, slab));
     });
     extras.forEach((extra, k) => {
       push(blank + (i === vp.cursor && chunks.length + k === at ? caret(opts) : "  ") + extra);
@@ -481,15 +484,15 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
   return lines;
 }
 
-/** `row` on a slab spanning the pane, or untouched when `on` is false.
+/** `row` on the slab `on` spanning the pane, or untouched when `on` is empty.
  * Every reset inside re-opens the slab; the gutter is left out of it so the
  * caret and the gap before the text stay clear of the color. */
-function lit(row: string, cols: number, on: boolean): string {
+function lit(row: string, cols: number, on: string): string {
   if (!on) {
     return row;
   }
   const fill = " ".repeat(Math.max(0, cols - bare(row)));
-  return SGR.bgLine + row.replaceAll(SGR.reset, SGR.reset + SGR.bgLine) + fill + SGR.reset;
+  return on + row.replaceAll(SGR.reset, SGR.reset + on) + fill + SGR.reset;
 }
 
 /** Aligned table row for `line` (code blocks excluded), else null. */

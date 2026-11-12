@@ -22,6 +22,9 @@ export const SGR = {
   bgGray: "\x1b[40m",
   // The cursor-line slab: darker than `bgGray`, so a note on that line still reads on top of it.
   bgLine: "\x1b[100m",
+  // Slabs under text and notes that just changed on disk; the shell fades them out.
+  bgNew: "\x1b[41m",
+  bgNote: "\x1b[42m",
 } as const;
 
 /** `s` wrapped in `sgr` + reset, or untouched when `on` is false. */

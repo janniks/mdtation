@@ -97,6 +97,7 @@ export const COMMANDS = [
     keys: [],
     group: "Prose",
   },
+  { id: "viewGlow", title: "Show changes", category: "View", keys: [], group: "Prose" },
   { id: "viewMore", title: "More view settings…", category: "View", keys: [], group: " " },
   {
     id: "cursorDown",
@@ -222,6 +223,7 @@ export const HANDLERS: { readonly [K in CommandId]: CmdHandler } = {
   viewCheck: () => ({}),
   viewQuote: () => ({}),
   viewFlow: () => ({}),
+  viewGlow: () => ({}),
   viewIndent: () => ({}),
   viewCrumb: () => ({}),
   viewMore: () => ({}),
