@@ -206,3 +206,57 @@ describe("line anchors follow their text", () => {
     assert.deepEqual(anchorFor(d, 1), { kind: "line", n: 1 });
   });
 });
+
+describe("rebase", () => {
+  const before = parseDocument("# Title\n\nalpha line here\nbeta line here\n\n## Sub\n\ngamma");
+  const note = (id: string, line: number, re?: string): Comment => ({
+    id,
+    anchor: anchorFor(before, line),
+    text: id,
+    createdAt: 1,
+    ...(re ? { re } : {}),
+  });
+  const made = () => {
+    const s = CommentStore.fromJSON([note("a", 2), note("b", 3), note("h", 5), note("r", 7, "a")]);
+    return s.rebase(before);
+  };
+  const line = (s: CommentStore, id: string, doc: ReturnType<typeof parseDocument>) =>
+    s.resolve(s.get(id)!.anchor, doc)?.startLine;
+
+  test("comments follow reworded lines and a renamed heading through a rewrite", () => {
+    const after = parseDocument(
+      "# Title\n\nnew intro\n\nalpha line here, reworded\nbeta line here\n\n## Sub section\n\ngamma",
+    );
+    const s = made().rebase(after);
+    assert.equal(line(s, "a", after), 4);
+    assert.equal(line(s, "b", after), 5);
+    assert.equal(line(s, "h", after), 7);
+    assert.equal(s.get("a")!.lost, undefined);
+  });
+
+  test("a reply rests where its parent does", () => {
+    const after = parseDocument("x\n\n# Title\n\nalpha line here\nbeta line here");
+    const s = made().rebase(after);
+    assert.equal(line(s, "r", after), 4);
+  });
+
+  test("a comment on a deleted line stays on its neighbour and is marked lost", () => {
+    const after = parseDocument("# Title\n\nalpha line here\n\n## Sub\n\ngamma");
+    const s = made().rebase(after);
+    assert.equal(line(s, "b", after), 2);
+    assert.equal(s.get("b")!.lost, true);
+    assert.match(copyFormat(s.get("b")!, after), /^Line 3\?/);
+  });
+
+  test("the base text rides along in the json, so a later session can follow it", () => {
+    const after = parseDocument("intro\n\n# Title\n\nalpha line here, reworded");
+    const s = CommentStore.fromJSON(JSON.parse(JSON.stringify(made().toJSON()))).rebase(after);
+    assert.equal(line(s, "a", after), 4);
+  });
+
+  test("a store without a base resolves as before and gains one", () => {
+    const s = CommentStore.fromJSON([note("a", 2)]).rebase(before);
+    assert.equal(line(s, "a", before), 2);
+    assert.equal(s.toJSON().base, before.text);
+  });
+});

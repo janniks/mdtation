@@ -1,6 +1,6 @@
 # Stable position
 
-Spec: `.github/specs/stable-DRAFT.md`.
+Spec: `.github/specs/stable.md`.
 
 ## Phase 1: hold the cursor row
 
@@ -24,12 +24,16 @@ Spec: `.github/specs/stable-DRAFT.md`.
 
 ## Phase 4: comments through `track`
 
-- [ ] Never null, replies follow the parent, drift and lost marks.
-- [ ] Stored anchors: `base` or fingerprints (open question 4).
+- [x] The store keeps `base`, the text its anchors point into.
+- [x] `rebase(doc)` moves every anchor into the current text, in memory; only a write that happens anyway saves it.
+- [x] Never null with a base; a reply rests on its parent; a comment whose line went away is `lost` and prints `Line N?`.
+- [x] CLI `add`, `edit`, `list`, `read`, `watch` and the TUI (open, both reloads, own edits) rebase.
+- [ ] Not built: a gutter mark for lost comments, a `~` for reworded lines, a palette verb to re-anchor.
 
 ## Log
 
 | date | phase | commit | note |
 |---|---|---|---|
 | 2026-11-12 | 1 | 63e1bfd | defaults taken for open questions 1-3: accept empty rows above, empty rows at the end, kept until scrolled out |
-| 2026-11-12 | 2, 3 | (next) | one commit: both touch `reloadDoc` and `draw`; `join` left out until phase 4 needs it |
+| 2026-11-12 | 2, 3 | ee9aa44 | one commit: both touch `reloadDoc` and `draw`; `join` left out until phase 4 needs it |
+| 2026-11-12 | 4 | (this) | rebase at load instead of a resolver per call site: no call site changed, and a live session chains save by save |

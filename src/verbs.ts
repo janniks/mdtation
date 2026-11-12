@@ -109,14 +109,14 @@ export async function run(
   }
   const doc = parseDocument(await text(file));
   if (verb === "add" || verb === "edit") {
-    const store = await load(file);
+    const store = (await load(file)).rebase(doc);
     const id = verb === "add" ? add(store, doc, rest, a, who) : edit(store, rest);
     await save(file, store);
     append(file, { event: "comment", by: who, id, what: verb === "add" ? "new" : "edit" });
     return { err: `${verb === "add" ? "added" : "edited"} ${id}` };
   }
   if (verb === "list" || verb === "read") {
-    const store = await load(file);
+    const store = (await load(file)).rebase(doc);
     const list = pick(store, a.archived === true, a.since, who);
     if (a.archive) {
       await archive(
@@ -222,6 +222,7 @@ export async function watching(
     const fresh = await events(file, at);
     const store = fresh.some((e) => e.event === "comment") ? await load(file) : undefined;
     const doc = store ? parseDocument(await readFile(file, "utf-8").catch(() => "")) : undefined;
+    if (doc) store!.rebase(doc);
     for (const e of fresh) {
       at = e.at;
       if (e.by === who) continue;

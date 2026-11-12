@@ -101,52 +101,12 @@ Detail, scores and code: `.github/specs/stable/metric.md`, `track.ts`.
 - Size: 118 lines, no dependency.
 - Limits:
   - The corpus and the mapper have one author; the 0.6 threshold was tuned on the same pairs.
-  - Short headings can pair wrongly (`## Open questions` with `## Design options`).
-  - A section moved and reworded in one save loses its heading.
+  - Short headings can pair wrongly (`## Decided
 
-### Comments between sessions
-
-- Live, `track` has both texts. Between sessions it needs the old text.
-- Option S: the store keeps `base`, the text the anchor numbers point into.
-  - Written only on a store write that happens anyway. A reload never writes.
-  - Old stores resolve as today; the first write adds `base`. No migration code.
-  - Cost: the store holds one copy of the document.
-- Option F: no `base`. Fingerprints between sessions (the 81% / 41% row).
-- Recommendation: S, as its own phase, after the viewport and live tracking prove out.
-
-## Phases
-
-1. Hold. The viewport part, with today's line finder. Fixes most measured jumps.
-2. Track, live. `src/core/track.ts`; `reloadDoc` maps the cursor through it. In memory only.
-3. Lose-the-place fixes.
-   - Half-written file: ignore an empty or much shorter read until the next event or a longer wait.
-   - Flow toggle: the cursor stays in its paragraph.
-   - Reload during the comment box: held, like any passive change (falls out of phase 1; verify).
-4. Comments through `track`. Never null, replies follow the parent, drift and lost marks (`~`, `?`).
-   Then option S or F for stored anchors.
-
-Row and line mix-ups found on the way (the `PAPERCUTS` 2026-10-19 class):
-
-- `clampBounds` clamps `offset` in lines for a window in rows (`src/core/viewport.ts:72-76`). Passive sites stop calling it (phase 1).
-- `withCursorVisible` shifts in lines (`viewport.ts:87-95`); the count move stops using it (phase 1).
-- Page keys step `height - 1` lines, not rows (`viewport.ts:109-117`). Separate fix.
-- `renderer.ts:428`, `:432`. Harmless today; note only.
-
-## Defaults taken (change if wrong)
-
-- Own comment that lands below the fold: the page stays; no shift.
-- Cursor line deleted: the mapped nearest line takes the same row.
-- `keep` is an explicit flag at the passive draw sites, not inferred.
-- Menu bar or crumb toggle moves the body one row: left as is.
-- Comment jumps keep the re-anchor of today.
-- No animation, no changed-line marks, no filler glyph, no stored slack counter.
-
-## Open questions
-
-1. Empty rows above line 1 (content above the cursor removed): accept them, or let the cursor rise in that one case?
-2. Taller window at the end of the page: empty rows at the bottom (like vim), or refill as today?
-3. Empty space lifetime: stays until scrolled out or a jump key. Or collapse on the first cursor move?
-4. Stored anchors: option S (`base` in the store) or option F (fingerprints)?
+1. Empty rows above line 1: accepted.
+2. Taller window at the end of the page: empty rows at the bottom.
+3. Empty space stays until scrolled out or a jump key.
+4. Stored anchors: option S. The store keeps `base`; `rebase(doc)` re-anchors every comment through `track` at load and on reload, in memory.
 
 ## Tests
 

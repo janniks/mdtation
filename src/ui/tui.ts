@@ -130,7 +130,7 @@ export class TuiShell {
     renderer.setBackgroundColor(THEME.page);
     this.doc = doc;
     this.file = file;
-    this.store = store;
+    this.store = store.rebase(doc);
     const cfg = loadConfig(process.cwd()).view;
     this.on = {
       viewColor: cfg.color,
@@ -475,6 +475,7 @@ export class TuiShell {
       return;
     }
     this.doc = parseDocument(text);
+    this.store.rebase(this.doc);
     this.dirty = true;
     this.draw(undefined, true);
   }
@@ -544,7 +545,7 @@ export class TuiShell {
     const fresh = await load(this.file);
     const diff = changes(this.store, fresh).filter((x) => x.what !== "new" || !x.c.archivedAt);
     // Adopt disk every time: a CLI clear, prune or mark shows up as no diff, yet must not be written back.
-    this.store = fresh;
+    this.store = fresh.rebase(this.doc);
     if (diff.length === 0) {
       this.draw(undefined, true);
       return;
@@ -584,6 +585,7 @@ export class TuiShell {
     const next = parseDocument(text);
     const line = track(this.doc.lines, next.lines)[this.view.cursor]?.to ?? 0;
     this.doc = next;
+    this.store.rebase(next);
     this.view = { ...this.fit(), cursor: line };
     this.draw("RELOADED", true);
   }
@@ -811,7 +813,11 @@ export class TuiShell {
           title: "Reply",
           quote: `${parent.author ?? "you"}: ${parent.text.split("\n")[0]!}`,
           submit: (text) => {
-            const n = { ...create(this.doc, this.view.cursor, text), re: parent.id };
+            const n = {
+              ...create(this.doc, this.view.cursor, text),
+              anchor: parent.anchor,
+              re: parent.id,
+            };
             this.store.add(n);
             this.persist("new", n.id);
             this.close();

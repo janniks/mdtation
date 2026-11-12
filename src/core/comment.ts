@@ -7,7 +7,9 @@
  *     line anchors map 1:1)
  *   - Export.copyFormat(comment, doc) -> the agent-consumable markdown block
  */
-import { findHeading } from "./document.ts";
+import { findHeading, parseDocument } from "./document.ts";
+import { anchorFor } from "./comments.ts";
+import { track } from "./track.ts";
 import type { Document } from "./document.ts";
 import { crumb } from "./crumb.ts";
 
@@ -36,6 +38,8 @@ export interface Comment {
   readonly agent?: true;
   /** Parent comment id; absent = top of a thread. */
   readonly re?: string;
+  /** Its line went away in a rewrite; it now rests on the nearest line left. */
+  readonly lost?: true;
   /** Set when archived: the comment stays on disk but leaves markers, nav, copy and the default report. */
   readonly archivedAt?: number;
 }
@@ -51,11 +55,14 @@ export interface Mark {
 export interface File {
   readonly comments: readonly Comment[];
   readonly marks: readonly Mark[];
+  /** The document text the anchors point into; `rebase` follows them from it into a newer text. */
+  readonly base?: string;
 }
 
 export class CommentStore {
   private readonly comments = new Map<string, Comment>();
   marks: readonly Mark[] = [];
+  private base?: string;
 
   add(c: Comment): void {
     this.comments.set(c.id, c);
@@ -104,6 +111,30 @@ export class CommentStore {
   resolve(anchor: Anchor, doc: Document): Location | null {
     return resolveAnchor(anchor, doc);
   }
+  /** Move every anchor from the text it was made on into `doc`, in memory; the next write keeps it.
+   * A line is followed by content (`track`), a reply takes its parent's place. */
+  rebase(doc: Document): this {
+    if (this.base === doc.text) return this;
+    const old = this.base === undefined ? doc : parseDocument(this.base);
+    const map = this.base === undefined ? undefined : track(old.lines, doc.lines);
+    for (const c of this.all()) {
+      const n = resolveAnchor(c.anchor, old)?.startLine;
+      const spot = n === undefined ? undefined : (map?.[n] ?? { to: n, sure: 1 });
+      if (!spot || !doc.lines.length) continue;
+      const { lost: _l, ...rest } = c;
+      this.comments.set(c.id, {
+        ...rest,
+        anchor: anchorFor(doc, spot.to),
+        ...(c.lost || spot.sure === 0 ? { lost: true as const } : {}),
+      });
+    }
+    for (const c of this.all()) {
+      const top = c.re && this.comments.get(c.re);
+      if (top) this.comments.set(c.id, { ...c, anchor: top.anchor });
+    }
+    this.base = doc.text;
+    return this;
+  }
   /** Add a checkpoint. */
   mark(now = Date.now(), by?: string, name?: string): void {
     const m: Mark = { at: now, ...(by ? { by } : {}), ...(name ? { name } : {}) };
@@ -114,13 +145,18 @@ export class CommentStore {
     return this.marks.findLast((m) => (name ? m.name === name : m.by === by));
   }
   toJSON(): File {
-    return { comments: this.all(), marks: this.marks };
+    return {
+      comments: this.all(),
+      marks: this.marks,
+      ...(this.base === undefined ? {} : { base: this.base }),
+    };
   }
   static fromJSON(data: File | readonly Comment[]): CommentStore {
     const store = new CommentStore();
-    const file = Array.isArray(data) ? { comments: data, marks: [] } : (data as File);
+    const file: File = Array.isArray(data) ? { comments: data, marks: [] } : (data as File);
     for (const c of file.comments ?? []) store.add(c);
     store.marks = [...(file.marks ?? [])];
+    store.base = file.base;
     return store;
   }
 }
@@ -212,7 +248,7 @@ export function copyFormat(
 ): string {
   const loc = resolveAnchor(comment.anchor, doc);
   const note = [quote(comment), ...replies.map((r) => indent(quote(r)))].join("\n");
-  let head = `Line ${loc ? loc.startLine + 1 : "?"}`;
+  let head = `Line ${loc ? loc.startLine + 1 : "?"}${comment.lost && loc ? "?" : ""}`;
   let src = comment.quote ?? "";
   if (mode === "detailed" && loc) {
     const path = crumb(doc, loc.startLine)

@@ -138,3 +138,7 @@ Append-only detours / surprises that cost more than one attempt.
 - 2026-10-20 — In this sandbox, Node24 default test isolation reported only 35 file-level successes.
   - `node --import tsx --test --test-isolation=none test/*.test.ts` exercised 297 actual tests, including PTY flows, with zero skips.
   - Check the assertion count, not just a green exit code.
+
+- 2026-11-12: `research/` is git-ignored, so `git add research/...` aborts the whole add and the commit never happens.
+  - Evidence that must be committed goes under `.github/specs/<feature>/`.
+  - `createTestRenderer` scripts do not exit by themselves: end them with `process.exit(0)` and run under `timeout`.

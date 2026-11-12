@@ -241,7 +241,7 @@ Unchecked entries are swept on occasional cleanup passes.
   - alternative: a confirm modal, or a diff view.
   - why: the menu entry is the explicit "take the disk" path; a second prompt on top of an explicit choice felt like noise.
 
-## 2026-11-12 — stable-DRAFT.md
+## 2026-11-12 — stable.md
 
 - [ ] An empty read of the file is ignored on reload; the page keeps the old text.
   - alternative: wait longer than 150 ms and read again; or show the empty page.
@@ -255,3 +255,9 @@ Unchecked entries are swept on occasional cleanup passes.
 - [ ] `track`'s 0.6 likeness threshold was tuned on the same 56 pairs it is scored on.
   - alternative: a held-out corpus before landing.
   - why: the failure is soft (a `sure` below 1 on a nearby line), and the cursor path shows no mark yet.
+- [ ] The comment store keeps a full copy of the document text (`base`) next to the comments.
+  - alternative: per-comment fingerprints (no copy, 41% on deleted lines against 97%); or a history of versions.
+  - why: one copy is the least state that lets `track` run between sessions; each rebase replaces it, so no history is needed.
+- [ ] A `lost` comment stays marked for good; only `Line N?` in list, copy and report shows it.
+  - alternative: a gutter mark in the TUI, a verb to re-anchor on the cursor line, clearing the mark on edit.
+  - why: the comment is still shown on a real line near its old place; marks can follow once the mapping proves out in use.

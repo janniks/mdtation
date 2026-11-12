@@ -1,6 +1,6 @@
 # Stable anchors
 
-> The recommendation here (fingerprints first) is superseded by `stable-DRAFT.md`, which measured it against a whole-text matcher.
+> The recommendation here (fingerprints first) is superseded by `stable.md`, which measured it against a whole-text matcher.
 
 ## Why
 
