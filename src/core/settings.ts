@@ -33,6 +33,13 @@ export const SETTINGS = [
   { id: "line", title: "Highlight line", category: "View", values: ["off", "on"] },
   { id: "corners", title: "Popup corners", category: "View", values: ["pointy", "round"] },
   { id: "status", title: "Badge corner", category: "View", values: ["bottom", "top"] },
+  // New comments outside the window: a notice that stays until each is scrolled to, or goes by itself.
+  {
+    id: "toast",
+    title: "New comment notice",
+    category: "Comments",
+    values: ["stay", "fade", "off"],
+  },
 ] as const;
 
 const DAY = 86_400_000;
@@ -60,6 +67,7 @@ export const DEFAULTS: Values = {
   line: "on",
   corners: "pointy",
   status: "bottom",
+  toast: "stay",
 };
 
 /** Move setting `id` by `dir` steps through its values (wrapping). Unknown ids are ignored. */

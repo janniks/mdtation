@@ -41,6 +41,8 @@ import {
 import type { Comment } from "../core/comment.ts";
 import { create, markers } from "../core/comments.ts";
 import { track } from "../core/track.ts";
+import { away, label } from "../core/notice.ts";
+import { Toast } from "./toast.ts";
 import { lay, notes, type Align, type Layout, type Time } from "../core/inline.ts";
 import { append, atomic, home, load, path as storePath, save } from "../core/store.ts";
 import type { Change } from "../core/comment.ts";
@@ -84,6 +86,8 @@ const AGAIN = 2000;
 /** A change on disk glows: these ms to come up, to stay, and to fade, redrawn every `FRAME`. */
 const GLOW = [200, 500, 1300] as const;
 const FRAME = 50;
+/** How long the new-comment notice shows when it is set to go by itself. */
+const NOTICE = 4000;
 /** Window for a double click, macOS's default. */
 const DOUBLE = 500;
 
@@ -235,6 +239,12 @@ export class TuiShell {
         this.comment(undefined, text);
       }
     });
+    this.toasts = {
+      above: new Toast(renderer, () => this.seek(-1)),
+      below: new Toast(renderer, () => this.seek(1)),
+    };
+    renderer.root.add(this.toasts.above.node);
+    renderer.root.add(this.toasts.below.node);
     renderer.keyInput.on("keypress", this.onKey);
     renderer.on("resize", () => this.resize());
     this.draw();
@@ -247,6 +257,10 @@ export class TuiShell {
   /** What just changed on disk (lines, comment ids) and when; it glows, then fades. */
   private glow?: { lines: ReadonlySet<number>; ids: ReadonlySet<string>; at: number };
   private pulse?: ReturnType<typeof setTimeout>;
+  /** Comments from elsewhere the reader has not had on screen yet; the toasts count them. */
+  private unseen = new Set<string>();
+  private toasts!: { above: Toast; below: Toast };
+  private expire?: ReturnType<typeof setTimeout>;
   /** Comment id per rendered inline note row, keyed by line; refreshed by `lay()`. */
   private ids = new Map<number, string[]>();
   /** Where and when the body was last clicked, for `again()`. */
@@ -555,6 +569,16 @@ export class TuiShell {
     // Adopt disk every time: a CLI clear, prune or mark shows up as no diff, yet must not be written back.
     this.store = fresh.rebase(this.doc);
     const ids = diff.filter((x) => x.what === "new" || x.what === "edit").map((x) => x.c.id);
+    if (this.prefs.toast !== "off") {
+      for (const x of diff) if (x.what === "new") this.unseen.add(x.c.id);
+      clearTimeout(this.expire);
+      if (this.prefs.toast === "fade") {
+        this.expire = setTimeout(() => {
+          this.unseen.clear();
+          this.draw();
+        }, NOTICE);
+      }
+    }
     if (ids.length) {
       this.glow = { lines: this.glow?.lines ?? new Set(), ids: new Set(ids), at: Date.now() };
     }
@@ -781,6 +805,7 @@ export class TuiShell {
     this.seg = c.seg;
     this.view = { ...this.view, cursor: c.line, offset: t.line, skip: t.seg };
     this.row = gap(t, c, rows);
+    this.notice(t.line, place(t, this.view.height - 1, total, rows)?.line ?? total - 1);
     this.paint(opts);
     const held = this.note(opts);
     const badge = held && this.store.get(held);
@@ -805,6 +830,39 @@ export class TuiShell {
       this.count !== null || mode === "VIEW" || mode === "UNSAVED"
         ? null
         : setTimeout(() => this.draw(), AGAIN);
+  }
+
+  /** Line of an unseen comment, or undefined once it is archived or gone. */
+  private spot(id: string): number | undefined {
+    const c = this.store.get(id);
+    return c && !c.archivedAt ? this.store.resolve(c.anchor, this.doc)?.startLine : undefined;
+  }
+
+  /** Count new comments outside lines `top`..`end` into the two toasts; one inside counts as seen. */
+  private notice(top: number, end: number): void {
+    if (this.prefs.toast === "off") this.unseen.clear();
+    for (const id of this.unseen) {
+      const n = this.spot(id);
+      if (n === undefined || (n >= top && n <= end)) this.unseen.delete(id);
+    }
+    const n = away(this.waiting(), top, end);
+    this.toasts.above.set(label(n.above, "above"), this.text.y);
+    this.toasts.below.set(label(n.below, "below"), this.text.y + this.view.height - 1);
+  }
+
+  private waiting(): number[] {
+    return [...this.unseen].map((id) => this.spot(id) ?? -1);
+  }
+
+  /** Jump to the nearest unseen comment above (`dir` -1) or below the cursor. */
+  private seek(dir: 1 | -1): void {
+    const at = this.waiting()
+      .filter((n) => (n - this.view.cursor) * dir > 0)
+      .toSorted((a, b) => (a - b) * dir)[0];
+    if (at !== undefined) {
+      this.seg = 0;
+      this.setCursor(at);
+    }
   }
 
   /** Paint the body. While a change glows, its slabs sit between their color and what lies under

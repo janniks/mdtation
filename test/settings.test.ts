@@ -38,6 +38,7 @@ test("every setting has its category and composes one popup title", () => {
       "View > Highlight line",
       "View > Popup corners",
       "View > Badge corner",
+      "Comments > New comment notice",
     ],
   );
   for (const [at, s] of SETTINGS.entries()) {
