@@ -24,6 +24,8 @@ export interface Command {
   readonly group?: string;
   /** `false` keeps the command out of the menu bar (still in help and the palette). */
   readonly menu?: boolean;
+  /** Title positions a fuzzy query matched; the palette prints them bold. */
+  readonly marks?: readonly number[];
 }
 
 /** The canonical command table. First-match-wins on key dispatch. Declaration
@@ -119,6 +121,7 @@ export const COMMANDS = [
   { id: "bottom", title: "Bottom", category: "Navigate", keys: ["shift+g"], menu: false },
   // Digit counts for vertical movement are owned by the shell.
   { id: "goto", title: "Go to line", category: "Cursor", keys: [":"], menu: false },
+  { id: "outline", title: "Go to section", category: "Cursor", keys: ["o"], menu: false },
   { id: "comment", title: "New comment", category: "Comments", keys: ["c"] },
   { id: "edit", title: "Edit comment", category: "Comments", keys: ["e"] },
   { id: "reply", title: "Reply", category: "Comments", keys: ["r"] },
@@ -204,6 +207,7 @@ export const HANDLERS: { readonly [K in CommandId]: CmdHandler } = {
   top: (vp, total) => ({ vp: jumpToLine(vp, 0, total) }),
   bottom: (vp, total) => ({ vp: jumpToLine(vp, Math.max(0, total - 1), total) }),
   goto: () => ({}),
+  outline: () => ({}),
   quit: () => ({ quit: true }),
   save: () => ({}),
   reload: () => ({}),

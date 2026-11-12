@@ -1,6 +1,14 @@
 /** `/` command palette: input on top, filtered items (default `COMMANDS`) below, ↵ runs the selected id.
  * With `stay`, the palette stays open and re-reads `items` after each run (settings mode). */
-import { BoxRenderable, InputRenderable, StyledText, TextRenderable, bg, dim } from "@opentui/core";
+import {
+  BoxRenderable,
+  InputRenderable,
+  StyledText,
+  TextRenderable,
+  bg,
+  bold,
+  dim,
+} from "@opentui/core";
 import type { CliRenderer, KeyEvent, MouseEvent, TextChunk } from "@opentui/core";
 import { COMMANDS } from "../core/commands.ts";
 import type { Command } from "../core/commands.ts";
@@ -22,6 +30,9 @@ export class Palette implements Overlay {
   private max: number;
   private readonly items: () => readonly Command[];
   private readonly stay: boolean;
+  private readonly rank?: (query: string) => Command[];
+  private readonly move?: (id: string) => void;
+  private readonly first: number;
 
   constructor(
     renderer: CliRenderer,
@@ -33,13 +44,24 @@ export class Palette implements Overlay {
       items?: () => readonly Command[];
       stay?: boolean;
       query?: string;
+      /** Replaces the default filter: the rows for a query, best first. */
+      rank?: (query: string) => Command[];
+      /** Told the row id each time typing or the arrows move the selection. */
+      move?: (id: string) => void;
+      /** Row selected while the query is empty. */
+      sel?: number;
+      /** Widest the popup may grow, in columns. */
+      width?: number;
     } = {},
   ) {
     this.renderer = renderer;
     this.items = opts.items ?? (() => COMMANDS);
     this.stay = opts.stay ?? false;
-    this.hits = filter(this.items(), opts.query ?? "");
-    this.inner = Math.min(48, Math.max(24, renderer.width - 4));
+    this.rank = opts.rank;
+    this.move = opts.move;
+    this.hits = this.find(opts.query ?? "");
+    this.sel = this.first = Math.min(opts.sel ?? 0, Math.max(0, this.hits.length - 1));
+    this.inner = Math.min(opts.width ?? 48, Math.max(24, renderer.width - 4));
     this.max = Math.max(1, Math.min(this.hits.length, renderer.height - 5));
     const height = this.max + 4 + (this.stay ? 1 : 0);
     this.node = new BoxRenderable(renderer, {
@@ -66,9 +88,10 @@ export class Palette implements Overlay {
       focusedBackgroundColor: THEME.panel,
     });
     this.input.on("input", () => {
-      this.hits = filter(this.items(), this.input.value);
-      this.sel = 0;
+      this.hits = this.find(this.input.value);
+      this.sel = this.input.value.trim() ? 0 : this.first;
       this.draw();
+      this.moved();
     });
     this.list = new TextRenderable(renderer, {
       fg: THEME.text,
@@ -99,15 +122,33 @@ export class Palette implements Overlay {
     this.draw();
   }
 
+  private find(query: string): Command[] {
+    return this.rank?.(query) ?? filter(this.items(), query);
+  }
+
+  private moved(): void {
+    const c = this.hits[this.sel];
+    if (c) this.move?.(c.id);
+  }
+
   private draw(): void {
     const from = Math.max(0, Math.min(this.sel - this.max + 1, this.hits.length - this.max));
     const out: TextChunk[] = [];
     this.hits.slice(from, from + this.max).forEach((c, i) => {
       // Settings rows carry their value, not a chord: show it verbatim, like the menu does.
       const h = this.stay ? `[${c.keys[0] ?? ""}]` : hint(c.keys[0]);
-      const text = `  ${c.title}${" ".repeat(Math.max(1, this.inner - c.title.length - h.length - 4))}${h}  `;
-      const row = from + i === this.sel ? bg(THEME.active)(chunk(text)) : chunk(text);
-      out.push(row, chunk("\n"));
+      const room = this.inner - h.length - 5;
+      const title = c.title.length > room ? `${c.title.slice(0, room - 1)}…` : c.title;
+      const pad = " ".repeat(this.inner - title.length - h.length - 4);
+      // Letters a fuzzy query matched are bold; a row without marks stays one chunk.
+      const row = c.marks?.length
+        ? [
+            chunk("  "),
+            ...title.split("").map((ch, k) => (c.marks!.includes(k) ? bold(chunk(ch)) : chunk(ch))),
+            chunk(`${pad}${h}  `),
+          ]
+        : [chunk(`  ${title}${pad}${h}  `)];
+      out.push(...(from + i === this.sel ? row.map(bg(THEME.active)) : row), chunk("\n"));
     });
     this.list.content = new StyledText(
       out.length ? out.slice(0, -1) : [dim(chunk("  no matches"))],
@@ -129,7 +170,7 @@ export class Palette implements Overlay {
     if (!c) return;
     if (this.stay) {
       this.run(c.id, dir);
-      this.hits = filter(this.items(), this.input.value);
+      this.hits = this.find(this.input.value);
       this.draw();
       return;
     }
@@ -150,6 +191,7 @@ export class Palette implements Overlay {
       const n = this.hits.length;
       if (n) this.sel = (this.sel + (e.name === "down" ? 1 : n - 1)) % n;
       this.draw();
+      this.moved();
     } else if (
       e.name === "return" ||
       e.name === "enter" ||

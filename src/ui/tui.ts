@@ -57,6 +57,7 @@ import { box, toggle } from "../core/edit.ts";
 import { align, cell } from "../core/table.ts";
 import { displayWidth } from "../core/unicode.ts";
 import { crumb } from "../core/crumb.ts";
+import { near, rows as outline } from "../core/outline.ts";
 import { loadConfig } from "../core/config.ts";
 import { hint, menus, specs, step } from "../core/menu.ts";
 import { flow, gutter, hidden, render as renderFrame, span, statusBar } from "../core/renderer.ts";
@@ -183,6 +184,7 @@ export class TuiShell {
       toggle: (i) => this.outside() || (this.cur === i ? this.close() : this.menuOpen(i)),
     });
     this.crumb = new Crumb(renderer);
+    this.crumb.node.onMouseUp = () => this.run("outline");
     this.text = new TextRenderable(renderer, {
       id: "body",
       fg: THEME.text,
@@ -306,6 +308,17 @@ export class TuiShell {
   /** Move the cursor to `line` (clamped, scrolled on-screen) and redraw. */
   setCursor(line: number): void {
     this.view = jumpToLine(this.view, line, this.doc.lines.length);
+    this.row = undefined;
+    this.draw();
+  }
+
+  /** Jump to the heading on `line`: to the top of the window (under the margin), or onto screen
+   * row `row` when the `land` setting says `cursor`. The page fills as after any jump. */
+  private land(line: number, row = 0): void {
+    const at = this.prefs.land === "cursor" ? row : 0;
+    const t = hold(this.view, { line, seg: 0 }, at, this.doc.lines.length, this.spans(this.lay()));
+    this.view = { ...this.view, cursor: line, offset: t.line, skip: Math.max(0, t.seg) };
+    this.seg = 0;
     this.row = undefined;
     this.draw();
   }
@@ -1139,6 +1152,44 @@ export class TuiShell {
           }),
         );
         return;
+      case "outline": {
+        if (!this.doc.headings.length) {
+          this.draw("NO HEADINGS");
+          return;
+        }
+        // The page moves behind the popup as the selection does; escape puts it back.
+        const { cursor, offset, skip } = this.view;
+        const back = { seg: this.seg, row: this.row };
+        const undo = () => {
+          this.view = { ...this.view, cursor, offset, skip };
+          this.seg = back.seg;
+          this.row = back.row;
+        };
+        const go = (x: string) => {
+          undo();
+          this.land(Number(x.slice(3)), back.row);
+        };
+        this.open(
+          new Palette(
+            this.renderer,
+            go,
+            () => {
+              undo();
+              this.close();
+              this.draw();
+            },
+            {
+              title: "Outline",
+              hint: "type to filter…",
+              width: 72,
+              rank: (q) => outline(this.doc, q),
+              sel: near(this.doc, cursor),
+              move: go,
+            },
+          ),
+        );
+        return;
+      }
       case "help":
         this.open(new Help(this.renderer, () => this.close()));
         return;

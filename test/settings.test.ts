@@ -39,6 +39,7 @@ test("every setting has its category and composes one popup title", () => {
       "View > Popup corners",
       "View > Badge corner",
       "Comments > New comment notice",
+      "View > Section jump",
     ],
   );
   for (const [at, s] of SETTINGS.entries()) {
@@ -69,6 +70,7 @@ test("View filter includes view settings and cyclers; clearing it restores all c
       "set:line",
       "set:corners",
       "set:status",
+      "set:land",
       "viewCaret",
       "viewNumbers",
       "viewFences",

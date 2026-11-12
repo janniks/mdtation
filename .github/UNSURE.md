@@ -261,3 +261,18 @@ Unchecked entries are swept on occasional cleanup passes.
 - [ ] A `lost` comment stays marked for good; only `Line N?` in list, copy and report shows it.
   - alternative: a gutter mark in the TUI, a verb to re-anchor on the cursor line, clearing the mark on edit.
   - why: the comment is still shown on a real line near its old place; marks can follow once the mapping proves out in use.
+
+## 2026-11-12 — .github/specs/outline.md
+
+- [ ] Outline key is `o`
+  - alternative: `s`, `t`, `tab`
+  - why: same letter as vim `gO` and VS Code `Cmd+Shift+O`; the user did not pick.
+- [ ] Outline previews the section while the selection moves
+  - alternative: jump only on enter
+  - why: Sublime and Helix do it; escape restores the place.
+- [ ] `cursor` landing falls back to the margin row when the cursor row is inside the scroll margin
+  - alternative: hold the exact row, with empty rows at the file ends
+  - why: a jump never leaves empty rows; one rule for both landings.
+- [ ] `Highlight line` default is now `row`; a stored `on` reads as `row`
+  - alternative: map the old `on` to `line`
+  - why: the user asked for `row` as the default; no migration code while users are few.
