@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 import { test, describe } from "node:test";
-import { step, place, pin, fit } from "../src/core/caret.ts";
+import { step, place, pin, fit, hold } from "../src/core/caret.ts";
 
 // Line heights: 0 hidden, 1 plain, 3 wrapped or with notes.
 const rows = (l: number) => [1, 0, 3, 1, 2][l] ?? 1;
@@ -82,5 +82,84 @@ describe("caret", () => {
   test("fit keeps a short document at the top", () => {
     const vp = { offset: 0, cursor: 0, width: 80, height: 20, margin: 3 };
     assert.deepEqual(fit(vp, { line: 4, seg: 1 }, total, rows), { line: 0, seg: 0 });
+  });
+});
+
+describe("hold", () => {
+  // 30 plain lines, except line 4 which takes 3 rows.
+  const tall = (l: number) => (l === 4 ? 3 : 1);
+  const vp = { offset: 0, cursor: 10, width: 80, height: 10, margin: 3 };
+
+  test("the top takes up rows added or removed above the cursor line", () => {
+    assert.deepEqual(
+      hold(vp, { line: 10, seg: 0 }, 5, 30, () => 1),
+      { line: 5, seg: 0 },
+    );
+    // Line 4's extra rows sit above: the top lands mid-block.
+    assert.deepEqual(hold(vp, { line: 6, seg: 0 }, 3, 30, tall), { line: 4, seg: 1 });
+  });
+
+  test("too few rows above leave blank rows instead of moving the line", () => {
+    assert.deepEqual(
+      hold(vp, { line: 2, seg: 0 }, 5, 30, () => 1),
+      { line: 0, seg: -3 },
+    );
+    assert.deepEqual(
+      hold({ ...vp, first: 1 }, { line: 2, seg: 0 }, 5, 30, () => 1),
+      {
+        line: 1,
+        seg: -4,
+      },
+    );
+  });
+
+  test("a row past the window puts the caret on the last row", () => {
+    assert.deepEqual(
+      hold(vp, { line: 20, seg: 0 }, 40, 30, () => 1),
+      { line: 11, seg: 0 },
+    );
+  });
+
+  test("a line that started above the window keeps the caret visible", () => {
+    assert.deepEqual(hold(vp, { line: 4, seg: 0 }, -2, 30, tall), { line: 4, seg: 0 });
+  });
+});
+
+describe("fit after a move from a known row", () => {
+  const one = () => 1;
+  const vp = { offset: 0, cursor: 0, width: 80, height: 10, margin: 3 };
+
+  test("blank rows below the end are not refilled, and shrink only as the top steps up", () => {
+    // 12 lines, top on 8: rows 4..9 are blank.
+    const low = { ...vp, offset: 8 };
+    assert.deepEqual(fit(low, { line: 10, seg: 0 }, 12, one, 2), { line: 8, seg: 0 });
+    assert.deepEqual(fit(low, { line: 11, seg: 0 }, 12, one, 2), { line: 8, seg: 0 });
+    assert.deepEqual(fit(low, { line: 7, seg: 0 }, 12, one, 0), { line: 7, seg: 0 });
+    // A jump (no row) fills the window again.
+    assert.deepEqual(fit(low, { line: 10, seg: 0 }, 12, one), { line: 2, seg: 0 });
+  });
+
+  test("blank rows above the first line shrink on the way down and never come back", () => {
+    const lead = { ...vp, skip: -4 };
+    assert.deepEqual(fit(lead, { line: 2, seg: 0 }, 30, one, 5), { line: 0, seg: -4 });
+    assert.deepEqual(fit(lead, { line: 4, seg: 0 }, 30, one, 7), { line: 0, seg: -3 });
+    assert.deepEqual(fit({ ...vp, skip: -2 }, { line: 0, seg: 0 }, 30, one, 3), {
+      line: 0,
+      seg: -2,
+    });
+    assert.deepEqual(fit(lead, { line: 3, seg: 0 }, 30, one), { line: 0, seg: 0 });
+  });
+
+  test("a caret inside the margin scrolls row by row instead of hopping", () => {
+    const mid = { ...vp, offset: 10 };
+    // From row 1, one step up: the top follows by one row, not by the margin.
+    assert.deepEqual(fit(mid, { line: 10, seg: 0 }, 30, one, 1), { line: 9, seg: 0 });
+    // From inside the band the full margin holds, as before.
+    assert.deepEqual(fit(mid, { line: 12, seg: 0 }, 30, one, 3), { line: 9, seg: 0 });
+  });
+
+  test("place maps rows in the blank lead to the first row", () => {
+    assert.deepEqual(place({ line: 0, seg: -3 }, 1, 30, one), { line: 0, seg: 0 });
+    assert.deepEqual(place({ line: 0, seg: -3 }, 4, 30, one), { line: 1, seg: 0 });
   });
 });

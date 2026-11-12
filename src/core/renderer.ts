@@ -433,7 +433,8 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
   const width = gutter(doc, opts);
   const blank = " ".repeat(width - GUTTER_WIDTH);
   const cols = Math.max(1, vp.width - width);
-  const lines: string[] = [];
+  // A negative `skip` is blank rows above the first line.
+  const lines: string[] = Array(Math.min(height, Math.max(0, -(vp.skip ?? 0)))).fill("");
   // Rows of the first line's block that have already scrolled off the top.
   let skip = Math.max(0, vp.skip ?? 0);
   const push = (row: string): void => {

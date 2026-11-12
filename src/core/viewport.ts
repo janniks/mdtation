@@ -22,7 +22,8 @@
 export interface Viewport {
   /** 0-based index into Document.lines of the line the window starts on. */
   readonly offset: number;
-  /** Rows of that line's block already scrolled off the top, so the window can start mid-block. */
+  /** Rows of that line's block already scrolled off the top, so the window can start mid-block.
+   * Negative: blank rows above the first line, left when content above the cursor went away. */
   readonly skip?: number;
   /** 0-based index into Document.lines of the focused (cursor) row. */
   readonly cursor: number;

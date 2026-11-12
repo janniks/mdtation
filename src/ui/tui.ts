@@ -28,7 +28,16 @@ import { All } from "./all.ts";
 import { copy } from "./clipboard.ts";
 import { CommentStore, changes } from "../core/comment.ts";
 import { follow } from "../core/watch.ts";
-import { end as last, fit, pin, place, step as walk, type Caret } from "../core/caret.ts";
+import {
+  end as last,
+  fit,
+  gap,
+  hold,
+  pin,
+  place,
+  step as walk,
+  type Caret,
+} from "../core/caret.ts";
 import type { Comment } from "../core/comment.ts";
 import { anchorFor, create, markers } from "../core/comments.ts";
 import { lay, notes, type Align, type Layout, type Time } from "../core/inline.ts";
@@ -217,6 +226,7 @@ export class TuiShell {
           cursor: hit ? hit.line : Math.max(0, this.doc.lines.length - 1),
         };
         this.seg = 0;
+        this.row = row;
         this.comment(undefined, text);
       }
     });
@@ -227,6 +237,8 @@ export class TuiShell {
 
   /** Caret row inside the cursor line's block (wrap rows, then inline note rows). */
   private seg = 0;
+  /** Screen row the caret was drawn on; unset after a jump, so the next draw fits strictly. */
+  private row?: number;
   /** Comment id per rendered inline note row, keyed by line; refreshed by `lay()`. */
   private ids = new Map<number, string[]>();
   /** Where and when the body was last clicked, for `again()`. */
@@ -272,6 +284,7 @@ export class TuiShell {
   /** Move the cursor to `line` (clamped, scrolled on-screen) and redraw. */
   setCursor(line: number): void {
     this.view = jumpToLine(this.view, line, this.doc.lines.length);
+    this.row = undefined;
     this.draw();
   }
 
@@ -390,6 +403,8 @@ export class TuiShell {
     const line = hit.line;
     this.view = { ...this.view, cursor: line };
     this.seg = hit.seg;
+    // The caret now rests where the pointer is; the margin must not scroll the page under it.
+    this.row = row;
     const twice = this.again(hit);
     if (hit.seg > 0) {
       // Continuation and note rows just take the caret; targets below live on a line's first row.
@@ -460,7 +475,7 @@ export class TuiShell {
     }
     this.doc = parseDocument(text);
     this.dirty = true;
-    this.draw();
+    this.draw(undefined, true);
   }
 
   /** Write all comments (with provenance) to a temp file and open it in `$EDITOR`. */
@@ -530,7 +545,7 @@ export class TuiShell {
     // Adopt disk every time: a CLI clear, prune or mark shows up as no diff, yet must not be written back.
     this.store = fresh;
     if (diff.length === 0) {
-      this.draw();
+      this.draw(undefined, true);
       return;
     }
     const added = diff.filter((x) => x.what === "new");
@@ -540,6 +555,7 @@ export class TuiShell {
       n === 0
         ? "COMMENTS UPDATED"
         : `${n} NEW ${replies === n ? (n === 1 ? "REPLY" : "REPLIES") : n === 1 ? "COMMENT" : "COMMENTS"}`,
+      true,
     );
   }
 
@@ -566,12 +582,8 @@ export class TuiShell {
     const anchor = anchorFor(this.doc, this.view.cursor);
     this.doc = parseDocument(text);
     const line = this.store.resolve(anchor, this.doc)?.startLine ?? this.view.cursor;
-    this.view = jumpToLine(
-      clampViewport(this.fit(), this.doc.lines.length),
-      line,
-      this.doc.lines.length,
-    );
-    this.draw("RELOADED");
+    this.view = { ...this.fit(), cursor: line };
+    this.draw("RELOADED", true);
   }
 
   private async save(): Promise<void> {
@@ -599,7 +611,7 @@ export class TuiShell {
     const n = CYCLES[id].length;
     this.pick[id] = (((this.pick[id] + dir) % n) + n) % n;
     this.remember();
-    this.draw();
+    this.draw(undefined, true);
   }
 
   private value<K extends Cycle>(id: K): (typeof CYCLES)[K][number] {
@@ -715,7 +727,7 @@ export class TuiShell {
     return this.seg >= w ? this.ids.get(this.view.cursor)?.[this.seg - w] : undefined;
   }
 
-  draw(mode = this.dirty ? "UNSAVED" : "VIEW"): void {
+  draw(mode = this.dirty ? "UNSAVED" : "VIEW", keep = false): void {
     if (this.count !== null) {
       mode = String(this.count);
     }
@@ -727,9 +739,13 @@ export class TuiShell {
     // Keep the scroll margin honest in screen rows (hidden lines take none, wrapped ones several).
     const total = this.doc.lines.length;
     const c = pin({ line: this.view.cursor, seg: this.seg }, total, this.spans(opts));
+    const t =
+      keep && this.row !== undefined
+        ? hold(this.view, c, this.row - this.seg, total, this.spans(opts))
+        : fit(this.view, c, total, this.spans(opts), this.row);
     this.seg = c.seg;
-    const t = fit(this.view, c, total, this.spans(opts));
     this.view = { ...this.view, cursor: c.line, offset: t.line, skip: t.seg };
+    this.row = gap(t, c, this.spans(opts));
     this.text.content = styled(
       renderFrame(this.doc, this.view, { ...opts, markers: marks, seg: this.seg }).join("\n"),
     );
@@ -773,7 +789,7 @@ export class TuiShell {
           this.store.add(n);
           this.persist(c ? "edit" : "new", n.id);
           this.close();
-          this.draw("SAVED");
+          this.draw("SAVED", true);
         },
         close: () => this.close(),
       }),
@@ -793,7 +809,7 @@ export class TuiShell {
             this.store.add(n);
             this.persist("new", n.id);
             this.close();
-            this.draw("SAVED");
+            this.draw("SAVED", true);
           },
           close: () => this.close(),
         }),
@@ -856,7 +872,7 @@ export class TuiShell {
       }
       for (const id of ids) this.store.archive(id);
       this.persist("archive", ...ids);
-      this.draw(`ARCHIVED ${ids.length}  restore via cli`);
+      this.draw(`ARCHIVED ${ids.length}  restore via cli`, true);
     };
     const held = this.note();
     const top = held ? this.root(held) : undefined;
@@ -956,7 +972,7 @@ export class TuiShell {
         this.store.archive(c.id);
       }
       this.persist("archive", ...list.map((c) => c.id));
-      this.draw(`COPIED ${list.length}  ARCHIVED${note}`);
+      this.draw(`COPIED ${list.length}  ARCHIVED${note}`, true);
       return;
     }
     this.draw(`COPIED ${list.length}${note}`);
@@ -1097,8 +1113,8 @@ export class TuiShell {
       case "viewInlineOwn":
         this.on[id] = !this.on[id];
         this.remember();
-        this.view = clampViewport(this.fit(), total);
-        this.draw();
+        this.view = this.fit();
+        this.draw(undefined, true);
         return;
       case "quit":
         if (this.dirty && Date.now() - this.guard > AGAIN) {
@@ -1110,23 +1126,18 @@ export class TuiShell {
         }
         break;
       case "nextComment":
-        this.view = nextComment(this.view, total, this.store, this.doc);
-        this.seg = 0;
-        this.draw();
-        return;
       case "prevComment":
-        this.view = prevComment(this.view, total, this.store, this.doc);
-        this.seg = 0;
-        this.draw();
-        return;
       case "nextAgent":
-        this.view = nextComment(this.view, total, this.store, this.doc, (c) => c.agent === true);
-        this.seg = 0;
-        this.draw();
-        return;
       case "prevAgent":
-        this.view = prevComment(this.view, total, this.store, this.doc, (c) => c.agent === true);
+        this.view = (id.startsWith("next") ? nextComment : prevComment)(
+          this.view,
+          total,
+          this.store,
+          this.doc,
+          id.endsWith("Agent") ? (c) => c.agent === true : undefined,
+        );
         this.seg = 0;
+        this.row = undefined;
         this.draw();
         return;
       case "reply":
@@ -1138,11 +1149,15 @@ export class TuiShell {
         if (n === 0) {
           return;
         }
-        this.view = moveCursor(this.view, id === "cursorDown" ? n : -n, total);
         // A hidden tail falls back to the previous line's last row; counts land on its first.
+        const line = this.view.cursor + (id === "cursorDown" ? n : -n);
         this.view = {
           ...this.view,
-          cursor: pin({ line: this.view.cursor, seg: 0 }, total, this.spans(this.lay())).line,
+          cursor: pin(
+            { line: Math.max(this.view.first ?? 0, line), seg: 0 },
+            total,
+            this.spans(this.lay()),
+          ).line,
         };
         this.seg = 0;
         this.draw();
@@ -1166,6 +1181,7 @@ export class TuiShell {
       const prev = this.view.cursor;
       this.view = action.vp;
       this.seg = 0;
+      this.row = undefined;
       this.settle(prev);
       this.draw();
     }
@@ -1207,9 +1223,9 @@ export class TuiShell {
   };
 
   private resize(): void {
-    this.view = clampViewport(this.fit(), this.doc.lines.length);
+    this.view = this.fit();
     this.overlay?.place?.();
-    this.draw();
+    this.draw(undefined, true);
   }
 
   dispose(): void {

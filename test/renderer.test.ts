@@ -383,3 +383,11 @@ test("span counts inline comment rows, so the scroll margin sees them", () => {
     "  ",
   ]);
 });
+
+test("a negative skip shows blank rows above the first line", () => {
+  const doc = parseDocument("a\nb\nc\nd");
+  const out = render(doc, { ...createViewport(0, 0, 10, 3), skip: -2 }, {});
+  assert.equal(out.length, 3);
+  assert.deepEqual(out.slice(0, 2), ["", ""]);
+  assert.match(out[2]!, /a/);
+});
