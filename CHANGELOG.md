@@ -1,5 +1,13 @@
 # mdtation
 
+## 0.2.4
+
+### Patch Changes
+
+- eecbb35: Outline popup on `o`: every heading in file order, fuzzy filter as you type, live preview, enter to jump, escape to go back. The heading lands on the row the cursor was on and the page is not refilled; `View > Section jump` can put it at the top of the window instead.
+- 68b105b: Highlight line lights only the caret's screen row by default; `View > Highlight line` switches to the whole source line or off.
+- bed9fde: `ctrl+e` and `ctrl+y` scroll the page one row while the cursor keeps its screen row.
+
 ## 0.2.3
 
 ### Patch Changes
