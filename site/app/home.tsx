@@ -1,9 +1,8 @@
 // The homepage's shared pieces: the pitch, the install row and the FAQ.
 
 import { Command } from "./command";
-import { Copy } from "./copy";
 import { Questions } from "./faq";
-import { PROMPT } from "./header";
+import { Ask } from "./study/closing/closing";
 
 const faq = [
   [
@@ -65,9 +64,7 @@ export function Install({ className = "mt-12 sm:mt-16" }: { className?: string }
       </p>
       <div className="flex max-w-full flex-wrap items-center justify-center gap-3">
         <Command id="install" />
-        <span className="flex items-center rounded-xl border border-black/[0.06] bg-black/[0.025] px-4 py-3 text-sm text-neutral-600">
-          <Copy text={PROMPT} label="Copy prompt" quiet />
-        </span>
+        <Ask surface="border border-black/[0.06] bg-black/[0.025] hover:bg-black/[0.045]" />
       </div>
     </div>
   );

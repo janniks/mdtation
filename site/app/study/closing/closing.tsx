@@ -14,7 +14,6 @@ import {
 } from "react";
 import { MotionConfig, motion } from "motion/react";
 import { Command } from "../../command";
-import { Copy } from "../../copy";
 import { GITHUB, INSTALL, NPM, PROMPT } from "../../header";
 import {
   Agentation,
@@ -101,9 +100,7 @@ function Row({ tone = 0.04, dark }: { tone?: number; dark?: boolean }) {
       className={`flex max-w-full flex-wrap items-center justify-center gap-2.5 ${dark ? "text-white/50 [&_button:hover]:text-white" : "text-neutral-500"}`}
     >
       <Command className={dark ? "text-white/90" : "text-neutral-800"} style={style} />
-      <span className={`${chip} px-4 py-3 font-sans`} style={style}>
-        <Copy text={PROMPT} label="Copy prompt" quiet />
-      </span>
+      <Ask kind="tilt" style={style} dark={dark} />
     </div>
   );
 }
@@ -130,9 +127,9 @@ function Source({ dark }: { dark?: boolean }) {
 
 const links = [
   ["https://x.com/janniksco", "twitter"],
-  [GITHUB, "GitHub"],
+  [GITHUB, "github"],
   [NPM, "npm"],
-  [`${GITHUB}/issues`, "Issues"],
+  [`${GITHUB}/issues`, "issues"],
 ] as const;
 
 function Credits() {
@@ -195,7 +192,18 @@ function useCopy(text: string) {
 }
 
 /** The copy-prompt button, with a few agent marks where the copy icon was. */
-function Ask({ kind }: { kind: (typeof asks)[number] }) {
+export function Ask({
+  kind = "tilt",
+  style,
+  dark,
+  surface = style ? "" : "bg-foreground/[0.04] hover:bg-foreground/[0.06]",
+}: {
+  kind?: (typeof asks)[number];
+  style?: CSSProperties;
+  dark?: boolean;
+  /** Classes for the chip's fill and border. */
+  surface?: string;
+}) {
   const [done, copy] = useCopy(PROMPT);
   const [at, setAt] = useState(0);
   useEffect(() => {
@@ -203,8 +211,7 @@ function Ask({ kind }: { kind: (typeof asks)[number] }) {
     const id = setInterval(() => setAt((n) => (n + 1) % bots.length), 2200);
     return () => clearInterval(id);
   }, [kind]);
-  const tile =
-    "inline-flex size-6 items-center justify-center rounded-full bg-background text-foreground/60 shadow-[0_1px_2px_rgba(20,22,28,0.1)]";
+  const tile = `inline-flex size-6 items-center justify-center rounded-full ${dark ? "bg-white/15 text-white/80" : "bg-background text-foreground/60 shadow-[0_1px_2px_rgba(20,22,28,0.1)]"}`;
   const marks = {
     // three small round tiles, overlapping
     stack: bots.map((Icon, i) => (
@@ -245,7 +252,8 @@ function Ask({ kind }: { kind: (typeof asks)[number] }) {
     <button
       type="button"
       onClick={copy}
-      className={`group ${chip} cursor-copy gap-2.5 bg-foreground/[0.04] py-2 pr-4 pl-2.5 font-sans text-sm text-neutral-500 transition-colors duration-200 hover:bg-foreground/[0.06] hover:text-neutral-900`}
+      style={style}
+      className={`group ${chip} cursor-copy gap-2.5 py-2.5 pr-4 pl-2.5 font-sans text-sm transition-colors duration-200 ${surface} ${dark ? "text-white/50 hover:text-white" : "text-neutral-500 hover:text-neutral-900"}`}
     >
       {kind !== "after" && row}
       <span className="grid">

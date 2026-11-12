@@ -25,9 +25,9 @@ export type Look = {
 
 // [label, line, clip]
 const chapters = [
-  ["Agent plans", "The plan lands as a markdown file, not a chat reply.", "light/doc/handoff"],
   ["You comment", "Comment on a line, or drag over a sentence.", "light/select"],
   ["Agent revises", "It reads your comments and edits the file in place.", "light/doc/rewrite"],
+  ["Hand off", "Every comment in a list, copied for your agent.", "light/doc/handoff"],
 ] as const;
 
 // [name, clip]: the six from the gallery, on their light pointer recordings
@@ -208,11 +208,14 @@ function Line({ id, className = "", children }: { id: number; className?: string
 /** The loop as three chapters on one stage. */
 export function Stage({
   variant = "tabs",
+  take,
   ...look
-}: Look & { variant?: (typeof stages)[number] }) {
+}: Look & { variant?: (typeof stages)[number]; take?: (typeof rails)[number] }) {
   const reel = useReel();
   const { at, t, go } = reel;
-  const [rail, setRail] = usePick("rail", rails);
+  // `take` locks the rail's balance; without it the picker chooses
+  const [pick, setRail] = usePick("rail", rails);
+  const rail = take ?? pick;
   const screen = <Screen clips={chapters.map((c) => c[2])} reel={reel} {...look} />;
   const pills = chapters.map(([label], i) => (
     <Pick
@@ -271,7 +274,7 @@ export function Stage({
             )}
           </div>
         </div>
-        <Picker label="rail" names={rails} at={rail} set={setRail} className="mt-4" />
+        {!take && <Picker label="rail" names={rails} at={rail} set={setRail} className="mt-4" />}
       </div>
     );
 
