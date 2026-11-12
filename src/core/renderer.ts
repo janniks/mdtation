@@ -57,7 +57,7 @@ export interface RenderOptions {
   /** Indent the first line of each paragraph, book style. Default false. */
   readonly indent?: boolean;
   /** Lay the cursor line's rows on a slab, for readers who lose the caret (needs `color`). */
-  readonly highlight?: boolean;
+  readonly highlight?: boolean | "row";
   /** Lines that just changed on disk; their rows sit on the fading `bgNew` slab (needs `color`). */
   readonly fresh?: ReadonlySet<number>;
 }
@@ -451,7 +451,7 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
       continue;
     }
     // The cursor line's own rows sit on a slab; its inline notes keep theirs.
-    const hot = opts.highlight === true && opts.color === true && i === vp.cursor;
+    const hot = !!opts.highlight && opts.color === true && i === vp.cursor;
     const slab = hot ? SGR.bgLine : opts.color === true && opts.fresh?.has(i) ? SGR.bgNew : "";
     const row = tableRow(doc, i, opts);
     const number = blank.length
@@ -475,7 +475,9 @@ export function render(doc: Document, vp: Viewport, opts: RenderOptions = {}): s
           : i === vp.cursor && ri === at
             ? caret(opts)
             : "  ";
-      push((ri === 0 ? number : blank) + g + lit(chunk, cols, slab));
+      // In `row` mode only the caret's own screen row is lit, not every wrap row of the line.
+      const on = hot && opts.highlight === "row" && ri !== at ? "" : slab;
+      push((ri === 0 ? number : blank) + g + lit(chunk, cols, on));
     });
     extras.forEach((extra, k) => {
       push(blank + (i === vp.cursor && chunks.length + k === at ? caret(opts) : "  ") + extra);

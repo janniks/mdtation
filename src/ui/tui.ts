@@ -749,7 +749,7 @@ export class TuiShell {
       deco: this.on.viewDeco,
       links: this.on.viewLinks,
       pipes: this.on.viewPipes,
-      highlight: this.prefs.line === "on",
+      highlight: this.prefs.line === "line" || (this.prefs.line !== "off" && ("row" as const)),
       ...this.style(),
     };
   }

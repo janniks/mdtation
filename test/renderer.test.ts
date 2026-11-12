@@ -349,6 +349,10 @@ describe("highlight the cursor line", () => {
       "  z",
     ]);
   });
+  test("row mode lights only the caret's screen row", () => {
+    const out = render(doc, createViewport(0, 0, 8, 3), { color: true, highlight: "row", seg: 1 });
+    assert.deepEqual(out, ["  aaaa", "\x1b[32m>\x1b[0m \x1b[100mbbbb  \x1b[0m", "  z"]);
+  });
   test("styling inside re-opens the slab, so a reset cannot cut it short", () => {
     const out = render(parseDocument("**b** c"), createViewport(0, 0, 9, 1), {
       color: true,

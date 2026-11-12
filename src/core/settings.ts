@@ -30,7 +30,8 @@ export const SETTINGS = [
   { id: "agent", title: "Agent side", category: "Comments", values: ["left", "right"] },
   { id: "own", title: "Your side", category: "Comments", values: ["right", "left"] },
   { id: "time", title: "Time", category: "Comments", values: ["relative", "absolute", "hide"] },
-  { id: "line", title: "Highlight line", category: "View", values: ["off", "on"] },
+  // `row` lights the caret's screen row only; `line` lights every wrap row of the source line.
+  { id: "line", title: "Highlight line", category: "View", values: ["row", "line", "off"] },
   { id: "corners", title: "Popup corners", category: "View", values: ["pointy", "round"] },
   { id: "status", title: "Badge corner", category: "View", values: ["bottom", "top"] },
   // New comments outside the window: a notice that stays until each is scrolled to, or goes by itself.
@@ -64,7 +65,7 @@ export const DEFAULTS: Values = {
   agent: "left",
   own: "right",
   time: "relative",
-  line: "on",
+  line: "row",
   corners: "pointy",
   status: "bottom",
   toast: "stay",
