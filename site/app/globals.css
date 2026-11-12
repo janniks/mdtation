@@ -2,10 +2,12 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant dark (&:where(.dark, .dark *):not(:where(.light, .light *)));
 
-/* Light first: warm paper, near-black ink, one green accent, amber for comment marks. */
-:root {
+/* Light first: warm paper, near-black ink, one green accent, amber for comment marks.
+   .light pins a subtree to these tokens, for the paper hero card that stays light in dark mode. */
+:root,
+.light {
   --background: oklch(0.985 0.005 85);
   --foreground: oklch(0.2 0.01 60);
   --card: oklch(1 0 0);
@@ -111,4 +113,10 @@ html,
 body {
   overflow-x: clip;
   max-width: 100%;
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
 }

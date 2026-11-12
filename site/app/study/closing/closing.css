@@ -1,0 +1,22 @@
+/* The block caret: solid while typing, then a slow blink with time to breathe. */
+.caret {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.15em;
+  margin-left: 0.08em;
+  vertical-align: -0.2em;
+  background: currentColor;
+}
+.caret[data-rest] {
+  animation: rest 2.4s steps(1) infinite;
+}
+.caret[data-still] {
+  animation-play-state: paused;
+}
+@keyframes rest {
+  0%, 62% { opacity: 1; }
+  62.01%, 100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .caret { animation: none; }
+}

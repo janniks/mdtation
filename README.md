@@ -1,4 +1,4 @@
-# 🧘 mdtation
+# <img src=".github/media/logo.svg" height="26" alt=""> mdtation
 
 <div align="center">
 

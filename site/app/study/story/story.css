@@ -1,0 +1,209 @@
+/* The TUI light theme on a 64 column, 20 row grid that scales with its frame, like the recordings do. */
+.story .term {
+  --lh: 4.01cqw;
+  position: relative;
+  aspect-ratio: 1382 / 1136;
+  overflow: hidden;
+  container-type: inline-size;
+  background: #f7f7f2;
+  text-align: left;
+  font-family: var(--font-mono);
+  color: #293127;
+}
+.story .term > * {
+  position: absolute;
+  inset: calc(0.25 * var(--lh)) 0;
+  font-size: 2.6cqw;
+  line-height: var(--lh);
+  white-space: pre;
+}
+.story .term > :has(> video) {
+  inset: 0;
+}
+.story .term video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.story .bar {
+  display: flex;
+  justify-content: space-between;
+  height: var(--lh);
+  margin-inline: 1ch;
+  padding-inline: 1ch;
+  background: #e9ece5;
+  color: #66705f;
+}
+.story .bar.foot {
+  position: absolute;
+  inset: auto 0 0;
+  padding-right: 0;
+}
+.story .bar b {
+  padding-inline: 1ch;
+  background: #547b48;
+  font-weight: 400;
+  color: #f7f7f2;
+}
+
+/* Chat */
+.story .log {
+  position: relative;
+  height: calc(15 * var(--lh));
+  margin-top: calc(0.5 * var(--lh));
+  overflow: hidden;
+  mask-image: linear-gradient(rgb(0 0 0 / calc(1 - var(--m, 0))), #000 calc(2 * var(--lh)));
+}
+.story .lines > div {
+  overflow: hidden;
+  height: var(--lh);
+  padding-inline: 2ch;
+  text-overflow: ellipsis;
+}
+.story .lines .note {
+  margin-inline: 1ch;
+  padding-inline: 1ch;
+  background: #e9ece5;
+}
+.story .lines .note::before {
+  content: "> ";
+  color: #586451;
+}
+.story .lines .tool::before,
+.story .lines .agent::before,
+.story .lines .say::before {
+  content: "⏺ ";
+  color: #547b48;
+}
+.story .lines .agent,
+.story .lines .agent::before {
+  color: #35658c;
+}
+.story .lines .out {
+  color: #66705f;
+}
+.story .lines .out::before {
+  content: "  ⎿ ";
+}
+.story .lines .head {
+  padding-left: 4ch;
+  font-weight: 600;
+  color: #28736a;
+}
+.story .lines .find {
+  padding-left: 4ch;
+}
+.story .lines .add,
+.story .lines .del {
+  padding-left: 6ch;
+  color: #547b48;
+}
+.story .lines .del {
+  color: #806215;
+}
+.story .more {
+  position: absolute;
+  right: 2ch;
+  bottom: 0.6cqw;
+  padding-inline: 1ch;
+  border-radius: 99px;
+  background: #35658c;
+  font-size: 2.2cqw;
+  color: #f7f7f2;
+}
+.story .input {
+  position: absolute;
+  inset: auto 2ch calc(0.75 * var(--lh));
+  padding-inline: 1ch;
+  border-radius: 1cqw;
+  background: #eceee7;
+  color: #586451;
+}
+
+/* Document */
+.story .crumb {
+  padding-inline: 2ch;
+  color: #66705f;
+}
+.story .body > div {
+  overflow: hidden;
+  height: var(--lh);
+  padding-left: 3ch;
+}
+.story .body .h1 {
+  font-weight: 700;
+}
+.story .body .h2 {
+  font-weight: 700;
+  color: #28736a;
+}
+.story .body .slot {
+  position: relative;
+  padding: 0;
+}
+.story .mark {
+  position: absolute;
+  top: calc(6 * var(--lh));
+  left: 1ch;
+  width: 1ch;
+  height: var(--lh);
+  background: #e9d28a;
+}
+.story .pin {
+  position: absolute;
+  display: flex;
+  justify-content: space-between;
+  height: var(--lh);
+  padding-inline: 1ch;
+  background: #e4e9de;
+}
+.story .pin i {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  font-style: normal;
+  color: #586451;
+}
+.story .pin span,
+.story .reply span {
+  color: #66705f;
+}
+.story .reply {
+  position: absolute;
+  inset: 0 auto auto 3ch;
+  width: 48ch;
+  padding-inline: 1ch;
+  background: #e4e9de;
+  transition: background 1200ms ease;
+}
+.story .reply span {
+  float: right;
+}
+
+/* Scroll: a bare chat column behind the card. */
+.story .column {
+  --lh: 4.01cqw;
+  container-type: inline-size;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  color: #293127;
+  mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent);
+}
+.story .column .lines {
+  animation: story-scroll 9s linear infinite;
+  will-change: transform;
+  font-size: 2.6cqw;
+  line-height: var(--lh);
+  white-space: pre;
+}
+@keyframes story-scroll {
+  to {
+    transform: translateY(-50%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .story .column .lines {
+    animation: none;
+  }
+}

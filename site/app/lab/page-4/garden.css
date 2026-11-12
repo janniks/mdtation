@@ -1,0 +1,79 @@
+/* Footer garden: each stem sways from its base. */
+.garden .stem {
+  transform-origin: 50% 100%;
+  animation: sway var(--d) ease-in-out var(--delay) infinite alternate;
+}
+/* Draw-on: each part's mask strokes on after its --t, once the .sprout host is [data-on]; the garden adds a per-stem --g. */
+.sprout .draw {
+  stroke-dasharray: 1 1;
+  animation: draw var(--l) cubic-bezier(0.4, 0, 0.2, 1) calc(var(--g, 0s) + var(--t)) both paused;
+}
+.sprout .pop {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pop var(--l) cubic-bezier(0.3, 1.5, 0.5, 1) calc(var(--g, 0s) + var(--t)) both paused;
+}
+.sprout[data-on] :is(.draw, .pop) {
+  animation-play-state: running;
+}
+@keyframes draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes pop {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+.garden[data-still] .stem {
+  animation-play-state: paused;
+}
+/* Loop step digits: the blooms show, the digit stays for screen readers. */
+.steps h3 > span.font-mono {
+  font-size: 0;
+}
+.breathe {
+  animation: breathe 9s ease-in-out infinite alternate;
+}
+@keyframes sway {
+  from { transform: rotate(-2.5deg); }
+  to { transform: rotate(2.5deg); }
+}
+@keyframes breathe {
+  from { transform: rotate(-4deg) scale(0.98); }
+  to { transform: rotate(4deg) scale(1.02); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .garden .stem,
+  .breathe { animation: none; }
+  .sprout :is(.draw, .pop) { animation: none; }
+}
+
+/* Document-mode play button: a five-petal bloom with the triangle in its middle. */
+.bloom .play {
+  position: relative;
+  isolation: isolate;
+  background: #fff;
+}
+.bloom .play::before {
+  content: "";
+  position: absolute;
+  inset: -9px;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 50% 12%, #f4c9d2 0 12px, transparent 12.5px),
+    radial-gradient(circle at 88% 40%, #f6d7a8 0 12px, transparent 12.5px),
+    radial-gradient(circle at 74% 85%, #f4c9d2 0 12px, transparent 12.5px),
+    radial-gradient(circle at 26% 85%, #f6d7a8 0 12px, transparent 12.5px),
+    radial-gradient(circle at 12% 40%, #f4c9d2 0 12px, transparent 12.5px);
+  animation: bloom-turn 24s linear infinite;
+}
+@keyframes bloom-turn {
+  to {
+    transform: rotate(1turn);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bloom .play::before {
+    animation: none;
+  }
+}
