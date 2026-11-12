@@ -1,6 +1,6 @@
 # Scroll the page, keep the cursor
 
-Research only (from memory, not checked against current docs). Not built.
+Research from memory, not checked against current docs.
 
 ## Two meanings
 
@@ -25,3 +25,10 @@ Research only (from memory, not checked against current docs). Not built.
 - Meaning A fits the caret model: move the top row by one, then `fit` pushes the cursor only when it leaves the window.
 - Counts work as for `j` and `k`: `5 ctrl+e`.
 - Open: should the scroll margin push the cursor (vim does), or only the window edge?
+
+## Built
+
+- `ctrl+e` scrolls down, `ctrl+y` scrolls up, one screen row. Meaning B: the cursor keeps its screen row and takes the row that arrives there.
+- Where the page cannot scroll (an end of the file, or empty rows already there) the cursor moves instead.
+- Scrolling never makes empty rows; it drops the ones a jump or a reload left.
+- Not built: counts, the `shift+j` and `shift+k` pair.

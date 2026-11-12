@@ -41,8 +41,8 @@ export const SETTINGS = [
     category: "Comments",
     values: ["stay", "fade", "off"],
   },
-  // Where a section jump puts the heading: at the top of the window, or on the row the cursor is on.
-  { id: "land", title: "Section jump", category: "View", values: ["top", "cursor"] },
+  // Where a section jump puts the heading: on the screen row the cursor is on, or at the top of the window.
+  { id: "land", title: "Section jump", category: "View", values: ["cursor", "top"] },
 ] as const;
 
 const DAY = 86_400_000;
@@ -71,7 +71,7 @@ export const DEFAULTS: Values = {
   corners: "pointy",
   status: "bottom",
   toast: "stay",
-  land: "top",
+  land: "cursor",
 };
 
 /** Move setting `id` by `dir` steps through its values (wrapping). Unknown ids are ignored. */

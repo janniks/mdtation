@@ -117,6 +117,9 @@ export const COMMANDS = [
     menu: false,
   },
   { id: "pageUp", title: "Page up", category: "Navigate", keys: ["ctrl+u", "pageup"], menu: false },
+  // The page moves, the cursor keeps its screen row.
+  { id: "scrollDown", title: "Scroll down", category: "Navigate", keys: ["ctrl+e"], menu: false },
+  { id: "scrollUp", title: "Scroll up", category: "Navigate", keys: ["ctrl+y"], menu: false },
   { id: "top", title: "Top", category: "Navigate", keys: ["g"], menu: false },
   { id: "bottom", title: "Bottom", category: "Navigate", keys: ["shift+g"], menu: false },
   // Digit counts for vertical movement are owned by the shell.
@@ -207,6 +210,8 @@ export const HANDLERS: { readonly [K in CommandId]: CmdHandler } = {
   top: (vp, total) => ({ vp: jumpToLine(vp, 0, total) }),
   bottom: (vp, total) => ({ vp: jumpToLine(vp, Math.max(0, total - 1), total) }),
   goto: () => ({}),
+  scrollDown: () => ({}),
+  scrollUp: () => ({}),
   outline: () => ({}),
   quit: () => ({ quit: true }),
   save: () => ({}),

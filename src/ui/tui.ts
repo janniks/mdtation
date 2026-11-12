@@ -312,15 +312,14 @@ export class TuiShell {
     this.draw();
   }
 
-  /** Jump to the heading on `line`: to the top of the window (under the margin), or onto screen
-   * row `row` when the `land` setting says `cursor`. The page fills as after any jump. */
+  /** Jump to the heading on `line` and hold it on a screen row: the window's first, or `row`
+   * (where the cursor was) when the `land` setting says `cursor`. Like a reload, the jump does not
+   * refill the page: near the end of the file empty rows show below, and scrolling drops them. */
   private land(line: number, row = 0): void {
-    const at = this.prefs.land === "cursor" ? row : 0;
-    const t = hold(this.view, { line, seg: 0 }, at, this.doc.lines.length, this.spans(this.lay()));
-    this.view = { ...this.view, cursor: line, offset: t.line, skip: Math.max(0, t.seg) };
+    this.view = { ...this.view, cursor: line };
     this.seg = 0;
-    this.row = undefined;
-    this.draw();
+    this.row = this.prefs.land === "cursor" ? row : 0;
+    this.draw(undefined, true);
   }
 
   /** Show `o` (replacing any open overlay). It sees keys first until closed. */
@@ -1324,6 +1323,27 @@ export class TuiShell {
       case "reply":
         this.reply();
         return;
+    }
+    if (id === "scrollDown" || id === "scrollUp") {
+      // The caret keeps its screen row and takes the row that arrives there. Where the page cannot
+      // scroll (an end of the file, empty rows) the caret moves instead: scrolling never makes empty rows.
+      const rows = this.spans(this.lay());
+      const home = pin({ line: this.view.first ?? 0, seg: 0 }, total, rows);
+      const { offset, skip = 0 } = this.view;
+      const free =
+        id === "scrollDown"
+          ? place(this.top(), this.view.height, total, rows) !== null
+          : offset > home.line || (offset === home.line && skip > 0);
+      const c = walk(
+        { line: this.view.cursor, seg: this.seg },
+        id === "scrollDown" ? 1 : -1,
+        total,
+        rows,
+      );
+      this.view = { ...this.view, cursor: c.line };
+      this.seg = c.seg;
+      this.draw(undefined, free);
+      return;
     }
     if (id === "cursorDown" || id === "cursorUp") {
       if (n !== null) {

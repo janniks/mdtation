@@ -86,9 +86,12 @@ Free single keys today: `o`, `s`, `t`, `f`, `n`, `p`, `h`, `l`, `w`, `u`, `i`, `
 
 Setting `View > Section jump` (`land`):
 
-- `top` (default): the heading goes to the top of the window, under the scroll margin. Same as every other jump today.
-- `cursor`: the heading lands on the screen row the cursor is on now. The eye does not move; the text does.
-  - Near the ends of the file the page fills as usual; a jump never leaves empty rows.
+- `cursor` (default): the heading lands on the screen row the cursor is on now. The eye does not move; the text does.
+- `top`: the heading goes to the first row of the window.
+- Both hold the row exactly, as a reload does. The page is not refilled.
+  - Near the end of the file empty rows show below the last line.
+  - A heading near the start of the file can show empty rows above the first line.
+  - The empty rows are one-way: scrolling drops them and cannot bring them back.
 - Later, if asked: `center`.
 
 ## Decided in the first cut

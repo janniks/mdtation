@@ -276,3 +276,12 @@ Unchecked entries are swept on occasional cleanup passes.
 - [ ] `Highlight line` default is now `row`; a stored `on` reads as `row`
   - alternative: map the old `on` to `line`
   - why: the user asked for `row` as the default; no migration code while users are few.
+- [ ] A section jump near the start of the file shows empty rows above the first line (`cursor` landing)
+  - alternative: clamp at the top, so the heading sits higher than the cursor row
+  - why: the user asked to keep the cursor row and named empty rows at the bottom only; the same hold rule serves both ends.
+- [ ] `ctrl+e` and `ctrl+y` keep the screen row (the cursor takes the arriving line)
+  - alternative: keep the cursor on its text line, as vim does
+  - why: the user said "keep cursor on the line it was" in the same breath as the outline row hold; read as the screen row.
+- [ ] Scroll keys take no count
+  - alternative: `5 ctrl+e`
+  - why: first cut, not asked.
