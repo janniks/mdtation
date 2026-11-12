@@ -240,3 +240,18 @@ Unchecked entries are swept on occasional cleanup passes.
 - [ ] `File > Reload` discards unsaved edits without asking, the badge `FILE CHANGED ON DISK` is the only warning.
   - alternative: a confirm modal, or a diff view.
   - why: the menu entry is the explicit "take the disk" path; a second prompt on top of an explicit choice felt like noise.
+
+## 2026-11-12 — stable-DRAFT.md
+
+- [ ] An empty read of the file is ignored on reload; the page keeps the old text.
+  - alternative: wait longer than 150 ms and read again; or show the empty page.
+  - why: a writer that truncates then writes sends a second event with the text; a file emptied on purpose is rare, and `File > Reload` runs the same check, so it stays stale until text comes back.
+- [ ] Empty rows above line 1, and at the end of a taller window, stay until the reader scrolls out of them or jumps.
+  - alternative: let the cursor rise in the top case; refill on resize; collapse on the first cursor move.
+  - why: one rule (the cursor line keeps its row) with no exceptions; the user asked for one-way empty space.
+- [ ] After a passive change, a cursor on a line with no rows moves up to the text above, not down.
+  - alternative: keep `pin`'s down-first rule everywhere.
+  - why: with flow on, down is the next paragraph; up is the paragraph the reader was in.
+- [ ] `track`'s 0.6 likeness threshold was tuned on the same 56 pairs it is scored on.
+  - alternative: a held-out corpus before landing.
+  - why: the failure is soft (a `sure` below 1 on a nearby line), and the cursor path shows no mark yet.

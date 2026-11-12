@@ -39,7 +39,8 @@ import {
   type Caret,
 } from "../core/caret.ts";
 import type { Comment } from "../core/comment.ts";
-import { anchorFor, create, markers } from "../core/comments.ts";
+import { create, markers } from "../core/comments.ts";
+import { track } from "../core/track.ts";
 import { lay, notes, type Align, type Layout, type Time } from "../core/inline.ts";
 import { append, atomic, home, load, path as storePath, save } from "../core/store.ts";
 import type { Change } from "../core/comment.ts";
@@ -559,7 +560,7 @@ export class TuiShell {
     );
   }
 
-  /** Re-read the markdown; the cursor keeps its line by its text, else its number.
+  /** Re-read the markdown; the cursor follows its line through the rewrite (`track`).
    * Waits (badged) while an overlay is open or edits are unsaved. */
   private async reloadDoc(): Promise<void> {
     let text: string;
@@ -568,7 +569,8 @@ export class TuiShell {
     } catch {
       return;
     }
-    if (text === this.doc.text) {
+    // An empty read is a writer caught between truncate and write; its next event brings the text.
+    if (text === this.doc.text || !text) {
       this.stale = false;
       return;
     }
@@ -579,9 +581,9 @@ export class TuiShell {
     }
     this.stale = false;
     this.tap.at = 0;
-    const anchor = anchorFor(this.doc, this.view.cursor);
-    this.doc = parseDocument(text);
-    const line = this.store.resolve(anchor, this.doc)?.startLine ?? this.view.cursor;
+    const next = parseDocument(text);
+    const line = track(this.doc.lines, next.lines)[this.view.cursor]?.to ?? 0;
+    this.doc = next;
     this.view = { ...this.fit(), cursor: line };
     this.draw("RELOADED", true);
   }
@@ -738,14 +740,18 @@ export class TuiShell {
     const opts = this.lay();
     // Keep the scroll margin honest in screen rows (hidden lines take none, wrapped ones several).
     const total = this.doc.lines.length;
-    const c = pin({ line: this.view.cursor, seg: this.seg }, total, this.spans(opts));
+    const rows = this.spans(opts);
+    let line = this.view.cursor;
+    // A line that lost its rows under the reader (flow on, fences hidden) hands the caret to the text above.
+    while (keep && line > 0 && rows(line) === 0) line--;
+    const c = pin({ line, seg: this.seg }, total, rows);
     const t =
       keep && this.row !== undefined
-        ? hold(this.view, c, this.row - this.seg, total, this.spans(opts))
-        : fit(this.view, c, total, this.spans(opts), this.row);
+        ? hold(this.view, c, this.row - this.seg, total, rows)
+        : fit(this.view, c, total, rows, this.row);
     this.seg = c.seg;
     this.view = { ...this.view, cursor: c.line, offset: t.line, skip: t.seg };
-    this.row = gap(t, c, this.spans(opts));
+    this.row = gap(t, c, rows);
     this.text.content = styled(
       renderFrame(this.doc, this.view, { ...opts, markers: marks, seg: this.seg }).join("\n"),
     );
