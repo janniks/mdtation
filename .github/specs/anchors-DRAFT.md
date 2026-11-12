@@ -1,5 +1,7 @@
 # Stable anchors
 
+> The recommendation here (fingerprints first) is superseded by `stable-DRAFT.md`, which measured it against a whole-text matcher.
+
 ## Why
 
 An agent or an editor rewrites the file on disk.

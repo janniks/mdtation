@@ -1,0 +1,195 @@
+diff --color -ru /Users/jannik/Documents/Dropbox/Files/Active/Repositories/mdtation/src/core/caret.ts src/core/caret.ts
+--- /Users/jannik/Documents/Dropbox/Files/Active/Repositories/mdtation/src/core/caret.ts	2026-09-02 18:42:57.726841243 +0200
++++ src/core/caret.ts	2026-11-12 03:49:21.138637494 +0100
+@@ -40,7 +40,7 @@
+   for (let l = Math.max(0, top.line); l < total; l++) {
+     const n = rows(l);
+     if (row < acc + n) {
+-      return { line: l, seg: row - acc };
++      return { line: l, seg: Math.max(0, row - acc) };
+     }
+     acc += n;
+   }
+@@ -49,7 +49,7 @@
+ 
+ /** Rendered rows from `a` down to `b`; negative when `b` sits above `a`.
+  * With `cap`, stops counting once the magnitude reaches it (callers only ask "at least N"). */
+-function gap(a: Caret, b: Caret, rows: Rows, cap = Infinity): number {
++export function gap(a: Caret, b: Caret, rows: Rows, cap = Infinity): number {
+   if (a.line > b.line) {
+     return -gap(b, a, rows, cap);
+   }
+@@ -84,28 +84,47 @@
+  * window never shows blank rows below the last one while the document can fill it.
+  * Row-granular, so scrolling advances one wrapped row at a time and a tall block
+  * may start half off the top. */
+-export function fit(vp: Viewport, c: Caret, total: number, rows: Rows): Caret {
++/** Top row that puts the first row of `c`s line on screen row `row`, whatever changed around it.
++ * No margin, no fill: a negative `seg` on the first line is blank rows above it. */
++export function hold(vp: Viewport, c: Caret, row: number, total: number, rows: Rows): Caret {
++  const home = pin({ line: vp.first ?? 0, seg: 0 }, total, rows);
++  let top = { line: c.line, seg: -Math.min(row, vp.height - 1 - c.seg) };
++  while (top.seg < 0 && after(home, { line: top.line, seg: 0 })) {
++    const up = step({ line: top.line, seg: 0 }, -1, total, rows);
++    top = { line: up.line, seg: top.seg + up.seg + 1 };
++  }
++  return after(c, top) ? c : top;
++}
++
++export function fit(vp: Viewport, c: Caret, total: number, rows: Rows, row?: number): Caret {
+   if (total <= 0 || vp.height <= 0) {
+     return { line: vp.offset, seg: vp.skip ?? 0 };
+   }
+   const m = Math.max(0, Math.min(vp.margin ?? 0, Math.floor((vp.height - 1) / 2)));
+   const home = pin({ line: vp.first ?? 0, seg: 0 }, total, rows);
+   const tail = end(total, rows);
+-  let top = pin({ line: vp.offset, seg: vp.skip ?? 0 }, total, rows);
++  const lead = Math.min(0, vp.skip ?? 0);
++  let top =
++    row !== undefined && lead < 0
++      ? { line: home.line, seg: lead }
++      : pin({ line: vp.offset, seg: vp.skip ?? 0 }, total, rows);
++  // After a move from screen row `row` the margin asks for no more than the caret already had.
++  const above = Math.min(m, Math.max(0, row ?? m));
++  const under = Math.min(m, Math.max(0, vp.height - 1 - (row ?? 0)));
+   // The caret may have moved above the window; never start below it.
+   if (after(c, top)) {
+     top = c;
+   }
+   // Margin above, then caret plus margin below, both measured in rendered rows.
+-  while (after(home, top) && gap(top, c, rows, m) < m) {
++  while (after(home, top) && gap(top, c, rows, above) < above) {
+     top = step(top, -1, total, rows);
+   }
+-  const below = Math.min(m, gap(c, tail, rows, m));
++  const below = Math.min(under, gap(c, tail, rows, m));
+   while (gap(top, c, rows, vp.height) + 1 + below > vp.height) {
+     top = step(top, 1, total, rows);
+   }
+   // Pull back off the end so the last row sits at the bottom edge, not above it.
+-  while (after(home, top) && gap(top, tail, rows, vp.height) + 1 < vp.height) {
++  while (row === undefined && after(home, top) && gap(top, tail, rows, vp.height) + 1 < vp.height) {
+     top = step(top, -1, total, rows);
+   }
+   return top;
+diff --color -ru /Users/jannik/Documents/Dropbox/Files/Active/Repositories/mdtation/src/core/renderer.ts src/core/renderer.ts
+--- /Users/jannik/Documents/Dropbox/Files/Active/Repositories/mdtation/src/core/renderer.ts	2026-09-10 17:51:41.325104609 +0200
++++ src/core/renderer.ts	2026-11-12 03:49:21.138637494 +0100
+@@ -433,7 +433,8 @@
+   const width = gutter(doc, opts);
+   const blank = " ".repeat(width - GUTTER_WIDTH);
+   const cols = Math.max(1, vp.width - width);
+-  const lines: string[] = [];
++  // A negative `skip` is blank rows above the first line.
++  const lines: string[] = Array(Math.min(height, Math.max(0, -(vp.skip ?? 0)))).fill("");
+   // Rows of the first line's block that have already scrolled off the top.
+   let skip = Math.max(0, vp.skip ?? 0);
+   const push = (row: string): void => {
+diff --color -ru /Users/jannik/Documents/Dropbox/Files/Active/Repositories/mdtation/src/ui/tui.ts src/ui/tui.ts
+--- /Users/jannik/Documents/Dropbox/Files/Active/Repositories/mdtation/src/ui/tui.ts	2026-11-10 08:29:20.055245757 +0100
++++ src/ui/tui.ts	2026-11-12 03:51:05.763293383 +0100
+@@ -28,7 +28,7 @@
+ import { copy } from "./clipboard.ts";
+ import { CommentStore, changes } from "../core/comment.ts";
+ import { follow } from "../core/watch.ts";
+-import { end as last, fit, pin, place, step as walk, type Caret } from "../core/caret.ts";
++import { end as last, fit, gap, hold, pin, place, step as walk, type Caret } from "../core/caret.ts";
+ import type { Comment } from "../core/comment.ts";
+ import { anchorFor, create, markers } from "../core/comments.ts";
+ import { lay, notes, type Align, type Layout, type Time } from "../core/inline.ts";
+@@ -227,6 +227,8 @@
+ 
+   /** Caret row inside the cursor line's block (wrap rows, then inline note rows). */
+   private seg = 0;
++  /** Screen row the caret was drawn on; unset after a jump, so the next draw fits strictly. */
++  private row?: number;
+   /** Comment id per rendered inline note row, keyed by line; refreshed by `lay()`. */
+   private ids = new Map<number, string[]>();
+   /** Where and when the body was last clicked, for `again()`. */
+@@ -272,6 +274,7 @@
+   /** Move the cursor to `line` (clamped, scrolled on-screen) and redraw. */
+   setCursor(line: number): void {
+     this.view = jumpToLine(this.view, line, this.doc.lines.length);
++    this.row = undefined;
+     this.draw();
+   }
+ 
+@@ -390,6 +393,8 @@
+     const line = hit.line;
+     this.view = { ...this.view, cursor: line };
+     this.seg = hit.seg;
++    // The caret now rests where the pointer is; the margin must not scroll the page under it.
++    this.row = row;
+     const twice = this.again(hit);
+     if (hit.seg > 0) {
+       // Continuation and note rows just take the caret; targets below live on a line's first row.
+@@ -566,12 +571,8 @@
+     const anchor = anchorFor(this.doc, this.view.cursor);
+     this.doc = parseDocument(text);
+     const line = this.store.resolve(anchor, this.doc)?.startLine ?? this.view.cursor;
+-    this.view = jumpToLine(
+-      clampViewport(this.fit(), this.doc.lines.length),
+-      line,
+-      this.doc.lines.length,
+-    );
+-    this.draw("RELOADED");
++    this.view = { ...this.fit(), cursor: line };
++    this.draw("RELOADED", true);
+   }
+ 
+   private async save(): Promise<void> {
+@@ -715,7 +716,7 @@
+     return this.seg >= w ? this.ids.get(this.view.cursor)?.[this.seg - w] : undefined;
+   }
+ 
+-  draw(mode = this.dirty ? "UNSAVED" : "VIEW"): void {
++  draw(mode = this.dirty ? "UNSAVED" : "VIEW", keep = false): void {
+     if (this.count !== null) {
+       mode = String(this.count);
+     }
+@@ -727,9 +728,13 @@
+     // Keep the scroll margin honest in screen rows (hidden lines take none, wrapped ones several).
+     const total = this.doc.lines.length;
+     const c = pin({ line: this.view.cursor, seg: this.seg }, total, this.spans(opts));
++    const t =
++      keep && this.row !== undefined
++        ? hold(this.view, c, this.row - this.seg, total, this.spans(opts))
++        : fit(this.view, c, total, this.spans(opts), this.row);
+     this.seg = c.seg;
+-    const t = fit(this.view, c, total, this.spans(opts));
+     this.view = { ...this.view, cursor: c.line, offset: t.line, skip: t.seg };
++    this.row = gap(t, c, this.spans(opts));
+     this.text.content = styled(
+       renderFrame(this.doc, this.view, { ...opts, markers: marks, seg: this.seg }).join("\n"),
+     );
+@@ -1097,8 +1102,8 @@
+       case "viewInlineOwn":
+         this.on[id] = !this.on[id];
+         this.remember();
+-        this.view = clampViewport(this.fit(), total);
+-        this.draw();
++        this.view = this.fit();
++        this.draw(undefined, true);
+         return;
+       case "quit":
+         if (this.dirty && Date.now() - this.guard > AGAIN) {
+@@ -1166,6 +1171,7 @@
+       const prev = this.view.cursor;
+       this.view = action.vp;
+       this.seg = 0;
++      this.row = undefined;
+       this.settle(prev);
+       this.draw();
+     }
+@@ -1207,9 +1213,9 @@
+   };
+ 
+   private resize(): void {
+-    this.view = clampViewport(this.fit(), this.doc.lines.length);
++    this.view = this.fit();
+     this.overlay?.place?.();
+-    this.draw();
++    this.draw(undefined, true);
+   }
+ 
+   dispose(): void {
